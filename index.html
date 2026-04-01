@@ -28,6 +28,9 @@
 
 </div>
 
+<!-- Her viser vi resultatet -->
+<p id="ff-resultat"></p>
+
 <script>
 // Vis boksen når siden åbner
 window.onload = () => {
@@ -40,11 +43,14 @@ document.getElementById("ff-done-btn").onclick = () => {
   document.getElementById("ff-step-energy").hidden = false;
 };
 
-// Step 2 → afslut
+// Step 2 → vis resultat på siden
 document.querySelectorAll("#ff-step-energy button").forEach(btn => {
   btn.onclick = () => {
     const energy = btn.dataset.energy;
-    alert("Tak! Du valgte: " + energy);
+
+    // Skriv resultatet på siden
+    document.getElementById("ff-resultat").textContent =
+      "Du valgte: " + energy;
 
     // Luk boksen
     document.getElementById("ff-box").hidden = true;
@@ -54,3 +60,4 @@ document.querySelectorAll("#ff-step-energy button").forEach(btn => {
 
 </body>
 </html>
+
