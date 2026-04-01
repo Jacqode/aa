@@ -2,30 +2,96 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>OS Notification Test</title>
+  <title>Flow Focus 1.0</title>
 </head>
 <body>
 
-<script>
-/* ===== SIMPLE OS NOTIFICATION TEST ===== */
+<h1>Flow Focus 1.0</h1>
 
-// Ask permission once
-if ("Notification" in window && Notification.permission === "default") {
-  Notification.requestPermission();
+<button id="startBtn">Start påmindelser</button>
+
+<h3>Seneste microfeed:</h3>
+<div id="feed">(ingen endnu)</div>
+
+<script>
+/* ===== FLOW FOCUS 1.0 – ALT I ÉN FIL, INGEN STYLING ===== */
+
+// --- LocalStorage wrapper ---
+function loadFeed() {
+  return JSON.parse(localStorage.getItem("ff_feed") || "[]");
+}
+function saveFeed(feed) {
+  localStorage.setItem("ff_feed", JSON.stringify(feed));
 }
 
-// Simple reminder function
-function showOSReminder() {
+// --- UI update ---
+function updateFeedUI() {
+  const feed = loadFeed();
+  const el = document.getElementById("feed");
+
+  if (feed.length === 0) {
+    el.textContent = "(ingen endnu)";
+    return;
+  }
+
+  el.innerHTML = feed.slice(-5).reverse().map(item =>
+    item.time + "  " + item.activity + "  +" + item.energy
+  ).join("<br>");
+}
+
+// --- Notifikation ---
+function showReminder() {
   if (!("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
 
   const n = new Notification("Flow Focus", {
     body: "Stræk skuldrene i 20 sek.",
-    requireInteraction: true
+    requireInteraction: true,
+    actions: [
+      { action: "done", title: "Jeg gjorde det!" }
+    ]
   });
 
-// Fire after 10 seconds (for testing)
-setTimeout(showOSReminder, 10000);
+  n.onaction = (e) => {
+    if (e.action === "done") {
+      n.close();
+
+      // Log event
+      const feed = loadFeed();
+      feed.push({
+        time: new Date().toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" }),
+        activity: "Stræk skuldrene",
+        energy: 2
+      });
+      saveFeed(feed);
+      updateFeedUI();
+
+      new Notification("Flow Focus", {
+        body: "Godt gået – du holdt fast!"
+      });
+    }
+  };
+}
+
+// --- Interval motor ---
+let intervalId = null;
+
+function startReminders() {
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+
+  if (intervalId) clearInterval(intervalId);
+
+  // Test: hvert 20. sekund
+  intervalId = setInterval(showReminder, 20000);
+
+  alert("Påmindelser startet!");
+}
+
+// --- Init ---
+document.getElementById("startBtn").onclick = startReminders;
+updateFeedUI();
 </script>
 
 </body>
