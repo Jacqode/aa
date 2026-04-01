@@ -2,96 +2,54 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus 1.0</title>
+  <title>Flow Focus</title>
 </head>
 <body>
 
-<h1>Flow Focus 1.0</h1>
+<h1>Hej 👋</h1>
 
-<button id="startBtn">Start påmindelser</button>
+<!-- Flow Focus interaktiv boks -->
+<div id="ff-box" hidden>
 
-<h3>Seneste microfeed:</h3>
-<div id="feed">(ingen endnu)</div>
+  <!-- Step 1: Aktivitet -->
+  <div id="ff-step-activity">
+    <p id="ff-activity-text">Aktivitet: Stræk skuldrene i 20 sek.</p>
+    <button id="ff-done-btn">Jeg har gjort det</button>
+  </div>
+
+  <!-- Step 2: Energi -->
+  <div id="ff-step-energy" hidden>
+    <h4>Hvordan er din energi nu?</h4>
+    <button data-energy="mindre">Mindre</button>
+    <button data-energy="uændret">Uændret</button>
+    <button data-energy="større">Større</button>
+    <button data-energy="ved_ikke">Ved ikke</button>
+  </div>
+
+</div>
 
 <script>
-/* ===== FLOW FOCUS 1.0 – ALT I ÉN FIL, INGEN STYLING ===== */
+// Vis boksen når siden åbner
+window.onload = () => {
+  document.getElementById("ff-box").hidden = false;
+};
 
-// --- LocalStorage wrapper ---
-function loadFeed() {
-  return JSON.parse(localStorage.getItem("ff_feed") || "[]");
-}
-function saveFeed(feed) {
-  localStorage.setItem("ff_feed", JSON.stringify(feed));
-}
+// Step 1 → Step 2
+document.getElementById("ff-done-btn").onclick = () => {
+  document.getElementById("ff-step-activity").hidden = true;
+  document.getElementById("ff-step-energy").hidden = false;
+};
 
-// --- UI update ---
-function updateFeedUI() {
-  const feed = loadFeed();
-  const el = document.getElementById("feed");
+// Step 2 → afslut
+document.querySelectorAll("#ff-step-energy button").forEach(btn => {
+  btn.onclick = () => {
+    const energy = btn.dataset.energy;
+    alert("Tak! Du valgte: " + energy);
 
-  if (feed.length === 0) {
-    el.textContent = "(ingen endnu)";
-    return;
-  }
-
-  el.innerHTML = feed.slice(-5).reverse().map(item =>
-    item.time + "  " + item.activity + "  +" + item.energy
-  ).join("<br>");
-}
-
-// --- Notifikation ---
-function showReminder() {
-  if (!("Notification" in window)) return;
-  if (Notification.permission !== "granted") return;
-
-  const n = new Notification("Flow Focus", {
-    body: "Stræk skuldrene i 20 sek.",
-    requireInteraction: true,
-    actions: [
-      { action: "done", title: "Jeg gjorde det!" }
-    ]
-  });
-
-  n.onaction = (e) => {
-    if (e.action === "done") {
-      n.close();
-
-      // Log event
-      const feed = loadFeed();
-      feed.push({
-        time: new Date().toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" }),
-        activity: "Stræk skuldrene",
-        energy: 2
-      });
-      saveFeed(feed);
-      updateFeedUI();
-
-      new Notification("Flow Focus", {
-        body: "Godt gået – du holdt fast!"
-      });
-    }
+    // Luk boksen
+    document.getElementById("ff-box").hidden = true;
   };
-}
-
-// --- Interval motor ---
-let intervalId = null;
-
-function startReminders() {
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
-  }
-
-  if (intervalId) clearInterval(intervalId);
-
-  // Test: hvert 20. sekund
-  intervalId = setInterval(showReminder, 20000);
-
-  alert("Påmindelser startet!");
-}
-
-// --- Init ---
-document.getElementById("startBtn").onclick = startReminders;
-updateFeedUI();
+});
 </script>
 
 </body>
