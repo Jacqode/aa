@@ -11,10 +11,10 @@
 <!-- Flow Focus interaktiv boks -->
 <div id="ff-box" hidden>
 
-  <!-- STEP 1: Energi før aktivitet (VAS) -->
+  <!-- STEP 1: Energi før aktivitet (VAS 0–100) -->
   <div id="ff-step-energy-before">
     <h4>Hvordan er din energi lige nu?</h4>
-    <p>Klik på et tal fra 0–10</p>
+    <p>Klik på et tal fra 0–100</p>
 
     <div id="ff-vas-before-scale"></div>
   </div>
@@ -25,10 +25,10 @@
     <button id="ff-done-btn">Jeg har gjort det</button>
   </div>
 
-  <!-- STEP 3: Energi efter aktivitet (VAS) -->
+  <!-- STEP 3: Energi efter aktivitet (VAS 0–100) -->
   <div id="ff-step-energy-after" hidden>
     <h4>Hvordan er din energi nu?</h4>
-    <p>Klik på et tal fra 0–10</p>
+    <p>Klik på et tal fra 0–100</p>
 
     <div id="ff-vas-after-scale"></div>
   </div>
@@ -39,10 +39,10 @@
 <p id="ff-resultat"></p>
 
 <script>
-// Helper: lav en klikbar VAS-skala 0–10
+// Helper: lav en klikbar VAS-skala 0–100 i trin af 10
 function createVAS(containerId, callback) {
   const container = document.getElementById(containerId);
-  for (let i = 0; i <= 10; i++) {
+  for (let i = 0; i <= 100; i += 10) {
     const btn = document.createElement("button");
     btn.textContent = i;
     btn.style.margin = "4px";
@@ -85,3 +85,4 @@ document.getElementById("ff-done-btn").onclick = () => {
 
 </body>
 </html>
+
