@@ -35,6 +35,12 @@
 
 </div>
 
+<!-- STEP 4: Graf -->
+<div id="ff-graph-section" hidden>
+  <h3>Din energi over tid</h3>
+  <canvas id="ff-graph" width="400" height="200" style="border:1px solid black;"></canvas>
+</div>
+
 <!-- Microfeedback vises her -->
 <p id="ff-resultat"></p>
 
@@ -54,7 +60,7 @@ function createFullVAS(containerId, callback) {
     box.style.justifyContent = "center";
     box.style.fontSize = "10px";
 
-    box.textContent = i;   // ← tallet vises i firkanten
+    box.textContent = i;
 
     box.onclick = () => callback(i);
 
@@ -64,11 +70,55 @@ function createFullVAS(containerId, callback) {
 
 let energyBefore = null;
 
+// Gem data i localStorage
+function saveMeasurement(before, after) {
+  const data = JSON.parse(localStorage.getItem("ff-data") || "[]");
+  data.push({ before, after, time: Date.now() });
+  localStorage.setItem("ff-data", JSON.stringify(data));
+}
+
+// Tegn graf
+function drawGraph() {
+  const data = JSON.parse(localStorage.getItem("ff-data") || "[]");
+  const canvas = document.getElementById("ff-graph");
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (data.length === 0) return;
+
+  const maxY = 100;
+  const stepX = canvas.width / (data.length - 1 || 1);
+
+  ctx.beginPath();
+  ctx.strokeStyle = "black";
+
+  data.forEach((d, i) => {
+    const x = i * stepX;
+    const y = canvas.height - (d.after / maxY) * canvas.height;
+
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+
+  ctx.stroke();
+
+  // Tegn punkter
+  data.forEach((d, i) => {
+    const x = i * stepX;
+    const y = canvas.height - (d.after / maxY) * canvas.height;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "black";
+    ctx.fill();
+  });
+}
+
 // Vis boksen når siden åbner
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
 
-  // Lav VAS-linjerne
   createFullVAS("ff-vas-before", (val) => {
     energyBefore = val;
     document.getElementById("ff-step-energy-before").hidden = true;
@@ -78,12 +128,18 @@ window.onload = () => {
   createFullVAS("ff-vas-after", (val) => {
     const energyAfter = val;
 
+    saveMeasurement(energyBefore, energyAfter);
+
     document.getElementById("ff-resultat").textContent =
       "Selv om effekten af en mikropause kan variere fra gang til gang, " +
       "viser forskning, at mikropauser generelt øger energien og mindsker træthed. " +
-      "I grafen kan du senere se, hvordan mikropauser har virket på dig afhængigt af aktivitet og tidspunkt.";
+      "I grafen kan du se, hvordan mikropauser har virket på dig over tid.";
 
     document.getElementById("ff-box").hidden = true;
+
+    // Vis graf
+    document.getElementById("ff-graph-section").hidden = false;
+    drawGraph();
   });
 };
 
@@ -95,4 +151,3 @@ document.getElementById("ff-done-btn").onclick = () => {
 </script>
 
 </body>
-</html>
