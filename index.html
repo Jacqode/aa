@@ -14,9 +14,9 @@
   <!-- STEP 1: Energi før aktivitet (VAS 0–100) -->
   <div id="ff-step-energy-before">
     <h4>Hvordan er din energi lige nu?</h4>
-    <p>Klik et sted på linjen</p>
+    <p>Klik på et tal fra 0–100</p>
 
-    <div id="ff-vas-before" style="display:flex; gap:2px; flex-wrap:wrap; width:220px;"></div>
+    <div id="ff-vas-before" style="display:flex; flex-wrap:wrap; gap:4px; width:260px;"></div>
   </div>
 
   <!-- STEP 2: Aktivitet -->
@@ -28,9 +28,9 @@
   <!-- STEP 3: Energi efter aktivitet (VAS 0–100) -->
   <div id="ff-step-energy-after" hidden>
     <h4>Hvordan er din energi nu?</h4>
-    <p>Klik et sted på linjen</p>
+    <p>Klik på et tal fra 0–100</p>
 
-    <div id="ff-vas-after" style="display:flex; gap:2px; flex-wrap:wrap; width:220px;"></div>
+    <div id="ff-vas-after" style="display:flex; flex-wrap:wrap; gap:4px; width:260px;"></div>
   </div>
 
 </div>
@@ -39,20 +39,26 @@
 <p id="ff-resultat"></p>
 
 <script>
-// Helper: lav en VAS-linje med 101 klikbare punkter (0–100)
+// Helper: lav en VAS-linje med 101 klikbare felter (0–100)
 function createFullVAS(containerId, callback) {
   const container = document.getElementById(containerId);
 
   for (let i = 0; i <= 100; i++) {
-    const dot = document.createElement("div");
-    dot.style.width = "18px";
-    dot.style.height = "18px";
-    dot.style.border = "1px solid black";
-    dot.style.cursor = "pointer";
+    const box = document.createElement("div");
+    box.style.width = "28px";
+    box.style.height = "28px";
+    box.style.border = "1px solid black";
+    box.style.cursor = "pointer";
+    box.style.display = "flex";
+    box.style.alignItems = "center";
+    box.style.justifyContent = "center";
+    box.style.fontSize = "10px";
 
-    dot.onclick = () => callback(i);
+    box.textContent = i;   // ← tallet vises i firkanten
 
-    container.appendChild(dot);
+    box.onclick = () => callback(i);
+
+    container.appendChild(box);
   }
 }
 
