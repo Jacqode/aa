@@ -11,19 +11,26 @@
 <!-- Flow Focus interaktiv boks -->
 <div id="ff-box" hidden>
 
-  <!-- Step 1: Aktivitet -->
-  <div id="ff-step-activity">
+  <!-- STEP 1: Energi før aktivitet (VAS) -->
+  <div id="ff-step-energy-before">
+    <h4>Hvordan er din energi lige nu?</h4>
+    <p>Vælg et tal fra 0–10</p>
+    <input id="ff-vas-before" type="number" min="0" max="10">
+    <button id="ff-vas-before-btn">Fortsæt</button>
+  </div>
+
+  <!-- STEP 2: Aktivitet -->
+  <div id="ff-step-activity" hidden>
     <p id="ff-activity-text">Aktivitet: Stræk skuldrene i 20 sek.</p>
     <button id="ff-done-btn">Jeg har gjort det</button>
   </div>
 
-  <!-- Step 2: Energi -->
-  <div id="ff-step-energy" hidden>
+  <!-- STEP 3: Energi efter aktivitet (VAS) -->
+  <div id="ff-step-energy-after" hidden>
     <h4>Hvordan er din energi nu?</h4>
-    <button data-energy="mindre">Mindre</button>
-    <button data-energy="uændret">Uændret</button>
-    <button data-energy="større">Større</button>
-    <button data-energy="ved_ikke">Ved ikke</button>
+    <p>Vælg et tal fra 0–10</p>
+    <input id="ff-vas-after" type="number" min="0" max="10">
+    <button id="ff-vas-after-btn">Fortsæt</button>
   </div>
 
 </div>
@@ -37,28 +44,38 @@ window.onload = () => {
   document.getElementById("ff-box").hidden = false;
 };
 
-// Step 1 → Step 2
-document.getElementById("ff-done-btn").onclick = () => {
-  document.getElementById("ff-step-activity").hidden = true;
-  document.getElementById("ff-step-energy").hidden = false;
+// STEP 1 → STEP 2
+document.getElementById("ff-vas-before-btn").onclick = () => {
+  const val = document.getElementById("ff-vas-before").value;
+  if (val === "") return;
+
+  document.getElementById("ff-step-energy-before").hidden = true;
+  document.getElementById("ff-step-activity").hidden = false;
 };
 
-// Step 2 → vis microfeedback på siden
-document.querySelectorAll("#ff-step-energy button").forEach(btn => {
-  btn.onclick = () => {
+// STEP 2 → STEP 3
+document.getElementById("ff-done-btn").onclick = () => {
+  document.getElementById("ff-step-activity").hidden = true;
+  document.getElementById("ff-step-energy-after").hidden = false;
+};
 
-    document.getElementById("ff-resultat").textContent =
-      "Selv om effekten af en mikropause kan variere fra gang til gang, " +
-      "viser forskning, at mikropauser generelt øger energien og mindsker træthed. " +
-      "I grafen kan du senere se, hvordan mikropauser har virket på dig afhængigt af aktivitet og tidspunkt.";
+// STEP 3 → microfeedback
+document.getElementById("ff-vas-after-btn").onclick = () => {
+  const before = document.getElementById("ff-vas-before").value;
+  const after = document.getElementById("ff-vas-after").value;
+  if (after === "") return;
 
-    // Luk boksen
-    document.getElementById("ff-box").hidden = true;
-  };
-});
+  document.getElementById("ff-resultat").textContent =
+    "Selv om effekten af en mikropause kan variere fra gang til gang, " +
+    "viser forskning, at mikropauser generelt øger energien og mindsker træthed. " +
+    "I grafen kan du senere se, hvordan mikropauser har virket på dig afhængigt af aktivitet og tidspunkt.";
+
+  document.getElementById("ff-box").hidden = true;
+};
 </script>
 
 </body>
 </html>
+
 
 
