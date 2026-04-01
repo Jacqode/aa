@@ -11,12 +11,12 @@
 <!-- Flow Focus interaktiv boks -->
 <div id="ff-box" hidden>
 
-  <!-- STEP 1: Energi før aktivitet (VAS 0–100) -->
+  <!-- STEP 1: Energi før aktivitet (visuel VAS) -->
   <div id="ff-step-energy-before">
     <h4>Hvordan er din energi lige nu?</h4>
-    <p>Klik på et tal fra 0–100</p>
+    <p>Klik et sted på linjen</p>
 
-    <div id="ff-vas-before-scale"></div>
+    <div id="ff-vas-before" style="display:flex; gap:4px;"></div>
   </div>
 
   <!-- STEP 2: Aktivitet -->
@@ -25,12 +25,12 @@
     <button id="ff-done-btn">Jeg har gjort det</button>
   </div>
 
-  <!-- STEP 3: Energi efter aktivitet (VAS 0–100) -->
+  <!-- STEP 3: Energi efter aktivitet (visuel VAS) -->
   <div id="ff-step-energy-after" hidden>
     <h4>Hvordan er din energi nu?</h4>
-    <p>Klik på et tal fra 0–100</p>
+    <p>Klik et sted på linjen</p>
 
-    <div id="ff-vas-after-scale"></div>
+    <div id="ff-vas-after" style="display:flex; gap:4px;"></div>
   </div>
 
 </div>
@@ -39,15 +39,23 @@
 <p id="ff-resultat"></p>
 
 <script>
-// Helper: lav en klikbar VAS-skala 0–100 i trin af 10
-function createVAS(containerId, callback) {
+// Helper: lav en visuel VAS-linje med 11 klikbare felter
+function createVisualVAS(containerId, callback) {
   const container = document.getElementById(containerId);
-  for (let i = 0; i <= 100; i += 10) {
-    const btn = document.createElement("button");
-    btn.textContent = i;
-    btn.style.margin = "4px";
-    btn.onclick = () => callback(i);
-    container.appendChild(btn);
+
+  for (let i = 0; i < 11; i++) {
+    const box = document.createElement("div");
+    box.style.width = "20px";
+    box.style.height = "20px";
+    box.style.border = "1px solid black";
+    box.style.cursor = "pointer";
+
+    // Intern værdi: 0–100 i trin af 10
+    const value = i * 10;
+
+    box.onclick = () => callback(value);
+
+    container.appendChild(box);
   }
 }
 
@@ -57,14 +65,14 @@ let energyBefore = null;
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
 
-  // Lav VAS-skalaerne
-  createVAS("ff-vas-before-scale", (val) => {
+  // Lav visuelle VAS-linjer
+  createVisualVAS("ff-vas-before", (val) => {
     energyBefore = val;
     document.getElementById("ff-step-energy-before").hidden = true;
     document.getElementById("ff-step-activity").hidden = false;
   });
 
-  createVAS("ff-vas-after-scale", (val) => {
+  createVisualVAS("ff-vas-after", (val) => {
     const energyAfter = val;
 
     document.getElementById("ff-resultat").textContent =
@@ -85,4 +93,5 @@ document.getElementById("ff-done-btn").onclick = () => {
 
 </body>
 </html>
+
 
