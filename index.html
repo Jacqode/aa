@@ -21,7 +21,7 @@
 
   <!-- STEP 2: Aktivitet -->
   <div id="ff-step-activity" hidden>
-    <p id="ff-activity-text">Aktivitet: Stræk skuldrene i 20 sek.</p>
+    <p id="ff-activity-text">Aktivitet: Skulderrul i 20 sek.</p>
     <button id="ff-done-btn">Jeg har gjort det</button>
   </div>
 
@@ -37,8 +37,15 @@
 
 <!-- STEP 4: Graf -->
 <div id="ff-graph-section" hidden>
-  <h3>Din energi over tid</h3>
-  <canvas id="ff-graph" width="400" height="200" style="border:1px solid black;"></canvas>
+  <h3>Energi-effekt af mikropauser over dagen</h3>
+
+  <canvas id="ff-graph" width="600" height="300" style="border:1px solid black;"></canvas>
+
+  <p style="max-width:600px;">
+    Hver prik viser én mikropause. X-aksen viser tidspunktet på dagen,
+    Y-aksen viser ændringen i energi efter pausen. Prikker over 0 betyder,
+    at energien steg efter pausen.
+  </p>
 </div>
 
 <!-- Microfeedback vises her -->
@@ -73,11 +80,18 @@ let energyBefore = null;
 // Gem data i localStorage
 function saveMeasurement(before, after) {
   const data = JSON.parse(localStorage.getItem("ff-data") || "[]");
-  data.push({ before, after, time: Date.now() });
+
+  data.push({
+    before,
+    after,
+    activity: "Skulderrul", // placeholder indtil du tilføjer rigtige aktiviteter
+    time: Date.now()
+  });
+
   localStorage.setItem("ff-data", JSON.stringify(data));
 }
 
-// Tegn graf
+// Tegn graf som i eksemplet
 function drawGraph() {
   const data = JSON.parse(localStorage.getItem("ff-data") || "[]");
   const canvas = document.getElementById("ff-graph");
@@ -87,30 +101,59 @@ function drawGraph() {
 
   if (data.length === 0) return;
 
-  const maxY = 100;
-  const stepX = canvas.width / (data.length - 1 || 1);
+  const padding = 50;
+  const w = canvas.width - padding * 2;
+  const h = canvas.height - padding * 2;
 
-  ctx.beginPath();
+  // Y-akse: energiændring
+  const yMin = -20;
+  const yMax = 20;
+
+  // X-akse: tid på dagen (08:00–18:00)
+  const dayStart = 8 * 60;
+  const dayEnd   = 18 * 60;
+
+  // Farver pr aktivitet
+  const colors = {
+    "Skulderrul": "green",
+    "Ryst kroppen": "orange",
+    "Stå-kat": "blue",
+    "Læg-løft": "purple",
+    "default": "black"
+  };
+
+  // Akser
   ctx.strokeStyle = "black";
-
-  data.forEach((d, i) => {
-    const x = i * stepX;
-    const y = canvas.height - (d.after / maxY) * canvas.height;
-
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-
+  ctx.beginPath();
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, padding + h);
+  ctx.lineTo(padding + w, padding + h);
   ctx.stroke();
 
-  // Tegn punkter
-  data.forEach((d, i) => {
-    const x = i * stepX;
-    const y = canvas.height - (d.after / maxY) * canvas.height;
+  // Y-akse labels
+  ctx.fillText("20", padding - 25, padding + 5);
+  ctx.fillText("0", padding - 20, padding + h / 2);
+  ctx.fillText("-20", padding - 30, padding + h);
+
+  // X-akse labels (08–18)
+  for (let hour = 8; hour <= 18; hour += 2) {
+    const x = padding + ((hour * 60 - dayStart) / (dayEnd - dayStart)) * w;
+    ctx.fillText(hour + ":00", x - 15, padding + h + 20);
+  }
+
+  // Tegn prikker
+  data.forEach(d => {
+    const delta = d.after - d.before;
+
+    const date = new Date(d.time);
+    const minutes = date.getHours() * 60 + date.getMinutes();
+
+    const x = padding + ((minutes - dayStart) / (dayEnd - dayStart)) * w;
+    const y = padding + (1 - (delta - yMin) / (yMax - yMin)) * h;
 
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = "black";
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = colors[d.activity] || colors.default;
     ctx.fill();
   });
 }
@@ -137,7 +180,6 @@ window.onload = () => {
 
     document.getElementById("ff-box").hidden = true;
 
-    // Vis graf
     document.getElementById("ff-graph-section").hidden = false;
     drawGraph();
   });
@@ -151,3 +193,4 @@ document.getElementById("ff-done-btn").onclick = () => {
 </script>
 
 </body>
+</html>
