@@ -14,9 +14,9 @@
   <!-- STEP 1: Energi før aktivitet (VAS) -->
   <div id="ff-step-energy-before">
     <h4>Hvordan er din energi lige nu?</h4>
-    <p>Vælg et tal fra 0–10</p>
-    <input id="ff-vas-before" type="number" min="0" max="10">
-    <button id="ff-vas-before-btn">Fortsæt</button>
+    <p>Klik på et tal fra 0–10</p>
+
+    <div id="ff-vas-before-scale"></div>
   </div>
 
   <!-- STEP 2: Aktivitet -->
@@ -28,9 +28,9 @@
   <!-- STEP 3: Energi efter aktivitet (VAS) -->
   <div id="ff-step-energy-after" hidden>
     <h4>Hvordan er din energi nu?</h4>
-    <p>Vælg et tal fra 0–10</p>
-    <input id="ff-vas-after" type="number" min="0" max="10">
-    <button id="ff-vas-after-btn">Fortsæt</button>
+    <p>Klik på et tal fra 0–10</p>
+
+    <div id="ff-vas-after-scale"></div>
   </div>
 
 </div>
@@ -39,18 +39,41 @@
 <p id="ff-resultat"></p>
 
 <script>
+// Helper: lav en klikbar VAS-skala 0–10
+function createVAS(containerId, callback) {
+  const container = document.getElementById(containerId);
+  for (let i = 0; i <= 10; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    btn.style.margin = "4px";
+    btn.onclick = () => callback(i);
+    container.appendChild(btn);
+  }
+}
+
+let energyBefore = null;
+
 // Vis boksen når siden åbner
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
-};
 
-// STEP 1 → STEP 2
-document.getElementById("ff-vas-before-btn").onclick = () => {
-  const val = document.getElementById("ff-vas-before").value;
-  if (val === "") return;
+  // Lav VAS-skalaerne
+  createVAS("ff-vas-before-scale", (val) => {
+    energyBefore = val;
+    document.getElementById("ff-step-energy-before").hidden = true;
+    document.getElementById("ff-step-activity").hidden = false;
+  });
 
-  document.getElementById("ff-step-energy-before").hidden = true;
-  document.getElementById("ff-step-activity").hidden = false;
+  createVAS("ff-vas-after-scale", (val) => {
+    const energyAfter = val;
+
+    document.getElementById("ff-resultat").textContent =
+      "Selv om effekten af en mikropause kan variere fra gang til gang, " +
+      "viser forskning, at mikropauser generelt øger energien og mindsker træthed. " +
+      "I grafen kan du senere se, hvordan mikropauser har virket på dig afhængigt af aktivitet og tidspunkt.";
+
+    document.getElementById("ff-box").hidden = true;
+  });
 };
 
 // STEP 2 → STEP 3
@@ -58,24 +81,7 @@ document.getElementById("ff-done-btn").onclick = () => {
   document.getElementById("ff-step-activity").hidden = true;
   document.getElementById("ff-step-energy-after").hidden = false;
 };
-
-// STEP 3 → microfeedback
-document.getElementById("ff-vas-after-btn").onclick = () => {
-  const before = document.getElementById("ff-vas-before").value;
-  const after = document.getElementById("ff-vas-after").value;
-  if (after === "") return;
-
-  document.getElementById("ff-resultat").textContent =
-    "Selv om effekten af en mikropause kan variere fra gang til gang, " +
-    "viser forskning, at mikropauser generelt øger energien og mindsker træthed. " +
-    "I grafen kan du senere se, hvordan mikropauser har virket på dig afhængigt af aktivitet og tidspunkt.";
-
-  document.getElementById("ff-box").hidden = true;
-};
 </script>
 
 </body>
 </html>
-
-
-
