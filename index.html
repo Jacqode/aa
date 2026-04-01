@@ -1,3 +1,34 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <title>Flow Focus</title>
+</head>
+<body>
+
+<h1>Hej 👋</h1>
+
+<!-- Flow Focus interaktiv boks -->
+<div id="ff-box" hidden>
+
+  <!-- Step 1: Aktivitet -->
+  <div id="ff-step-activity">
+    <p id="ff-activity-text">Aktivitet: Stræk skuldrene i 20 sek.</p>
+    <button id="ff-done-btn">Jeg har gjort det</button>
+  </div>
+
+  <!-- Step 2: Energi -->
+  <div id="ff-step-energy" hidden>
+    <h4>Hvordan er din energi nu?</h4>
+    <button data-energy="mindre">Mindre</button>
+    <button data-energy="uændret">Uændret</button>
+    <button data-energy="større">Større</button>
+    <button data-energy="ved_ikke">Ved ikke</button>
+  </div>
+
+</div>
+
+<!-- Microfeedback vises her -->
 <p id="ff-resultat"></p>
 
 <script>
@@ -17,7 +48,7 @@ document.querySelectorAll("#ff-step-energy button").forEach(btn => {
   btn.onclick = () => {
 
     document.getElementById("ff-resultat").textContent =
-      "Tak for din tilbagemelding. Selv om effekten af en mikropause kan variere fra gang til gang, " +
+      "Selv om effekten af en mikropause kan variere fra gang til gang, " +
       "viser forskning, at mikropauser generelt øger energien og mindsker træthed. " +
       "I grafen kan du senere se, hvordan mikropauser har virket på dig afhængigt af aktivitet og tidspunkt.";
 
@@ -26,5 +57,8 @@ document.querySelectorAll("#ff-step-energy button").forEach(btn => {
   };
 });
 </script>
+
+</body>
+</html>
 
 
