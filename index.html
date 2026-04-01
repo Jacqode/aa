@@ -16,7 +16,8 @@
     <h4>Hvordan er din energi lige nu?</h4>
     <p>Klik på et tal fra 0–100</p>
 
-    <div id="ff-vas-before" style="display:flex; flex-wrap:wrap; gap:4px; width:260px;"></div>
+    <div id="ff-vas-before"
+         style="display:flex; flex-wrap:nowrap; gap:2px; overflow-x:auto;"></div>
   </div>
 
   <!-- STEP 2: Aktivitet -->
@@ -30,7 +31,8 @@
     <h4>Hvordan er din energi nu?</h4>
     <p>Klik på et tal fra 0–100</p>
 
-    <div id="ff-vas-after" style="display:flex; flex-wrap:wrap; gap:4px; width:260px;"></div>
+    <div id="ff-vas-after"
+         style="display:flex; flex-wrap:nowrap; gap:2px; overflow-x:auto;"></div>
   </div>
 
 </div>
@@ -52,20 +54,20 @@
 <p id="ff-resultat"></p>
 
 <script>
-// Helper: lav en VAS-linje med 101 klikbare felter (0–100)
+// Helper: VAS-linje med 101 klikbare felter (0–100) i én lang linje
 function createFullVAS(containerId, callback) {
   const container = document.getElementById(containerId);
 
   for (let i = 0; i <= 100; i++) {
     const box = document.createElement("div");
-    box.style.width = "28px";
-    box.style.height = "28px";
+    box.style.width = "24px";
+    box.style.height = "24px";
     box.style.border = "1px solid black";
     box.style.cursor = "pointer";
     box.style.display = "flex";
     box.style.alignItems = "center";
     box.style.justifyContent = "center";
-    box.style.fontSize = "10px";
+    box.style.fontSize = "9px";
 
     box.textContent = i;
 
@@ -84,14 +86,14 @@ function saveMeasurement(before, after) {
   data.push({
     before,
     after,
-    activity: "Skulderrul", // placeholder indtil du tilføjer rigtige aktiviteter
+    activity: "Skulderrul",
     time: Date.now()
   });
 
   localStorage.setItem("ff-data", JSON.stringify(data));
 }
 
-// Tegn graf som i eksemplet
+// Tegn graf (scatter, energiændring vs tidspunkt)
 function drawGraph() {
   const data = JSON.parse(localStorage.getItem("ff-data") || "[]");
   const canvas = document.getElementById("ff-graph");
@@ -105,15 +107,12 @@ function drawGraph() {
   const w = canvas.width - padding * 2;
   const h = canvas.height - padding * 2;
 
-  // Y-akse: energiændring
   const yMin = -20;
   const yMax = 20;
 
-  // X-akse: tid på dagen (08:00–18:00)
   const dayStart = 8 * 60;
   const dayEnd   = 18 * 60;
 
-  // Farver pr aktivitet
   const colors = {
     "Skulderrul": "green",
     "Ryst kroppen": "orange",
@@ -122,7 +121,6 @@ function drawGraph() {
     "default": "black"
   };
 
-  // Akser
   ctx.strokeStyle = "black";
   ctx.beginPath();
   ctx.moveTo(padding, padding);
@@ -130,21 +128,17 @@ function drawGraph() {
   ctx.lineTo(padding + w, padding + h);
   ctx.stroke();
 
-  // Y-akse labels
   ctx.fillText("20", padding - 25, padding + 5);
   ctx.fillText("0", padding - 20, padding + h / 2);
   ctx.fillText("-20", padding - 30, padding + h);
 
-  // X-akse labels (08–18)
   for (let hour = 8; hour <= 18; hour += 2) {
     const x = padding + ((hour * 60 - dayStart) / (dayEnd - dayStart)) * w;
     ctx.fillText(hour + ":00", x - 15, padding + h + 20);
   }
 
-  // Tegn prikker
   data.forEach(d => {
     const delta = d.after - d.before;
-
     const date = new Date(d.time);
     const minutes = date.getHours() * 60 + date.getMinutes();
 
@@ -158,7 +152,6 @@ function drawGraph() {
   });
 }
 
-// Vis boksen når siden åbner
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
 
@@ -185,7 +178,6 @@ window.onload = () => {
   });
 };
 
-// STEP 2 → STEP 3
 document.getElementById("ff-done-btn").onclick = () => {
   document.getElementById("ff-step-activity").hidden = true;
   document.getElementById("ff-step-energy-after").hidden = false;
