@@ -11,12 +11,13 @@
 <!-- Flow Focus interaktiv boks -->
 <div id="ff-box" hidden>
 
-  <!-- STEP 1: Energi før aktivitet (visuel VAS) -->
+  <!-- STEP 1: Energi før aktivitet (slider) -->
   <div id="ff-step-energy-before">
     <h4>Hvordan er din energi lige nu?</h4>
-    <p>Klik et sted på linjen</p>
+    <p>Træk på linjen</p>
 
-    <div id="ff-vas-before" style="display:flex; gap:4px;"></div>
+    <input id="ff-slider-before" type="range" min="0" max="100" value="50">
+    <button id="ff-slider-before-btn">Fortsæt</button>
   </div>
 
   <!-- STEP 2: Aktivitet -->
@@ -25,12 +26,13 @@
     <button id="ff-done-btn">Jeg har gjort det</button>
   </div>
 
-  <!-- STEP 3: Energi efter aktivitet (visuel VAS) -->
+  <!-- STEP 3: Energi efter aktivitet (slider) -->
   <div id="ff-step-energy-after" hidden>
     <h4>Hvordan er din energi nu?</h4>
-    <p>Klik et sted på linjen</p>
+    <p>Træk på linjen</p>
 
-    <div id="ff-vas-after" style="display:flex; gap:4px;"></div>
+    <input id="ff-slider-after" type="range" min="0" max="100" value="50">
+    <button id="ff-slider-after-btn">Fortsæt</button>
   </div>
 
 </div>
@@ -39,55 +41,37 @@
 <p id="ff-resultat"></p>
 
 <script>
-// Helper: lav en visuel VAS-linje med 11 klikbare felter
-function createVisualVAS(containerId, callback) {
-  const container = document.getElementById(containerId);
-
-  for (let i = 0; i < 11; i++) {
-    const box = document.createElement("div");
-    box.style.width = "20px";
-    box.style.height = "20px";
-    box.style.border = "1px solid black";
-    box.style.cursor = "pointer";
-
-    // Intern værdi: 0–100 i trin af 10
-    const value = i * 10;
-
-    box.onclick = () => callback(value);
-
-    container.appendChild(box);
-  }
-}
-
 let energyBefore = null;
 
 // Vis boksen når siden åbner
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
+};
 
-  // Lav visuelle VAS-linjer
-  createVisualVAS("ff-vas-before", (val) => {
-    energyBefore = val;
-    document.getElementById("ff-step-energy-before").hidden = true;
-    document.getElementById("ff-step-activity").hidden = false;
-  });
+// STEP 1 → STEP 2
+document.getElementById("ff-slider-before-btn").onclick = () => {
+  energyBefore = document.getElementById("ff-slider-before").value;
 
-  createVisualVAS("ff-vas-after", (val) => {
-    const energyAfter = val;
-
-    document.getElementById("ff-resultat").textContent =
-      "Selv om effekten af en mikropause kan variere fra gang til gang, " +
-      "viser forskning, at mikropauser generelt øger energien og mindsker træthed. " +
-      "I grafen kan du senere se, hvordan mikropauser har virket på dig afhængigt af aktivitet og tidspunkt.";
-
-    document.getElementById("ff-box").hidden = true;
-  });
+  document.getElementById("ff-step-energy-before").hidden = true;
+  document.getElementById("ff-step-activity").hidden = false;
 };
 
 // STEP 2 → STEP 3
 document.getElementById("ff-done-btn").onclick = () => {
   document.getElementById("ff-step-activity").hidden = true;
   document.getElementById("ff-step-energy-after").hidden = false;
+};
+
+// STEP 3 → microfeedback
+document.getElementById("ff-slider-after-btn").onclick = () => {
+  const energyAfter = document.getElementById("ff-slider-after").value;
+
+  document.getElementById("ff-resultat").textContent =
+    "Selv om effekten af en mikropause kan variere fra gang til gang, " +
+    "viser forskning, at mikropauser generelt øger energien og mindsker træthed. " +
+    "I grafen kan du senere se, hvordan mikropauser har virket på dig afhængigt af aktivitet og tidspunkt.";
+
+  document.getElementById("ff-box").hidden = true;
 };
 </script>
 
