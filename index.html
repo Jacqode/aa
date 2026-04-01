@@ -24,14 +24,6 @@ function showOSReminder() {
     requireInteraction: true
   });
 
-  n.onclick = () => {
-    n.close();
-    new Notification("Flow Focus", {
-      body: "Godt gået – hold fast i den gode vane!"
-    });
-  };
-}
-
 // Fire after 10 seconds (for testing)
 setTimeout(showOSReminder, 10000);
 </script>
