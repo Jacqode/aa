@@ -17,7 +17,12 @@
     <p>Klik et sted på linjen</p>
 
     <div id="ff-vas-before"
-         style="width:100%; height:30px; position:relative; border-bottom:2px solid black; cursor:pointer;">
+         style="width:100%; height:40px; position:relative; cursor:pointer; margin-bottom:10px;">
+    </div>
+
+    <div style="display:flex; justify-content:space-between; font-size:12px;">
+      <span>Ingen energi</span>
+      <span>Maksimal energi</span>
     </div>
   </div>
 
@@ -33,7 +38,12 @@
     <p>Klik et sted på linjen</p>
 
     <div id="ff-vas-after"
-         style="width:100%; height:30px; position:relative; border-bottom:2px solid black; cursor:pointer;">
+         style="width:100%; height:40px; position:relative; cursor:pointer; margin-bottom:10px;">
+    </div>
+
+    <div style="display:flex; justify-content:space-between; font-size:12px;">
+      <span>Ingen energi</span>
+      <span>Maksimal energi</span>
     </div>
   </div>
 
@@ -55,19 +65,51 @@
 <p id="ff-resultat"></p>
 
 <script>
-// --- VAS-LINJE (ren, klikbar, farvefyld) ---
+// --- VAS-LINJE MED MARKERINGER OG LABELS ---
 function createVASLine(containerId, callback) {
   const container = document.getElementById(containerId);
 
+  // Fyld (grøn linje)
   const fill = document.createElement("div");
   fill.style.position = "absolute";
   fill.style.left = "0";
-  fill.style.top = "0";
-  fill.style.height = "100%";
+  fill.style.top = "18px";
+  fill.style.height = "4px";
   fill.style.width = "0%";
   fill.style.backgroundColor = "#4CAF50";
   container.appendChild(fill);
 
+  // Baselinje
+  const baseline = document.createElement("div");
+  baseline.style.position = "absolute";
+  baseline.style.left = "0";
+  baseline.style.top = "20px";
+  baseline.style.height = "2px";
+  baseline.style.width = "100%";
+  baseline.style.backgroundColor = "black";
+  container.appendChild(baseline);
+
+  // Markeringer ved 0,10,...100
+  for (let i = 0; i <= 100; i += 10) {
+    const tick = document.createElement("div");
+    tick.style.position = "absolute";
+    tick.style.width = "1px";
+    tick.style.height = "10px";
+    tick.style.backgroundColor = "black";
+    tick.style.left = i + "%";
+    tick.style.top = "10px";
+    container.appendChild(tick);
+
+    const label = document.createElement("div");
+    label.style.position = "absolute";
+    label.style.fontSize = "10px";
+    label.style.top = "0px";
+    label.style.left = `calc(${i}% - 8px)`;
+    label.textContent = i;
+    container.appendChild(label);
+  }
+
+  // Klik-event
   container.onclick = (e) => {
     const rect = container.getBoundingClientRect();
     const x = e.clientX - rect.left;
