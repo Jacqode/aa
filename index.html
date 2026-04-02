@@ -53,4 +53,241 @@
 <div id="ff-graph-section" hidden>
   <h3>Energi-effekt af mikropauser over dagen</h3>
 
-  <canvas id="ff-graph" width="600" height="320" style="border:1px solid black;">
+  <canvas id="ff-graph" width="600" height="320" style="border:1px solid black;"></canvas>
+
+  <p style="max-width:600px;">
+    Hver prik viser én mikropause. X-aksen viser tidspunktet på dagen,
+    Y-aksen viser ændringen i energi efter pausen.
+  </p>
+</div>
+
+<!-- STEP 5: Påmindelses-interval -->
+<div id="ff-step-reminder" hidden>
+  <h4>Påmindelses-interval</h4>
+
+  <p>Hvor ofte vil du mindes om en mikropause?</p>
+
+  <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+    <input id="ff-reminder-input" type="number" min="1" max="180"
+           style="width:60px; padding:4px; font-size:14px;">
+    <span>minutter</span>
+  </div>
+
+  <button id="ff-reminder-save" style="margin-top:15px;">Gem</button>
+
+  <button id="ff-reminder-disable" style="margin-top:10px;">
+    Vil ikke mindes om
+  </button>
+
+  <p id="ff-reminder-feedback" style="margin-top:15px;"></p>
+</div>
+
+<p id="ff-resultat"></p>
+
+<script>
+// --- VAS-LINJE MED MARKERINGER OG LABELS ---
+function createVASLine(containerId, callback) {
+  const container = document.getElementById(containerId);
+
+  const fill = document.createElement("div");
+  fill.style.position = "absolute";
+  fill.style.left = "0";
+  fill.style.top = "18px";
+  fill.style.height = "4px";
+  fill.style.width = "0%";
+  fill.style.backgroundColor = "#4CAF50";
+  container.appendChild(fill);
+
+  const baseline = document.createElement("div");
+  baseline.style.position = "absolute";
+  baseline.style.left = "0";
+  baseline.style.top = "20px";
+  baseline.style.height = "2px";
+  baseline.style.width = "100%";
+  baseline.style.backgroundColor = "black";
+  container.appendChild(baseline);
+
+  for (let i = 0; i <= 100; i += 10) {
+    const tick = document.createElement("div");
+    tick.style.position = "absolute";
+    tick.style.width = "1px";
+    tick.style.height = "10px";
+    tick.style.backgroundColor = "black";
+    tick.style.left = i + "%";
+    tick.style.top = "10px";
+    container.appendChild(tick);
+
+    const label = document.createElement("div");
+    label.style.position = "absolute";
+    label.style.fontSize = "10px";
+    label.style.top = "0px";
+    label.style.left = `calc(${i}% - 8px)`;
+    label.textContent = i;
+    container.appendChild(label);
+  }
+
+  container.onclick = (e) => {
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = Math.round((x / rect.width) * 100);
+
+    fill.style.width = percent + "%";
+    callback(percent);
+  };
+}
+
+let energyBefore = null;
+
+// --- Gem data ---
+function saveMeasurement(before, after) {
+  const data = JSON.parse(localStorage.getItem("ff-data") || "[]");
+
+  data.push({
+    before,
+    after,
+    activity: "Skulderrul",
+    time: Date.now()
+  });
+
+  localStorage.setItem("ff-data", JSON.stringify(data));
+}
+
+// --- Tegn graf ---
+function drawGraph() {
+  const data = JSON.parse(localStorage.getItem("ff-data") || "[]");
+  const canvas = document.getElementById("ff-graph");
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (data.length === 0) return;
+
+  const padding = 70;
+  const w = canvas.width - padding * 2;
+  const h = canvas.height - padding * 2;
+
+  const yMin = -20;
+  const yMax = 20;
+
+  const dayStart = 8 * 60;
+  const dayEnd   = 18 * 60;
+
+  const colors = {
+    "Skulderrul": "green",
+    "Ryst kroppen": "orange",
+    "Stå-kat": "blue",
+    "Læg-løft": "purple",
+    "default": "black"
+  };
+
+  // Akser
+  ctx.strokeStyle = "black";
+  ctx.beginPath();
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, padding + h);
+  ctx.lineTo(padding + w, padding + h);
+  ctx.stroke();
+
+  // Y-akse labels
+  ctx.fillText("20", padding - 30, padding + 5);
+  ctx.fillText("0", padding - 25, padding + h / 2);
+  ctx.fillText("-20", padding - 35, padding + h);
+
+  // Y-akse label (lodret)
+  ctx.save();
+  ctx.translate(20, canvas.height / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center";
+  ctx.fillText("Energi-ændring (efter-før)", 0, 0);
+  ctx.restore();
+
+  // X-akse labels
+  for (let hour = 8; hour <= 18; hour += 2) {
+    const x = padding + ((hour * 60 - dayStart) / (dayEnd - dayStart)) * w;
+    ctx.fillText(hour + ":00", x - 15, padding + h + 20);
+  }
+
+  // X-akse label
+  ctx.textAlign = "center";
+  ctx.fillText("Tidspunkt på dagen", padding + w / 2, padding + h + 40);
+
+  // Prikker
+  data.forEach(d => {
+    const delta = d.after - d.before;
+    const date = new Date(d.time);
+    const minutes = date.getHours() * 60 + date.getMinutes();
+
+    const x = padding + ((minutes - dayStart) / (dayEnd - dayStart)) * w;
+    const y = padding + (1 - (delta - yMin) / (yMax - yMin)) * h;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = colors[d.activity] || colors.default;
+    ctx.fill();
+  });
+}
+
+// --- Step 5: Påmindelses-interval ---
+document.getElementById("ff-reminder-save").onclick = () => {
+  const minutes = Number(document.getElementById("ff-reminder-input").value);
+
+  if (!minutes || minutes < 1) {
+    document.getElementById("ff-reminder-feedback").textContent =
+      "Indtast et gyldigt antal minutter.";
+    return;
+  }
+
+  localStorage.setItem("ff-reminder-interval", minutes);
+
+  document.getElementById("ff-reminder-feedback").textContent =
+    "Gemt! Jeg minder dig om det.";
+
+  setTimeout(() => {
+    alert("Tid til en mikropause 🙌");
+  }, minutes * 60 * 1000);
+};
+
+document.getElementById("ff-reminder-disable").onclick = () => {
+  localStorage.removeItem("ff-reminder-interval");
+  document.getElementById("ff-reminder-feedback").textContent =
+    "Helt i orden — du bliver ikke mindet om noget.";
+};
+
+// --- Flow ---
+window.onload = () => {
+  document.getElementById("ff-box").hidden = false;
+
+  // Indlæs tidligere interval
+  const savedInterval = localStorage.getItem("ff-reminder-interval") || 25;
+  document.getElementById("ff-reminder-input").value = savedInterval;
+
+  createVASLine("ff-vas-before", (val) => {
+    energyBefore = val;
+    document.getElementById("ff-step-energy-before").hidden = true;
+    document.getElementById("ff-step-activity").hidden = false;
+  });
+
+  createVASLine("ff-vas-after", (val) => {
+    const energyAfter = val;
+
+    saveMeasurement(energyBefore, energyAfter);
+
+    document.getElementById("ff-resultat").textContent = "Tak! Din måling er gemt.";
+
+    document.getElementById("ff-box").hidden = true;
+
+    document.getElementById("ff-graph-section").hidden = false;
+    drawGraph();
+
+    // Vis Step 5
+    document.getElementById("ff-step-reminder").hidden = false;
+  });
+};
+
+document.getElementById("ff-done-btn").onclick = () => {
+  document.getElementById("ff-step-activity").hidden = true;
+  document.getElementById("ff-step-energy-after").hidden = false;
+};
+</script>
+
+</body>
+</html>
