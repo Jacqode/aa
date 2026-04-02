@@ -68,7 +68,6 @@
 function createVASLine(containerId, callback) {
   const container = document.getElementById(containerId);
 
-  // Fyld (grøn linje)
   const fill = document.createElement("div");
   fill.style.position = "absolute";
   fill.style.left = "0";
@@ -78,7 +77,6 @@ function createVASLine(containerId, callback) {
   fill.style.backgroundColor = "#4CAF50";
   container.appendChild(fill);
 
-  // Baselinje
   const baseline = document.createElement("div");
   baseline.style.position = "absolute";
   baseline.style.left = "0";
@@ -88,7 +86,6 @@ function createVASLine(containerId, callback) {
   baseline.style.backgroundColor = "black";
   container.appendChild(baseline);
 
-  // Markeringer ved 0,10,...100
   for (let i = 0; i <= 100; i += 10) {
     const tick = document.createElement("div");
     tick.style.position = "absolute";
@@ -108,7 +105,6 @@ function createVASLine(containerId, callback) {
     container.appendChild(label);
   }
 
-  // Klik-event
   container.onclick = (e) => {
     const rect = container.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -180,7 +176,7 @@ function drawGraph() {
   ctx.translate(20, canvas.height / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = "center";
-  ctx.fillText("Ændring i energi (efter aktivitet - før aktivitet)", 0, 0);
+  ctx.fillText("Energi-ændring (efter-før)", 0, 0);
   ctx.restore();
 
   // X-akse labels
