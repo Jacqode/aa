@@ -53,12 +53,11 @@
 <div id="ff-graph-section" hidden>
   <h3>Energi-effekt af mikropauser over dagen</h3>
 
-  <canvas id="ff-graph" width="600" height="300" style="border:1px solid black;"></canvas>
+  <canvas id="ff-graph" width="600" height="320" style="border:1px solid black;"></canvas>
 
   <p style="max-width:600px;">
     Hver prik viser én mikropause. X-aksen viser tidspunktet på dagen,
-    Y-aksen viser ændringen i energi efter pausen. Prikker over 0 betyder,
-    at energien steg efter pausen.
+    Y-aksen viser ændringen i energi efter pausen.
   </p>
 </div>
 
@@ -145,7 +144,7 @@ function drawGraph() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (data.length === 0) return;
 
-  const padding = 50;
+  const padding = 70;
   const w = canvas.width - padding * 2;
   const h = canvas.height - padding * 2;
 
@@ -163,6 +162,7 @@ function drawGraph() {
     "default": "black"
   };
 
+  // Akser
   ctx.strokeStyle = "black";
   ctx.beginPath();
   ctx.moveTo(padding, padding);
@@ -170,15 +170,30 @@ function drawGraph() {
   ctx.lineTo(padding + w, padding + h);
   ctx.stroke();
 
-  ctx.fillText("20", padding - 25, padding + 5);
-  ctx.fillText("0", padding - 20, padding + h / 2);
-  ctx.fillText("-20", padding - 30, padding + h);
+  // Y-akse labels
+  ctx.fillText("20", padding - 30, padding + 5);
+  ctx.fillText("0", padding - 25, padding + h / 2);
+  ctx.fillText("-20", padding - 35, padding + h);
 
+  // Y-akse label (lodret)
+  ctx.save();
+  ctx.translate(20, canvas.height / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center";
+  ctx.fillText("Ændring i energi (efter aktivitet - før aktivitet)", 0, 0);
+  ctx.restore();
+
+  // X-akse labels
   for (let hour = 8; hour <= 18; hour += 2) {
     const x = padding + ((hour * 60 - dayStart) / (dayEnd - dayStart)) * w;
     ctx.fillText(hour + ":00", x - 15, padding + h + 20);
   }
 
+  // X-akse label
+  ctx.textAlign = "center";
+  ctx.fillText("Tidspunkt på dagen", padding + w / 2, padding + h + 40);
+
+  // Prikker
   data.forEach(d => {
     const delta = d.after - d.before;
     const date = new Date(d.time);
@@ -210,8 +225,7 @@ window.onload = () => {
     saveMeasurement(energyBefore, energyAfter);
 
     document.getElementById("ff-resultat").textContent =
-      "Selv om effekten af en mikropause kan variere fra gang til gang, " +
-      "viser forskning, at mikropauser generelt øger energien og mindsker træthed.";
+      "Tak! Din måling er gemt.";
 
     document.getElementById("ff-box").hidden = true;
 
