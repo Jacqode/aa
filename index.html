@@ -11,13 +11,14 @@
 <!-- Flow Focus interaktiv boks -->
 <div id="ff-box" hidden>
 
-  <!-- STEP 1: Energi før aktivitet (VAS 0–100) -->
+  <!-- STEP 1: Energi før aktivitet -->
   <div id="ff-step-energy-before">
     <h4>Hvordan er din energi lige nu?</h4>
-    <p>Klik på et tal fra 0–100</p>
+    <p>Klik et sted på linjen</p>
 
     <div id="ff-vas-before"
-         style="display:flex; flex-wrap:nowrap; gap:2px; overflow-x:auto;"></div>
+         style="width:100%; height:30px; position:relative; border-bottom:2px solid black; cursor:pointer;">
+    </div>
   </div>
 
   <!-- STEP 2: Aktivitet -->
@@ -26,13 +27,14 @@
     <button id="ff-done-btn">Jeg har gjort det</button>
   </div>
 
-  <!-- STEP 3: Energi efter aktivitet (VAS 0–100) -->
+  <!-- STEP 3: Energi efter aktivitet -->
   <div id="ff-step-energy-after" hidden>
     <h4>Hvordan er din energi nu?</h4>
-    <p>Klik på et tal fra 0–100</p>
+    <p>Klik et sted på linjen</p>
 
     <div id="ff-vas-after"
-         style="display:flex; flex-wrap:nowrap; gap:2px; overflow-x:auto;"></div>
+         style="width:100%; height:30px; position:relative; border-bottom:2px solid black; cursor:pointer;">
+    </div>
   </div>
 
 </div>
@@ -50,36 +52,35 @@
   </p>
 </div>
 
-<!-- Microfeedback vises her -->
 <p id="ff-resultat"></p>
 
 <script>
-// Helper: VAS-linje med 101 klikbare felter (0–100) i én lang linje
-function createFullVAS(containerId, callback) {
+// --- VAS-LINJE (ren, klikbar, farvefyld) ---
+function createVASLine(containerId, callback) {
   const container = document.getElementById(containerId);
 
-  for (let i = 0; i <= 100; i++) {
-    const box = document.createElement("div");
-    box.style.width = "24px";
-    box.style.height = "24px";
-    box.style.border = "1px solid black";
-    box.style.cursor = "pointer";
-    box.style.display = "flex";
-    box.style.alignItems = "center";
-    box.style.justifyContent = "center";
-    box.style.fontSize = "9px";
+  const fill = document.createElement("div");
+  fill.style.position = "absolute";
+  fill.style.left = "0";
+  fill.style.top = "0";
+  fill.style.height = "100%";
+  fill.style.width = "0%";
+  fill.style.backgroundColor = "#4CAF50";
+  container.appendChild(fill);
 
-    box.textContent = i;
+  container.onclick = (e) => {
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = Math.round((x / rect.width) * 100);
 
-    box.onclick = () => callback(i);
-
-    container.appendChild(box);
-  }
+    fill.style.width = percent + "%";
+    callback(percent);
+  };
 }
 
 let energyBefore = null;
 
-// Gem data i localStorage
+// --- Gem data ---
 function saveMeasurement(before, after) {
   const data = JSON.parse(localStorage.getItem("ff-data") || "[]");
 
@@ -93,14 +94,13 @@ function saveMeasurement(before, after) {
   localStorage.setItem("ff-data", JSON.stringify(data));
 }
 
-// Tegn graf (scatter, energiændring vs tidspunkt)
+// --- Tegn graf ---
 function drawGraph() {
   const data = JSON.parse(localStorage.getItem("ff-data") || "[]");
   const canvas = document.getElementById("ff-graph");
   const ctx = canvas.getContext("2d");
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   if (data.length === 0) return;
 
   const padding = 50;
@@ -152,24 +152,24 @@ function drawGraph() {
   });
 }
 
+// --- Flow ---
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
 
-  createFullVAS("ff-vas-before", (val) => {
+  createVASLine("ff-vas-before", (val) => {
     energyBefore = val;
     document.getElementById("ff-step-energy-before").hidden = true;
     document.getElementById("ff-step-activity").hidden = false;
   });
 
-  createFullVAS("ff-vas-after", (val) => {
+  createVASLine("ff-vas-after", (val) => {
     const energyAfter = val;
 
     saveMeasurement(energyBefore, energyAfter);
 
     document.getElementById("ff-resultat").textContent =
       "Selv om effekten af en mikropause kan variere fra gang til gang, " +
-      "viser forskning, at mikropauser generelt øger energien og mindsker træthed. " +
-      "I grafen kan du se, hvordan mikropauser har virket på dig over tid.";
+      "viser forskning, at mikropauser generelt øger energien og mindsker træthed.";
 
     document.getElementById("ff-box").hidden = true;
 
