@@ -61,21 +61,19 @@
   </p>
 </div>
 
-<!-- STEP 5: Påmindelse -->
+<!-- STEP 5: Påmindelses-interval -->
 <div id="ff-step-reminder" hidden>
-  <h4>Vil du mindes om næste mikropause?</h4>
+  <h4>Påmindelses-interval</h4>
 
-  <div style="display:flex; flex-direction:column; gap:10px; max-width:250px;">
+  <p>Hvor ofte vil du mindes om en mikropause?</p>
 
-    <button class="ff-reminder-btn" data-minutes="20">Mind mig om 20 min</button>
-    <button class="ff-reminder-btn" data-minutes="45">Mind mig om 45 min</button>
-    <button class="ff-reminder-btn" data-minutes="60">Mind mig om 60 min</button>
-
-    <button class="ff-reminder-btn" data-minutes="0" style="margin-top:10px;">
-      Vil ikke mindes om
-    </button>
-
+  <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+    <input id="ff-reminder-input" type="number" min="1" max="180"
+           style="width:60px; padding:4px; font-size:14px;">
+    <span>minutter</span>
   </div>
+
+  <button id="ff-reminder-save" style="margin-top:15px;">Gem</button>
 
   <p id="ff-reminder-feedback" style="margin-top:15px;"></p>
 </div>
@@ -224,29 +222,33 @@ function drawGraph() {
   });
 }
 
-// --- Step 5: Påmindelse ---
-document.querySelectorAll(".ff-reminder-btn").forEach(btn => {
-  btn.onclick = () => {
-    const minutes = Number(btn.dataset.minutes);
+// --- Step 5: Påmindelses-interval ---
+document.getElementById("ff-reminder-save").onclick = () => {
+  const minutes = Number(document.getElementById("ff-reminder-input").value);
 
-    if (minutes === 0) {
-      document.getElementById("ff-reminder-feedback").textContent =
-        "Helt i orden — du bliver ikke mindet om noget.";
-      return;
-    }
-
+  if (!minutes || minutes < 1) {
     document.getElementById("ff-reminder-feedback").textContent =
-      "Perfekt — jeg minder dig om det.";
+      "Indtast et gyldigt antal minutter.";
+    return;
+  }
 
-    setTimeout(() => {
-      alert("Tid til en mikropause 🙌");
-    }, minutes * 60 * 1000);
-  };
-});
+  localStorage.setItem("ff-reminder-interval", minutes);
+
+  document.getElementById("ff-reminder-feedback").textContent =
+    "Gemt! Jeg minder dig om det.";
+
+  setTimeout(() => {
+    alert("Tid til en mikropause 🙌");
+  }, minutes * 60 * 1000);
+};
 
 // --- Flow ---
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
+
+  // Indlæs tidligere interval
+  const savedInterval = localStorage.getItem("ff-reminder-interval") || 25;
+  document.getElementById("ff-reminder-input").value = savedInterval;
 
   createVASLine("ff-vas-before", (val) => {
     energyBefore = val;
