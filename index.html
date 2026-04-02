@@ -61,6 +61,25 @@
   </p>
 </div>
 
+<!-- STEP 5: Påmindelse -->
+<div id="ff-step-reminder" hidden>
+  <h4>Vil du mindes om næste mikropause?</h4>
+
+  <div style="display:flex; flex-direction:column; gap:10px; max-width:250px;">
+
+    <button class="ff-reminder-btn" data-minutes="20">Mind mig om 20 min</button>
+    <button class="ff-reminder-btn" data-minutes="45">Mind mig om 45 min</button>
+    <button class="ff-reminder-btn" data-minutes="60">Mind mig om 60 min</button>
+
+    <button class="ff-reminder-btn" data-minutes="0" style="margin-top:10px;">
+      Vil ikke mindes om
+    </button>
+
+  </div>
+
+  <p id="ff-reminder-feedback" style="margin-top:15px;"></p>
+</div>
+
 <p id="ff-resultat"></p>
 
 <script>
@@ -205,6 +224,26 @@ function drawGraph() {
   });
 }
 
+// --- Step 5: Påmindelse ---
+document.querySelectorAll(".ff-reminder-btn").forEach(btn => {
+  btn.onclick = () => {
+    const minutes = Number(btn.dataset.minutes);
+
+    if (minutes === 0) {
+      document.getElementById("ff-reminder-feedback").textContent =
+        "Helt i orden — du bliver ikke mindet om noget.";
+      return;
+    }
+
+    document.getElementById("ff-reminder-feedback").textContent =
+      "Perfekt — jeg minder dig om det.";
+
+    setTimeout(() => {
+      alert("Tid til en mikropause 🙌");
+    }, minutes * 60 * 1000);
+  };
+});
+
 // --- Flow ---
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
@@ -220,13 +259,15 @@ window.onload = () => {
 
     saveMeasurement(energyBefore, energyAfter);
 
-    document.getElementById("ff-resultat").textContent =
-      "Tak! Din måling er gemt.";
+    document.getElementById("ff-resultat").textContent = "Tak! Din måling er gemt.";
 
     document.getElementById("ff-box").hidden = true;
 
     document.getElementById("ff-graph-section").hidden = false;
     drawGraph();
+
+    // Vis Step 5
+    document.getElementById("ff-step-reminder").hidden = false;
   });
 };
 
