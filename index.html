@@ -2,11 +2,10 @@
 <html lang="da">
 <head>
   <!-- 
-  Flow Focus – Version 0.4
-  - FULL_FLOW flag
+  Flow Focus – Version 0.5
   - Evidensbaserede aktive mikropauser
   - Random aktivitet pr. pause
-  - Reminder-interval gemmes i localStorage
+  - Påmindelser flyttet til Indstillinger (lavere friktion)
   -->
   <meta charset="UTF-8">
   <title>Flow Focus</title>
@@ -21,20 +20,34 @@
   <div id="ff-step-energy-before" hidden>
     <h4>Hvordan er din energi lige nu?</h4>
     <p>Klik et sted på linjen</p>
-    <div id="ff-vas-before" style="width:100%; height:40px; position:relative; cursor:pointer;"></div>
+    <div id="ff-vas-before" style="width:100%; height:40px; cursor:pointer;"></div>
   </div>
 
   <!-- STEP 2 -->
   <div id="ff-step-activity" hidden>
     <p id="ff-activity-text"></p>
     <button id="ff-done-btn">Jeg har gjort det</button>
+
+    <p style="margin-top:12px;">
+      <a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a>
+    </p>
+
+    <!-- SETTINGS (tidl. Step 5) -->
+    <div id="ff-settings" hidden>
+      <h4>Påmindelser</h4>
+      <input id="ff-reminder-input" type="number" min="1" style="width:60px;"> minutter
+      <br><br>
+      <button id="ff-reminder-save">Gem</button>
+      <button id="ff-reminder-disable">Slå fra</button>
+      <p id="ff-reminder-feedback"></p>
+    </div>
   </div>
 
   <!-- STEP 3 -->
   <div id="ff-step-energy-after" hidden>
     <h4>Hvordan er din energi nu?</h4>
     <p>Klik et sted på linjen</p>
-    <div id="ff-vas-after" style="width:100%; height:40px; position:relative; cursor:pointer;"></div>
+    <div id="ff-vas-after" style="width:100%; height:40px; cursor:pointer;"></div>
   </div>
 
 </div>
@@ -44,32 +57,22 @@
   <canvas id="ff-graph" width="600" height="320"></canvas>
 </div>
 
-<!-- STEP 5 -->
-<div id="ff-step-reminder" hidden>
-  <h4>Påmindelses-interval</h4>
-  <input id="ff-reminder-input" type="number" min="1" style="width:60px;"> minutter
-  <br><br>
-  <button id="ff-reminder-save">Gem</button>
-  <button id="ff-reminder-disable">Vil ikke mindes om</button>
-  <p id="ff-reminder-feedback"></p>
-</div>
-
 <script>
 const FULL_FLOW = false;
 
-// --- EVIDENCE-BASED ACTIVITIES (light intensity) ---
+// --- ACTIVITIES (evidence-based, light intensity) ---
 const ffActivities = [
   {
     title: "Gang på stedet",
-    text: "Gå roligt på stedet med lette skridt. Løft fødderne lidt fra gulvet og bevæg armene naturligt. Hold tempoet afslappet."
+    text: "Gå roligt på stedet med lette skridt. Løft fødderne lidt fra gulvet og bevæg armene naturligt."
   },
   {
     title: "Stå på tæer",
-    text: "Stå oprejst og løft langsomt hælene fra gulvet, så du står på tæer. Sænk roligt ned igen i et afslappet tempo."
+    text: "Stå oprejst og løft langsomt hælene fra gulvet, så du står på tæer. Sænk roligt ned igen."
   },
   {
     title: "Rejs og sæt dig fra stol",
-    text: "Rejs dig roligt fra stolen og sæt dig langsomt ned igen. Brug stolen som støtte og hold tempoet afslappet."
+    text: "Rejs dig roligt fra stolen og sæt dig langsomt ned igen. Brug stolen som støtte."
   }
 ];
 
@@ -86,8 +89,6 @@ function createVASLine(id, cb) {
   };
 }
 
-let energyBefore = null;
-
 // --- FLOW ---
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
@@ -98,21 +99,20 @@ window.onload = () => {
   if (FULL_FLOW) {
     document.getElementById("ff-step-energy-before").hidden = false;
   } else {
-    const a = getRandomActivity();
-    document.getElementById("ff-activity-text").textContent =
-      "Aktivitet: " + a.title + " – " + a.text;
-    document.getElementById("ff-step-activity").hidden = false;
+    showActivity();
   }
 };
 
-createVASLine("ff-vas-before", v => {
-  energyBefore = v;
-  document.getElementById("ff-step-energy-before").hidden = true;
-
+function showActivity() {
   const a = getRandomActivity();
   document.getElementById("ff-activity-text").textContent =
     "Aktivitet: " + a.title + " – " + a.text;
   document.getElementById("ff-step-activity").hidden = false;
+}
+
+createVASLine("ff-vas-before", v => {
+  document.getElementById("ff-step-energy-before").hidden = true;
+  showActivity();
 });
 
 document.getElementById("ff-done-btn").onclick = () => {
@@ -120,17 +120,19 @@ document.getElementById("ff-done-btn").onclick = () => {
 
   if (FULL_FLOW) {
     document.getElementById("ff-step-energy-after").hidden = false;
-  } else {
-    document.getElementById("ff-step-reminder").hidden = false;
   }
 };
 
 createVASLine("ff-vas-after", v => {
-  if (FULL_FLOW) {
-    document.getElementById("ff-graph-section").hidden = false;
-  }
-  document.getElementById("ff-step-reminder").hidden = false;
+  document.getElementById("ff-graph-section").hidden = false;
 });
+
+// --- SETTINGS TOGGLE ---
+document.getElementById("ff-settings-toggle").onclick = e => {
+  e.preventDefault();
+  const s = document.getElementById("ff-settings");
+  s.hidden = !s.hidden;
+};
 
 // --- REMINDER ---
 document.getElementById("ff-reminder-save").onclick = () => {
@@ -141,7 +143,7 @@ document.getElementById("ff-reminder-save").onclick = () => {
 
 document.getElementById("ff-reminder-disable").onclick = () => {
   localStorage.removeItem("ff-reminder-interval");
-  document.getElementById("ff-reminder-feedback").textContent = "Ingen påmindelser.";
+  document.getElementById("ff-reminder-feedback").textContent = "Slået fra.";
 };
 </script>
 
