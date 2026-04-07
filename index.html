@@ -2,11 +2,11 @@
 <html lang="da">
 <head>
   <!-- 
-  Flow Focus – Version 0.6
+  Flow Focus – Version 0.7
   - Evidensbaserede aktive mikropauser
   - Random aktivitet pr. pause
   - Påmindelser som Indstillinger
-  - Mikrofeedback efter udført pause (roterende)
+  - Mikrofeedback erstatter aktivitet efter udførsel
   -->
   <meta charset="UTF-8">
   <title>Flow Focus</title>
@@ -47,24 +47,12 @@
     </div>
   </div>
 
-  <!-- STEP 3 -->
-  <div id="ff-step-energy-after" hidden>
-    <h4>Hvordan er din energi nu?</h4>
-    <p>Klik et sted på linjen</p>
-    <div id="ff-vas-after" style="width:100%; height:40px; cursor:pointer;"></div>
-  </div>
-
-</div>
-
-<!-- STEP 4 -->
-<div id="ff-graph-section" hidden>
-  <canvas id="ff-graph" width="600" height="320"></canvas>
 </div>
 
 <script>
 const FULL_FLOW = false;
 
-// --- ACTIVITIES (evidence-based, light intensity) ---
+// --- ACTIVITIES ---
 const ffActivities = [
   {
     title: "Gang på stedet",
@@ -98,15 +86,6 @@ function getRandomMicrofeedback(m) {
   return t.replace("{m}", m);
 }
 
-// --- VAS ---
-function createVASLine(id, cb) {
-  const el = document.getElementById(id);
-  el.onclick = e => {
-    const v = Math.round((e.offsetX / el.offsetWidth) * 100);
-    cb(v);
-  };
-}
-
 // --- FLOW ---
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
@@ -114,11 +93,7 @@ window.onload = () => {
   const saved = localStorage.getItem("ff-reminder-interval") || 25;
   document.getElementById("ff-reminder-input").value = saved;
 
-  if (FULL_FLOW) {
-    document.getElementById("ff-step-energy-before").hidden = false;
-  } else {
-    showActivity();
-  }
+  showActivity();
 };
 
 function showActivity() {
@@ -128,16 +103,16 @@ function showActivity() {
   document.getElementById("ff-step-activity").hidden = false;
 }
 
-createVASLine("ff-vas-before", v => {
-  document.getElementById("ff-step-energy-before").hidden = true;
-  showActivity();
-});
-
-// --- DONE + MICROFEEDBACK ---
+// --- DONE → MICROFEEDBACK ---
 document.getElementById("ff-done-btn").onclick = () => {
   const fb = document.getElementById("ff-microfeedback");
   const interval = localStorage.getItem("ff-reminder-interval");
 
+  // Fjern aktivitet og knap
+  document.getElementById("ff-activity-text").hidden = true;
+  document.getElementById("ff-done-btn").hidden = true;
+
+  // Vis mikrofeedback (bliver stående)
   if (interval) {
     fb.textContent = getRandomMicrofeedback(interval);
   } else {
@@ -145,19 +120,7 @@ document.getElementById("ff-done-btn").onclick = () => {
   }
 
   fb.hidden = false;
-
-  setTimeout(() => {
-    fb.hidden = true;
-  }, 4000);
-
-  if (FULL_FLOW) {
-    document.getElementById("ff-step-energy-after").hidden = false;
-  }
 };
-
-createVASLine("ff-vas-after", v => {
-  document.getElementById("ff-graph-section").hidden = false;
-});
 
 // --- SETTINGS TOGGLE ---
 document.getElementById("ff-settings-toggle").onclick = e => {
