@@ -3,8 +3,9 @@
 <head>
   <!-- 
   Flow Focus – Version 0.4
-  - FULL_FLOW flag tilføjet
-  - Step 2 + Step 5 som MVP
+  - FULL_FLOW flag
+  - Evidensbaserede aktive mikropauser
+  - Random aktivitet pr. pause
   - Reminder-interval gemmes i localStorage
   -->
   <meta charset="UTF-8">
@@ -25,7 +26,7 @@
 
   <!-- STEP 2 -->
   <div id="ff-step-activity" hidden>
-    <p>Aktivitet: Skulderrul i 20 sek.</p>
+    <p id="ff-activity-text"></p>
     <button id="ff-done-btn">Jeg har gjort det</button>
   </div>
 
@@ -56,6 +57,26 @@
 <script>
 const FULL_FLOW = false;
 
+// --- EVIDENCE-BASED ACTIVITIES (light intensity) ---
+const ffActivities = [
+  {
+    title: "Gang på stedet",
+    text: "Gå roligt på stedet med lette skridt. Løft fødderne lidt fra gulvet og bevæg armene naturligt. Hold tempoet afslappet."
+  },
+  {
+    title: "Stå på tæer",
+    text: "Stå oprejst og løft langsomt hælene fra gulvet, så du står på tæer. Sænk roligt ned igen i et afslappet tempo."
+  },
+  {
+    title: "Rejs og sæt dig fra stol",
+    text: "Rejs dig roligt fra stolen og sæt dig langsomt ned igen. Brug stolen som støtte og hold tempoet afslappet."
+  }
+];
+
+function getRandomActivity() {
+  return ffActivities[Math.floor(Math.random() * ffActivities.length)];
+}
+
 // --- VAS ---
 function createVASLine(id, cb) {
   const el = document.getElementById(id);
@@ -77,6 +98,9 @@ window.onload = () => {
   if (FULL_FLOW) {
     document.getElementById("ff-step-energy-before").hidden = false;
   } else {
+    const a = getRandomActivity();
+    document.getElementById("ff-activity-text").textContent =
+      "Aktivitet: " + a.title + " – " + a.text;
     document.getElementById("ff-step-activity").hidden = false;
   }
 };
@@ -84,6 +108,10 @@ window.onload = () => {
 createVASLine("ff-vas-before", v => {
   energyBefore = v;
   document.getElementById("ff-step-energy-before").hidden = true;
+
+  const a = getRandomActivity();
+  document.getElementById("ff-activity-text").textContent =
+    "Aktivitet: " + a.title + " – " + a.text;
   document.getElementById("ff-step-activity").hidden = false;
 });
 
