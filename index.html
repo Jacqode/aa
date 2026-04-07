@@ -2,10 +2,11 @@
 <html lang="da">
 <head>
   <!-- 
-  Flow Focus – Version 0.5
+  Flow Focus – Version 0.6
   - Evidensbaserede aktive mikropauser
   - Random aktivitet pr. pause
-  - Påmindelser flyttet til Indstillinger (lavere friktion)
+  - Påmindelser som Indstillinger
+  - Mikrofeedback efter udført pause (roterende)
   -->
   <meta charset="UTF-8">
   <title>Flow Focus</title>
@@ -28,11 +29,14 @@
     <p id="ff-activity-text"></p>
     <button id="ff-done-btn">Jeg har gjort det</button>
 
+    <!-- MICROFEEDBACK -->
+    <p id="ff-microfeedback" style="margin-top:10px; font-weight:500;" hidden></p>
+
     <p style="margin-top:12px;">
       <a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a>
     </p>
 
-    <!-- SETTINGS (tidl. Step 5) -->
+    <!-- SETTINGS -->
     <div id="ff-settings" hidden>
       <h4>Påmindelser</h4>
       <input id="ff-reminder-input" type="number" min="1" style="width:60px;"> minutter
@@ -80,6 +84,20 @@ function getRandomActivity() {
   return ffActivities[Math.floor(Math.random() * ffActivities.length)];
 }
 
+// --- MICROFEEDBACK TEXTS ---
+const ffMicrofeedbackTexts = [
+  "Godt gået – næste aktive mikropause er indstillet til {m} min.",
+  "Pause gennemført – næste aktive mikropause er om {m} min.",
+  "Tak – næste aktive mikropause er indstillet til {m} min."
+];
+
+function getRandomMicrofeedback(m) {
+  const t = ffMicrofeedbackTexts[
+    Math.floor(Math.random() * ffMicrofeedbackTexts.length)
+  ];
+  return t.replace("{m}", m);
+}
+
 // --- VAS ---
 function createVASLine(id, cb) {
   const el = document.getElementById(id);
@@ -115,8 +133,22 @@ createVASLine("ff-vas-before", v => {
   showActivity();
 });
 
+// --- DONE + MICROFEEDBACK ---
 document.getElementById("ff-done-btn").onclick = () => {
-  document.getElementById("ff-step-activity").hidden = true;
+  const fb = document.getElementById("ff-microfeedback");
+  const interval = localStorage.getItem("ff-reminder-interval");
+
+  if (interval) {
+    fb.textContent = getRandomMicrofeedback(interval);
+  } else {
+    fb.textContent = "Godt gået – husk at tage små pauser i løbet af dagen.";
+  }
+
+  fb.hidden = false;
+
+  setTimeout(() => {
+    fb.hidden = true;
+  }, 4000);
 
   if (FULL_FLOW) {
     document.getElementById("ff-step-energy-after").hidden = false;
