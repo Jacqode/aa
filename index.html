@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <!-- 
-  Flow Focus – Version 0.9 - virker
+  Flow Focus – Version 0.9
   - Evidensbaserede aktive mikropauser
   - Random aktivitet pr. pause
   - Påmindelser som Indstillinger
@@ -15,6 +15,10 @@
 <body>
 
 <h1>Hej 👋</h1>
+
+<p style="margin-top:4px; color:#555; font-size:14px;">
+  Forskning har vist, at gentagne aktive mikropauser styrker energien.
+</p>
 
 <div id="ff-box" hidden>
 
@@ -60,7 +64,7 @@ function getRandomActivity() {
 
 // --- MICROFEEDBACK (ENESTE) ---
 const ffMicrofeedbackTemplate =
-  "Godt arbejde — gentagne aktive mikropauser styrker din energi. Du har gennemført {n} aktive mikropauser.";
+  "Du har gennemført {n} aktive mikropauser.";
 
 // --- FLOW ---
 window.onload = () => {
@@ -166,5 +170,3 @@ document.getElementById("ff-reminder-disable").onclick = () => {
 
 </body>
 </html>
-
-
