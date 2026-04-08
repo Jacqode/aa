@@ -2,12 +2,12 @@
 <html lang="da">
 <head>
   <!-- 
-  Flow Focus – Version 0.8
+  Flow Focus – Version 0.9
   - Evidensbaserede aktive mikropauser
   - Random aktivitet pr. pause
   - Påmindelser som Indstillinger
   - Mikrofeedback erstatter aktivitet efter udførsel
-  - Reminder-timer fungerer
+  - Reminder-timer med nedtælling (A-1-Ja)
   -->
   <meta charset="UTF-8">
   <title>Flow Focus</title>
@@ -18,13 +18,6 @@
 
 <div id="ff-box" hidden>
 
-  <!-- STEP 1 -->
-  <div id="ff-step-energy-before" hidden>
-    <h4>Hvordan er din energi lige nu?</h4>
-    <p>Klik et sted på linjen</p>
-    <div id="ff-vas-before" style="width:100%; height:40px; cursor:pointer;"></div>
-  </div>
-
   <!-- STEP 2 -->
   <div id="ff-step-activity" hidden>
     <p id="ff-activity-text"></p>
@@ -32,6 +25,9 @@
 
     <!-- MICROFEEDBACK -->
     <p id="ff-microfeedback" style="margin-top:10px; font-weight:500;" hidden></p>
+
+    <!-- COUNTDOWN -->
+    <p id="ff-countdown" style="margin-top:6px; font-size:14px; color:#555;" hidden></p>
 
     <p style="margin-top:12px;">
       <a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a>
@@ -52,6 +48,7 @@
 
 <script>
 const FULL_FLOW = false;
+let countdownInterval = null;
 
 // --- ACTIVITIES ---
 const ffActivities = [
@@ -95,6 +92,12 @@ window.onload = () => {
   document.getElementById("ff-reminder-input").value = saved;
 
   showActivity();
+
+  // Hvis der allerede er en aktiv timer → fortsæt nedtælling
+  const nextTime = localStorage.getItem("ff-next-pause-time");
+  if (nextTime) {
+    continueCountdown();
+  }
 };
 
 function showActivity() {
@@ -107,20 +110,75 @@ function showActivity() {
 // --- RESET UI AFTER REMINDER ---
 function resetUI() {
   document.getElementById("ff-microfeedback").hidden = true;
+  document.getElementById("ff-countdown").hidden = true;
+
   document.getElementById("ff-activity-text").hidden = false;
   document.getElementById("ff-done-btn").hidden = false;
+
+  localStorage.removeItem("ff-next-pause-time");
 
   showActivity();
 }
 
-// --- REMINDER TIMER ---
+// --- START REMINDER TIMER ---
 function startReminderTimer() {
-  const interval = localStorage.getItem("ff-reminder-interval");
+  const interval = Number(localStorage.getItem("ff-reminder-interval"));
   if (!interval) return;
 
-  setTimeout(() => {
-    resetUI();
-  }, interval * 60 * 1000);
+  const nextTime = Date.now() + interval * 60 * 1000;
+  localStorage.setItem("ff-next-pause-time", nextTime);
+
+  startCountdown();
+}
+
+// --- COUNTDOWN LOGIC ---
+function startCountdown() {
+  const countdownEl = document.getElementById("ff-countdown");
+  countdownEl.hidden = false;
+
+  if (countdownInterval) clearInterval(countdownInterval);
+
+  countdownInterval = setInterval(() => {
+    const nextTime = Number(localStorage.getItem("ff-next-pause-time"));
+    if (!nextTime) {
+      countdownEl.hidden = true;
+      clearInterval(countdownInterval);
+      return;
+    }
+
+    const diff = nextTime - Date.now();
+
+    if (diff <= 0) {
+      clearInterval(countdownInterval);
+      resetUI();
+      return;
+    }
+
+    const minutes = Math.floor(diff / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+
+    countdownEl.textContent =
+      "Næste aktive mikropause om: " +
+      String(minutes).padStart(2, "0") + ":" +
+      String(seconds).padStart(2, "0");
+
+  }, 1000);
+}
+
+// --- CONTINUE COUNTDOWN AFTER REFRESH ---
+function continueCountdown() {
+  const nextTime = Number(localStorage.getItem("ff-next-pause-time"));
+  if (!nextTime) return;
+
+  // UI skal være i mikrofeedback-tilstand
+  document.getElementById("ff-activity-text").hidden = true;
+  document.getElementById("ff-done-btn").hidden = true;
+
+  document.getElementById("ff-microfeedback").hidden = false;
+  document.getElementById("ff-microfeedback").textContent =
+    "Næste aktive mikropause er planlagt.";
+
+  startCountdown();
 }
 
 // --- DONE → MICROFEEDBACK + START REMINDER ---
@@ -132,16 +190,13 @@ document.getElementById("ff-done-btn").onclick = () => {
   document.getElementById("ff-activity-text").hidden = true;
   document.getElementById("ff-done-btn").hidden = true;
 
-  // Vis mikrofeedback (bliver stående)
-  if (interval) {
-    fb.textContent = getRandomMicrofeedback(interval);
-  } else {
-    fb.textContent = "Godt gået – husk at tage små pauser i løbet af dagen.";
-  }
-
+  // Vis mikrofeedback
+  fb.textContent = interval
+    ? getRandomMicrofeedback(interval)
+    : "Godt gået – husk at tage små pauser i løbet af dagen.";
   fb.hidden = false;
 
-  // Start reminder
+  // Start reminder + nedtælling
   startReminderTimer();
 };
 
@@ -162,7 +217,10 @@ document.getElementById("ff-reminder-save").onclick = () => {
 // --- REMINDER DISABLE ---
 document.getElementById("ff-reminder-disable").onclick = () => {
   localStorage.removeItem("ff-reminder-interval");
+  localStorage.removeItem("ff-next-pause-time");
   document.getElementById("ff-reminder-feedback").textContent = "Slået fra.";
+  document.getElementById("ff-countdown").hidden = true;
+  if (countdownInterval) clearInterval(countdownInterval);
 };
 </script>
 
