@@ -61,10 +61,10 @@ function sendReminderNotification() {
   navigator.serviceWorker.getRegistration().then(reg => {
     if (reg) {
       reg.showNotification("Flow Focus", {
-        body: "Tid til en aktiv mikropause",
+        body: "Tid til en aktiv mikropause – tryk for at åbne Flow Focus",
         icon: "icon-192.png",
         badge: "icon-192.png",
-        data: { url: "https://jacqode.github.io/aa" } // ← link til Flow Focus
+        data: { url: "https://jacqode.github.io/aa" }
       });
     }
   });
@@ -98,10 +98,18 @@ window.onload = () => {
   }
 };
 
+// ✅ AKTIVITET MED TIDSSTEMPEL
 function showActivity() {
   const a = getRandomActivity();
+
+  const now = new Date();
+  const time =
+    String(now.getHours()).padStart(2, "0") + "." +
+    String(now.getMinutes()).padStart(2, "0");
+
   document.getElementById("ff-activity-text").textContent =
-    "Aktivitet: " + a.title + " – " + a.text;
+    `Aktivitet givet kl. ${time}: ${a.title} – ${a.text}`;
+
   document.getElementById("ff-step-activity").hidden = false;
 }
 
@@ -135,17 +143,15 @@ function startCountdown() {
 
     if (diff <= 0) {
       clearInterval(countdownInterval);
-
-      // 🔔 PWA: Send notifikation når tiden er gået
       sendReminderNotification();
-
       resetUI();
       return;
     }
 
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
-    el.textContent = `Næste aktive mikropause om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    el.textContent =
+      `Næste aktive mikropause om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
   }, 1000);
 }
 
