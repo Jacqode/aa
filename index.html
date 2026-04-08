@@ -2,11 +2,12 @@
 <html lang="da">
 <head>
   <!-- 
-  Flow Focus – Version 0.7
+  Flow Focus – Version 0.8
   - Evidensbaserede aktive mikropauser
   - Random aktivitet pr. pause
   - Påmindelser som Indstillinger
   - Mikrofeedback erstatter aktivitet efter udførsel
+  - Reminder-timer fungerer
   -->
   <meta charset="UTF-8">
   <title>Flow Focus</title>
@@ -103,7 +104,26 @@ function showActivity() {
   document.getElementById("ff-step-activity").hidden = false;
 }
 
-// --- DONE → MICROFEEDBACK ---
+// --- RESET UI AFTER REMINDER ---
+function resetUI() {
+  document.getElementById("ff-microfeedback").hidden = true;
+  document.getElementById("ff-activity-text").hidden = false;
+  document.getElementById("ff-done-btn").hidden = false;
+
+  showActivity();
+}
+
+// --- REMINDER TIMER ---
+function startReminderTimer() {
+  const interval = localStorage.getItem("ff-reminder-interval");
+  if (!interval) return;
+
+  setTimeout(() => {
+    resetUI();
+  }, interval * 60 * 1000);
+}
+
+// --- DONE → MICROFEEDBACK + START REMINDER ---
 document.getElementById("ff-done-btn").onclick = () => {
   const fb = document.getElementById("ff-microfeedback");
   const interval = localStorage.getItem("ff-reminder-interval");
@@ -120,6 +140,9 @@ document.getElementById("ff-done-btn").onclick = () => {
   }
 
   fb.hidden = false;
+
+  // Start reminder
+  startReminderTimer();
 };
 
 // --- SETTINGS TOGGLE ---
@@ -129,13 +152,14 @@ document.getElementById("ff-settings-toggle").onclick = e => {
   s.hidden = !s.hidden;
 };
 
-// --- REMINDER ---
+// --- REMINDER SAVE ---
 document.getElementById("ff-reminder-save").onclick = () => {
   const m = Number(document.getElementById("ff-reminder-input").value);
   localStorage.setItem("ff-reminder-interval", m);
   document.getElementById("ff-reminder-feedback").textContent = "Gemt.";
 };
 
+// --- REMINDER DISABLE ---
 document.getElementById("ff-reminder-disable").onclick = () => {
   localStorage.removeItem("ff-reminder-interval");
   document.getElementById("ff-reminder-feedback").textContent = "Slået fra.";
