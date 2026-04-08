@@ -1,16 +1,11 @@
 <!DOCTYPE html>
 <html lang="da">
 <head>
-  <!-- 
-  Flow Focus – Version 0.9
-  - Evidensbaserede aktive mikropauser
-  - Random aktivitet pr. pause
-  - Påmindelser som Indstillinger
-  - Én mikrofeedback med tæller
-  - Reminder-timer med nedtælling (A-1-Ja)
-  -->
   <meta charset="UTF-8">
   <title>Flow Focus</title>
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="/manifest.json">
 </head>
 <body>
 
@@ -26,10 +21,7 @@
     <p id="ff-activity-text"></p>
     <button id="ff-done-btn">Jeg har gjort det</button>
 
-    <!-- MICROFEEDBACK -->
     <p id="ff-microfeedback" style="margin-top:10px; font-weight:500;" hidden></p>
-
-    <!-- COUNTDOWN -->
     <p id="ff-countdown" style="margin-top:6px; font-size:14px; color:#555;" hidden></p>
 
     <p style="margin-top:12px;">
@@ -51,6 +43,32 @@
 <script>
 let countdownInterval = null;
 
+// --- PWA: Registrér service worker ---
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js");
+}
+
+// --- PWA: Bed om notifikationstilladelse ---
+async function requestNotificationPermission() {
+  const permission = await Notification.requestPermission();
+  return permission === "granted";
+}
+
+// --- PWA: Send notifikation ---
+function sendReminderNotification() {
+  if (Notification.permission !== "granted") return;
+
+  navigator.serviceWorker.getRegistration().then(reg => {
+    if (reg) {
+      reg.showNotification("Flow Focus", {
+        body: "Tid til en aktiv mikropause",
+        icon: "icon-192.png",
+        badge: "icon-192.png"
+      });
+    }
+  });
+}
+
 // --- ACTIVITIES ---
 const ffActivities = [
   { title: "Gang på stedet", text: "Gå roligt på stedet med lette skridt." },
@@ -62,7 +80,7 @@ function getRandomActivity() {
   return ffActivities[Math.floor(Math.random() * ffActivities.length)];
 }
 
-// --- MICROFEEDBACK (ENESTE) ---
+// --- MICROFEEDBACK ---
 const ffMicrofeedbackTemplate =
   "Du har gennemført {n} aktive mikropauser.";
 
@@ -113,11 +131,17 @@ function startCountdown() {
   countdownInterval = setInterval(() => {
     const nextTime = Number(localStorage.getItem("ff-next-pause-time"));
     const diff = nextTime - Date.now();
+
     if (diff <= 0) {
       clearInterval(countdownInterval);
+
+      // 🔔 PWA: Send notifikation når tiden er gået
+      sendReminderNotification();
+
       resetUI();
       return;
     }
+
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
     el.textContent = `Næste aktive mikropause om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
@@ -153,10 +177,13 @@ document.getElementById("ff-settings-toggle").onclick = e => {
     !document.getElementById("ff-settings").hidden;
 };
 
-document.getElementById("ff-reminder-save").onclick = () => {
-  localStorage.setItem("ff-reminder-interval",
-    Number(document.getElementById("ff-reminder-input").value));
-  document.getElementById("ff-reminder-feedback").textContent = "Gemt.";
+document.getElementById("ff-reminder-save").onclick = async () => {
+  const m = Number(document.getElementById("ff-reminder-input").value);
+  localStorage.setItem("ff-reminder-interval", m);
+
+  const ok = await requestNotificationPermission();
+  document.getElementById("ff-reminder-feedback").textContent =
+    ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
 };
 
 document.getElementById("ff-reminder-disable").onclick = () => {
