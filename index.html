@@ -54,7 +54,7 @@ async function requestNotificationPermission() {
   return permission === "granted";
 }
 
-// --- PWA: Send notifikation ---
+// --- PWA: Send notifikation med link ---
 function sendReminderNotification() {
   if (Notification.permission !== "granted") return;
 
@@ -63,7 +63,8 @@ function sendReminderNotification() {
       reg.showNotification("Flow Focus", {
         body: "Tid til en aktiv mikropause",
         icon: "icon-192.png",
-        badge: "icon-192.png"
+        badge: "icon-192.png",
+        data: { url: "https://jacqode.github.io/aa" } // ← link til Flow Focus
       });
     }
   });
