@@ -14,7 +14,8 @@
 <h1>Hej 👋</h1>
 
 <p style="margin-top:4px; color:#555; font-size:14px;">
-  Forskning viser, at korte, aktive pauser på 2–3 minutter for hver 30 minutters stillesiddende arbejde kan støtte energi og mindske træthed.</p>
+  Forskning har vist, at gentagne aktive mikropauser styrker energien.
+</p>
 
 <div id="ff-box" hidden>
 
@@ -152,8 +153,8 @@ function startCountdown() {
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
     el.textContent =
-      `Næste pause om ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")} — du får en notifikation.`
-
+      `Næste aktive mikropause om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  }, 1000);
 }
 
 function continueCountdown() {
