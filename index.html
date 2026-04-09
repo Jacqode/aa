@@ -152,8 +152,8 @@ function startCountdown() {
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
     el.textContent =
-      `Du får en notifikation, når det er tid til næste pause om ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-  }, 1000);
+      `Næste pause om ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")} — du får en notifikation.`
+
 }
 
 function continueCountdown() {
