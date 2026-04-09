@@ -152,7 +152,7 @@ function startCountdown() {
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
     el.textContent =
-      `Næste aktive mikropause om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+      `Du får en notifikation, når det er tid til næste pause om ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
   }, 1000);
 }
 
