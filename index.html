@@ -100,13 +100,12 @@ window.onload = () => {
 function showActivity() {
   const a = getRandomActivity();
 
-  const now = new Date();
-  const time =
-    String(now.getHours()).padStart(2, "0") + "." +
-    String(now.getMinutes()).padStart(2, "0");
+  // Gem timestamp til databasebrug (vises ikke i UI)
+  localStorage.setItem("ff-last-activity-timestamp", Date.now());
 
+  // Vis kun selve aktiviteten i UI
   document.getElementById("ff-activity-text").textContent =
-    `Aktivitet givet kl. ${time}: ${a.title} – ${a.text}`;
+    `${a.title} – ${a.text}`;
 
   document.getElementById("ff-step-activity").hidden = false;
 }
