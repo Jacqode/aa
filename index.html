@@ -68,11 +68,11 @@ function sendReminderNotification() {
   });
 }
 
-// --- ACTIVITIES ---
+// --- ACTIVITIES (fast varighed: 2 min) ---
 const ffActivities = [
-  { title: "Gang på stedet", text: "Gå roligt på stedet med lette skridt." },
-  { title: "Stå på tæer", text: "Løft langsomt hælene og sænk igen." },
-  { title: "Rejs og sæt dig", text: "Rejs dig roligt og sæt dig igen." }
+  { title: "Gang på stedet", text: "Gå roligt på stedet med lette skridt.", duration: 2 },
+  { title: "Stå på tæer", text: "Løft langsomt hælene og sænk igen.", duration: 2 },
+  { title: "Rejs og sæt dig", text: "Rejs dig roligt og sæt dig igen.", duration: 2 }
 ];
 
 function getRandomActivity() {
@@ -96,16 +96,17 @@ window.onload = () => {
   }
 };
 
-// ✅ AKTIVITET MED TIDSSTEMPEL
+// ✅ AKTIVITET UDEN TIDSSTEMPEL, MED VARIGHED
 function showActivity() {
   const a = getRandomActivity();
 
-  // Gem timestamp til databasebrug (vises ikke i UI)
+  // Gem timestamp + varighed til data (vises ikke i UI)
   localStorage.setItem("ff-last-activity-timestamp", Date.now());
+  localStorage.setItem("ff-last-activity-duration", a.duration);
 
-  // Vis kun selve aktiviteten i UI
+  // Vis kun aktivitet + varighed i UI
   document.getElementById("ff-activity-text").textContent =
-    `${a.title} – ${a.text}`;
+    `${a.title} – ${a.text} (${a.duration} min)`;
 
   document.getElementById("ff-step-activity").hidden = false;
 }
@@ -201,3 +202,4 @@ document.getElementById("ff-reminder-disable").onclick = () => {
 
 </body>
 </html>
+
