@@ -2,14 +2,16 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
+  
+  <!-- Flow Focus v0.9.1 — aktiv mikropause, reminder-baseret, lav friktion -->
   <title>Flow Focus</title>
+  
+  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
 <h1>Hej 👋</h1>
-
-<button id="ff-get-activity-btn" style="margin-top:12px;">Få en let aktivitet</button>
 
 <div id="ff-box" hidden>
 
@@ -39,25 +41,25 @@
 <script>
 let countdownInterval = null;
 
-// --- SERVICE WORKER ---
+// --- PWA: Registrér service worker ---
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
 
-// --- NOTIFIKATIONSTILLADELSE ---
+// --- PWA: Bed om notifikationstilladelse ---
 async function requestNotificationPermission() {
   const permission = await Notification.requestPermission();
   return permission === "granted";
 }
 
-// --- SEND NOTIFIKATION ---
+// --- PWA: Send notifikation med link ---
 function sendReminderNotification() {
   if (Notification.permission !== "granted") return;
 
   navigator.serviceWorker.getRegistration().then(reg => {
     if (reg) {
       reg.showNotification("Flow Focus", {
-        body: "Tid til en aktiv mikropause – tryk når du er klar",
+        body: "Tid til en aktiv mikropause – tryk for at åbne Flow Focus",
         icon: "icon-192.png",
         badge: "icon-192.png",
         data: { url: "https://jacqode.github.io/aa" }
@@ -66,11 +68,11 @@ function sendReminderNotification() {
   });
 }
 
-// --- ACTIVITIES (fast varighed: 2 min) ---
+// --- ACTIVITIES ---
 const ffActivities = [
-  { title: "Gang på stedet", text: "Gå roligt på stedet med lette skridt.", duration: 2 },
-  { title: "Stå på tæer", text: "Løft langsomt hælene og sænk igen.", duration: 2 },
-  { title: "Rejs og sæt dig", text: "Rejs dig roligt og sæt dig igen.", duration: 2 }
+  { title: "Gang på stedet", text: "Gå roligt på stedet med lette skridt." },
+  { title: "Stå på tæer", text: "Løft langsomt hælene og sænk igen." },
+  { title: "Rejs og sæt dig", text: "Rejs dig roligt og sæt dig igen." }
 ];
 
 function getRandomActivity() {
@@ -81,44 +83,44 @@ function getRandomActivity() {
 const ffMicrofeedbackTemplate =
   "Du har nu gennemført {n} aktive mikropauser.";
 
-// --- LOAD ---
+// --- FLOW ---
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
   document.getElementById("ff-reminder-input").value =
     localStorage.getItem("ff-reminder-interval") || 25;
 
-  // Ingen auto-aktivitet ved load
+  showActivity();
 
   if (localStorage.getItem("ff-next-pause-time")) {
     continueCountdown();
   }
 };
 
-// --- VIS AKTIVITET (uden tidsstempel) ---
+// ✅ AKTIVITET MED TIDSSTEMPEL
 function showActivity() {
   const a = getRandomActivity();
 
-  // Gem timestamp + varighed til data
+  // Gem timestamp til databasebrug (vises ikke i UI)
   localStorage.setItem("ff-last-activity-timestamp", Date.now());
-  localStorage.setItem("ff-last-activity-duration", a.duration);
 
-  // Vis aktivitet + varighed i UI
+  // Vis kun selve aktiviteten i UI
   document.getElementById("ff-activity-text").textContent =
-    `${a.title} – ${a.text} (${a.duration} min)`;
+    `${a.title} – ${a.text}`;
 
   document.getElementById("ff-step-activity").hidden = false;
 }
 
-// --- RESET EFTER NOTIFIKATION ---
+// --- RESET ---
 function resetUI() {
   document.getElementById("ff-microfeedback").hidden = true;
   document.getElementById("ff-countdown").hidden = true;
-  document.getElementById("ff-activity-text").hidden = true;
-  document.getElementById("ff-done-btn").hidden = true;
+  document.getElementById("ff-activity-text").hidden = false;
+  document.getElementById("ff-done-btn").hidden = false;
   localStorage.removeItem("ff-next-pause-time");
+  showActivity();
 }
 
-// --- REMINDER TIMER ---
+// --- REMINDER ---
 function startReminderTimer() {
   const interval = Number(localStorage.getItem("ff-reminder-interval"));
   if (!interval) return;
@@ -146,7 +148,7 @@ function startCountdown() {
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
     el.textContent =
-      `Næste mikropause om ${String(m).padStart(2,"0")} min ${String(s).padStart(2,"0")} sek. Du får en notifikation, når det er tid.`;
+       `Næste aktive mikropause om ${String(m).padStart(2,"0")} min ${String(s).padStart(2,"0")} sek. Du får en notifikation, når det er tid.`;
   }, 1000);
 }
 
@@ -170,11 +172,6 @@ document.getElementById("ff-done-btn").onclick = () => {
   fb.hidden = false;
 
   startReminderTimer();
-};
-
-// --- GET ACTIVITY BUTTON ---
-document.getElementById("ff-get-activity-btn").onclick = () => {
-  showActivity();
 };
 
 // --- SETTINGS ---
