@@ -79,9 +79,10 @@ function getRandomActivity() {
   return ffActivities[Math.floor(Math.random() * ffActivities.length)];
 }
 
-// --- MICROFEEDBACK ---
-const ffMicrofeedbackTemplate =
-  "Du har nu gennemført {n} aktive mikropauser.";
+// --- MICROFEEDBACK (kort og smart) ---
+function formatMicrofeedback(count) {
+  return count === 1 ? `${count} mikropause gennemført.` : `${count} mikropauser gennemført.`;
+}
 
 // --- FLOW ---
 window.onload = () => {
@@ -169,7 +170,7 @@ document.getElementById("ff-done-btn").onclick = () => {
   document.getElementById("ff-done-btn").hidden = true;
 
   const fb = document.getElementById("ff-microfeedback");
-  fb.textContent = ffMicrofeedbackTemplate.replace("{n}", count);
+  fb.textContent = formatMicrofeedback(count);
   fb.hidden = false;
 
   startReminderTimer();
@@ -202,4 +203,3 @@ document.getElementById("ff-reminder-disable").onclick = () => {
 
 </body>
 </html>
-
