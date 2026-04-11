@@ -98,18 +98,25 @@ function getRandomActivity() {
 }
 
 // --- MICROFEEDBACK (NY VERSION) ---
-function formatMicrofeedback(todayCount, totalCount, startDate) {
-  return `Aktive mikropauser i dag: ${todayCount}\nAktive mikropauser siden ${startDate}: ${totalCount}`;
+function formatMicrofeedback(todayCount, totalCount, startDate, nextTime) {
+  const next = new Date(Number(nextTime));
+  const nextClock = next.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    "Aktive mikropauser\n" +
+    `I alt i dag: ${todayCount}\n` +
+    `I alt siden ${startDate}: ${totalCount}\n` +
+    `Næste aktive pause er kl. ${nextClock}\n` +
+    "God arbejdslyst indtil da!"
+  );
 }
 
 // --- VIS AKTIVITET ---
 function showActivity() {
   const a = getRandomActivity();
 
-  // Titel
   document.getElementById("ff-activity-title").textContent = a.title;
 
-  // Illustration
   const imgEl = document.getElementById("ff-activity-image");
   if (a.image) {
     imgEl.src = a.image;
@@ -118,10 +125,8 @@ function showActivity() {
     imgEl.hidden = true;
   }
 
-  // Kort tekstbeskrivelse
   document.getElementById("ff-activity-description").textContent = a.text;
 
-  // Start-knap
   const btn = document.getElementById("ff-start-activity");
   btn.hidden = false;
   btn.onclick = () => {
@@ -129,7 +134,6 @@ function showActivity() {
     startActivityTimer(a.duration);
   };
 
-  // Timer skjules ved ny aktivitet
   document.getElementById("ff-activity-countdown").hidden = true;
 
   document.getElementById("ff-step-activity").hidden = false;
@@ -213,11 +217,9 @@ function startCountdown() {
 // --- DONE (NY VERSION) ---
 document.getElementById("ff-done-btn").onclick = () => {
 
-  // Total count
   const total = Number(localStorage.getItem("ff-total-count") || 0) + 1;
   localStorage.setItem("ff-total-count", total);
 
-  // Daily count
   const today = new Date().toISOString().slice(0, 10);
   const lastDay = localStorage.getItem("ff-last-day");
 
@@ -229,7 +231,6 @@ document.getElementById("ff-done-btn").onclick = () => {
   localStorage.setItem("ff-last-day", today);
   localStorage.setItem("ff-today-count", todayCount);
 
-  // Startdato (første pause)
   if (!localStorage.getItem("ff-start-date")) {
     const d = new Date();
     const formatted = d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" });
@@ -238,7 +239,6 @@ document.getElementById("ff-done-btn").onclick = () => {
 
   const startDate = localStorage.getItem("ff-start-date");
 
-  // Skjul aktivitetselementer
   document.getElementById("ff-activity-title").hidden = true;
   document.getElementById("ff-activity-description").hidden = true;
   document.getElementById("ff-done-btn").hidden = true;
@@ -246,12 +246,12 @@ document.getElementById("ff-done-btn").onclick = () => {
   document.getElementById("ff-activity-countdown").hidden = true;
   document.getElementById("ff-activity-image").hidden = true;
 
-  // Microfeedback
-  const fb = document.getElementById("ff-microfeedback");
-  fb.textContent = formatMicrofeedback(todayCount, total, startDate);
-  fb.hidden = false;
-
   startReminderTimer();
+  const nextTime = localStorage.getItem("ff-next-pause-time");
+
+  const fb = document.getElementById("ff-microfeedback");
+  fb.textContent = formatMicrofeedback(todayCount, total, startDate, nextTime);
+  fb.hidden = false;
 };
 
 // --- SETTINGS ---
