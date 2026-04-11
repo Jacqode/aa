@@ -2,43 +2,38 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus ver. 0.9.2</title>
+  <title>Flow Focus</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    #ff-activity-title { font-weight:600; font-size:1.2rem; }
+    #ff-activity-image { max-width:200px; margin-top:10px; }
+    #ff-activity-description { margin-top:10px; }
+    #ff-start-activity, #ff-done-btn { margin-top:12px; }
+    #ff-activity-countdown { font-size:1.4rem; margin-top:6px; }
+    #ff-microfeedback { margin-top:10px; font-weight:500; white-space:pre-line; }
+    #ff-countdown { margin-top:6px; font-size:14px; color:#555; }
+    #ff-settings { margin-top:10px; }
+  </style>
 </head>
 <body>
 
 <div id="ff-box" hidden>
-
   <div id="ff-step-activity" hidden>
 
-    <!-- 1: Titel -->
-    <p id="ff-activity-title" style="font-weight:600; font-size:1.2rem;"></p>
+    <p id="ff-activity-title"></p>
+    <img id="ff-activity-image" alt="Øvelse" hidden>
+    <p id="ff-activity-description"></p>
 
-    <!-- 2: Illustration -->
-    <img id="ff-activity-image" alt="Øvelse" style="max-width:200px; margin-top:10px;" hidden>
+    <button id="ff-start-activity">Start 2-minutters timer</button>
+    <div id="ff-activity-countdown" hidden>2:00</div>
 
-    <!-- 3: Kort tekstbeskrivelse -->
-    <p id="ff-activity-description" style="margin-top:10px;"></p>
+    <button id="ff-done-btn">Jeg har gjort det</button>
 
-    <!-- 4: Start-knap -->
-    <button id="ff-start-activity" style="margin-top:12px;">Start 2-minutters timer</button>
+    <p id="ff-microfeedback" hidden></p>
+    <p id="ff-countdown" hidden></p>
 
-    <!-- 5: 2-minutters timer -->
-    <div id="ff-activity-countdown" style="font-size:1.4rem; margin-top:6px;" hidden>2:00</div>
-
-    <!-- 6: Jeg har gjort det -->
-    <button id="ff-done-btn" style="margin-top:12px;">Jeg har gjort det</button>
-
-    <!-- Microfeedback -->
-    <p id="ff-microfeedback" style="margin-top:10px; font-weight:500; white-space:pre-line;" hidden></p>
-
-    <!-- Reminder countdown -->
-    <p id="ff-countdown" style="margin-top:6px; font-size:14px; color:#555;" hidden></p>
-
-    <!-- 7: Indstillinger -->
-    <p style="margin-top:12px;">
-      <a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a>
-    </p>
+    <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
     <div id="ff-settings" hidden>
       <h4>Påmindelser</h4>
@@ -50,41 +45,32 @@
     </div>
 
   </div>
-
 </div>
 
 <script>
 let countdownInterval = null;
 let activityInterval = null;
 
-// --- PWA: Registrér service worker ---
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
 
-// --- PWA: Bed om notifikationstilladelse ---
 async function requestNotificationPermission() {
-  const permission = await Notification.requestPermission();
-  return permission === "granted";
+  return (await Notification.requestPermission()) === "granted";
 }
 
-// --- PWA: Send notifikation ---
 function sendReminderNotification() {
   if (Notification.permission !== "granted") return;
-
   navigator.serviceWorker.getRegistration().then(reg => {
-    if (reg) {
-      reg.showNotification("Flow Focus", {
-        body: "Tid til en aktiv mikropause – tryk for at åbne Flow Focus",
-        icon: "icon-192.png",
-        badge: "icon-192.png",
-        data: { url: "https://jacqode.github.io/aa" }
-      });
-    }
+    reg?.showNotification("Flow Focus", {
+      body: "Tid til en aktiv mikropause – tryk for at åbne Flow Focus",
+      icon: "icon-192.png",
+      badge: "icon-192.png",
+      data: { url: "https://jacqode.github.io/aa" }
+    });
   });
 }
 
-// --- ACTIVITIES ---
 const ffActivities = [
   { title: "Gang på stedet i 2 min", text: "Gå roligt på stedet med lette skridt.", duration: 2, image: "images/gang.png" },
   { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt for at aktivere lægmusklerne.", duration: 2, image: "images/laegloeft.png" },
@@ -93,97 +79,80 @@ const ffActivities = [
   { title: "Benstræk i 2 min", text: "Stræk ét ben ad gangen og hold kort, før du skifter.", duration: 2, image: "images/benstraek.png" }
 ];
 
+const el = id => document.getElementById(id);
+
 function getRandomActivity() {
   return ffActivities[Math.floor(Math.random() * ffActivities.length)];
 }
 
-// --- MICROFEEDBACK (NY VERSION) ---
-function formatMicrofeedback(todayCount, totalCount, startDate, nextTime) {
+function formatMicrofeedback(today, total, startDate, nextTime) {
   const next = new Date(Number(nextTime));
   const nextClock = next.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
 
   return (
     "Aktive mikropauser\n" +
-    `I alt i dag: ${todayCount}\n` +
-    `I alt siden ${startDate}: ${totalCount}\n` +
+    `I alt i dag: ${today}\n` +
+    `I alt siden ${startDate}: ${total}\n` +
     `Næste aktive pause er kl. ${nextClock}\n` +
     "God arbejdslyst indtil da!"
   );
 }
 
-// --- VIS AKTIVITET ---
 function showActivity() {
   const a = getRandomActivity();
+  el("ff-activity-title").textContent = a.title;
+  el("ff-activity-description").textContent = a.text;
 
-  document.getElementById("ff-activity-title").textContent = a.title;
-
-  const imgEl = document.getElementById("ff-activity-image");
   if (a.image) {
-    imgEl.src = a.image;
-    imgEl.hidden = false;
+    el("ff-activity-image").src = a.image;
+    el("ff-activity-image").hidden = false;
   } else {
-    imgEl.hidden = true;
+    el("ff-activity-image").hidden = true;
   }
 
-  document.getElementById("ff-activity-description").textContent = a.text;
+  el("ff-activity-countdown").hidden = true;
+  el("ff-step-activity").hidden = false;
 
-  const btn = document.getElementById("ff-start-activity");
-  btn.hidden = false;
-  btn.onclick = () => {
+  el("ff-start-activity").onclick = () => {
     clearInterval(activityInterval);
     startActivityTimer(a.duration);
   };
-
-  document.getElementById("ff-activity-countdown").hidden = true;
-
-  document.getElementById("ff-step-activity").hidden = false;
 }
 
-// --- AKTIVITETS-TIMER ---
 function startActivityTimer(minutes) {
   let seconds = minutes * 60;
-  const display = document.getElementById("ff-activity-countdown");
-
+  const display = el("ff-activity-countdown");
   display.hidden = false;
-  updateDisplay();
 
-  activityInterval = setInterval(() => {
-    seconds--;
-    updateDisplay();
-
-    if (seconds <= 0) {
-      clearInterval(activityInterval);
-      playActivityDoneSound();
-    }
-  }, 1000);
-
-  function updateDisplay() {
+  const update = () => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     display.textContent = `${m}:${s.toString().padStart(2, "0")}`;
-  }
+  };
+
+  update();
+  activityInterval = setInterval(() => {
+    seconds--;
+    update();
+    if (seconds <= 0) {
+      clearInterval(activityInterval);
+      new Audio("done.mp3").play();
+    }
+  }, 1000);
 }
 
-function playActivityDoneSound() {
-  const audio = new Audio("done.mp3");
-  audio.play();
-}
-
-// --- RESET ---
 function resetUI() {
-  document.getElementById("ff-microfeedback").hidden = true;
-  document.getElementById("ff-countdown").hidden = true;
-  document.getElementById("ff-activity-title").hidden = false;
-  document.getElementById("ff-activity-description").hidden = false;
-  document.getElementById("ff-done-btn").hidden = false;
+  el("ff-microfeedback").hidden = true;
+  el("ff-countdown").hidden = true;
+  el("ff-activity-title").hidden = false;
+  el("ff-activity-description").hidden = false;
+  el("ff-done-btn").hidden = false;
   localStorage.removeItem("ff-next-pause-time");
   showActivity();
 }
 
-// --- REMINDER TIMER ---
 function startReminderTimer() {
-  const stored = Number(localStorage.getItem("ff-reminder-interval"));
-  const interval = stored > 0 ? stored : 30;
+  const interval = Number(localStorage.getItem("ff-reminder-interval")) || 30;
   localStorage.setItem("ff-reminder-interval", interval);
 
   const nextTime = Date.now() + interval * 60000;
@@ -192,10 +161,10 @@ function startReminderTimer() {
 }
 
 function startCountdown() {
-  const el = document.getElementById("ff-countdown");
-  el.hidden = false;
-  if (countdownInterval) clearInterval(countdownInterval);
+  const box = el("ff-countdown");
+  box.hidden = false;
 
+  clearInterval(countdownInterval);
   countdownInterval = setInterval(() => {
     const nextTime = Number(localStorage.getItem("ff-next-pause-time"));
     const diff = nextTime - Date.now();
@@ -209,89 +178,75 @@ function startCountdown() {
 
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
-
-    el.textContent = `Næste aktivitet er om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    box.textContent = `Næste aktivitet er om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
   }, 1000);
 }
 
-// --- DONE (NY VERSION) ---
-document.getElementById("ff-done-btn").onclick = () => {
-
-  const total = Number(localStorage.getItem("ff-total-count") || 0) + 1;
+el("ff-done-btn").onclick = () => {
+  const total = (Number(localStorage.getItem("ff-total-count")) || 0) + 1;
   localStorage.setItem("ff-total-count", total);
 
   const today = new Date().toISOString().slice(0, 10);
   const lastDay = localStorage.getItem("ff-last-day");
-
-  let todayCount = 1;
-  if (today === lastDay) {
-    todayCount = Number(localStorage.getItem("ff-today-count") || 0) + 1;
-  }
+  const todayCount = today === lastDay
+    ? (Number(localStorage.getItem("ff-today-count")) || 0) + 1
+    : 1;
 
   localStorage.setItem("ff-last-day", today);
   localStorage.setItem("ff-today-count", todayCount);
 
   if (!localStorage.getItem("ff-start-date")) {
     const d = new Date();
-    const formatted = d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" });
-    localStorage.setItem("ff-start-date", formatted);
+    localStorage.setItem("ff-start-date",
+      d.toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })
+    );
   }
 
   const startDate = localStorage.getItem("ff-start-date");
 
-  document.getElementById("ff-activity-title").hidden = true;
-  document.getElementById("ff-activity-description").hidden = true;
-  document.getElementById("ff-done-btn").hidden = true;
-  document.getElementById("ff-start-activity").hidden = true;
-  document.getElementById("ff-activity-countdown").hidden = true;
-  document.getElementById("ff-activity-image").hidden = true;
+  ["ff-activity-title","ff-activity-description","ff-done-btn",
+   "ff-start-activity","ff-activity-countdown","ff-activity-image"]
+   .forEach(id => el(id).hidden = true);
 
   startReminderTimer();
   const nextTime = localStorage.getItem("ff-next-pause-time");
 
-  const fb = document.getElementById("ff-microfeedback");
-  fb.textContent = formatMicrofeedback(todayCount, total, startDate, nextTime);
-  fb.hidden = false;
+  el("ff-microfeedback").textContent =
+    formatMicrofeedback(todayCount, total, startDate, nextTime);
+  el("ff-microfeedback").hidden = false;
 };
 
-// --- SETTINGS ---
-document.getElementById("ff-settings-toggle").onclick = e => {
+el("ff-settings-toggle").onclick = e => {
   e.preventDefault();
-  document.getElementById("ff-settings").hidden =
-    !document.getElementById("ff-settings").hidden;
+  el("ff-settings").hidden = !el("ff-settings").hidden;
 };
 
-document.getElementById("ff-reminder-save").onclick = async () => {
-  const m = Number(document.getElementById("ff-reminder-input").value);
-  if (m > 0) {
-    localStorage.setItem("ff-reminder-interval", m);
-  }
+el("ff-reminder-save").onclick = async () => {
+  const m = Number(el("ff-reminder-input").value);
+  if (m > 0) localStorage.setItem("ff-reminder-interval", m);
 
   const ok = await requestNotificationPermission();
-  document.getElementById("ff-reminder-feedback").textContent =
+  el("ff-reminder-feedback").textContent =
     ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
 };
 
-document.getElementById("ff-reminder-disable").onclick = () => {
+el("ff-reminder-disable").onclick = () => {
   localStorage.removeItem("ff-reminder-interval");
   localStorage.removeItem("ff-next-pause-time");
-  document.getElementById("ff-reminder-feedback").textContent = "Slået fra.";
-  document.getElementById("ff-countdown").hidden = true;
-  if (countdownInterval) clearInterval(countdownInterval);
+  el("ff-reminder-feedback").textContent = "Slået fra.";
+  el("ff-countdown").hidden = true;
+  clearInterval(countdownInterval);
 };
 
-// --- INIT ---
 window.onload = () => {
-  document.getElementById("ff-box").hidden = false;
-
-  const defaultInterval = 30;
-  document.getElementById("ff-reminder-input").value =
-    localStorage.getItem("ff-reminder-interval") || defaultInterval;
+  el("ff-box").hidden = false;
+  el("ff-reminder-input").value =
+    localStorage.getItem("ff-reminder-interval") || 30;
 
   showActivity();
 
   if (localStorage.getItem("ff-next-pause-time")) {
-    document.getElementById("ff-countdown").hidden = false;
+    el("ff-countdown").hidden = false;
     startCountdown();
   }
 };
