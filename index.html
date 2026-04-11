@@ -92,12 +92,14 @@ window.onload = () => {
 
   showActivity();
 
+  // ✅ MINIMAL PATCH: gør countdown synlig i Chrome
   if (localStorage.getItem("ff-next-pause-time")) {
-    continueCountdown();
+    document.getElementById("ff-countdown").hidden = false;
+    startCountdown();
   }
 };
 
-// ✅ AKTIVITET UDEN TIDSSTEMPEL, MED VARIGHED
+// --- AKTIVITET UDEN TIDSSTEMPEL, MED VARIGHED ---
 function showActivity() {
   const a = getRandomActivity();
 
@@ -149,6 +151,7 @@ function startCountdown() {
 
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
+
     el.textContent =
        `Næste aktivitet er om ${String(m).padStart(2,"0")} min ${String(s).padStart(2,"0")} sek.`;
   }, 1000);
