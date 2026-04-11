@@ -109,10 +109,14 @@ function showActivity() {
 
   // Bind start-knap til aktivitets-timer
   const btn = document.getElementById("ff-start-activity");
+  btn.hidden = false;
   btn.onclick = () => {
     clearInterval(activityInterval);
     startActivityTimer(a.duration);
   };
+
+  // Nulstil aktivitets-timer display
+  document.getElementById("ff-activity-countdown").hidden = true;
 
   document.getElementById("ff-step-activity").hidden = false;
 }
@@ -196,8 +200,12 @@ document.getElementById("ff-done-btn").onclick = () => {
   const count = Number(localStorage.getItem("ff-pause-count") || 0) + 1;
   localStorage.setItem("ff-pause-count", count);
 
+  // Skjul aktivitetselementer
   document.getElementById("ff-activity-text").hidden = true;
   document.getElementById("ff-done-btn").hidden = true;
+  document.getElementById("ff-start-activity").hidden = true;
+  document.getElementById("ff-activity-countdown").hidden = true;
+  document.getElementById("ff-activity-image").hidden = true;
 
   const fb = document.getElementById("ff-microfeedback");
   fb.textContent = formatMicrofeedback(count);
