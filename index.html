@@ -67,10 +67,16 @@ function sendReminderNotification() {
 }
 
 // --- ACTIVITIES (fast varighed: 2 min) ---
+// Oprindelige tre + tre ekstra med god effekt for kontorarbejde
 const ffActivities = [
   { title: "Gang på stedet", text: "Gå roligt på stedet med lette skridt.", duration: 2 },
   { title: "Stå på tæer", text: "Løft langsomt hælene og sænk igen.", duration: 2 },
-  { title: "Rejs og sæt dig", text: "Rejs dig roligt og sæt dig igen.", duration: 2 }
+  { title: "Rejs og sæt dig", text: "Rejs dig roligt og sæt dig igen.", duration: 2 },
+
+  // Tre ekstra aktiviteter med god effekt
+  { title: "Nakkestræk og skulderrulninger", text: "Skift mellem blide nakkestræk og rolige skulderrulninger.", duration: 2 },
+  { title: "Siddende benløft og ankelcirkler", text: "Løft skiftevis ben og lav ankelcirkler for bedre blodcirkulation.", duration: 2 },
+  { title: "Hofte- og rygmobilitet", text: "Dynamiske hoftecirkler og let rygmobilisering (cat–cow eller knæ-til-bryst).", duration: 2 }
 ];
 
 function getRandomActivity() {
@@ -85,12 +91,15 @@ function formatMicrofeedback(count) {
 // --- FLOW ---
 window.onload = () => {
   document.getElementById("ff-box").hidden = false;
+
+  // Default reminder interval: 30 minutter (forskning: 2 min aktivitet hver 30 min siddende arbejde)
+  const defaultInterval = 30;
   document.getElementById("ff-reminder-input").value =
-    localStorage.getItem("ff-reminder-interval") || 25;
+    localStorage.getItem("ff-reminder-interval") || defaultInterval;
 
   showActivity();
 
-  // ✅ MINIMAL PATCH: gør countdown synlig i Chrome
+  // ✅ MINIMAL PATCH: gør countdown synlig i Chrome hvis der allerede er en aktiv timer
   if (localStorage.getItem("ff-next-pause-time")) {
     document.getElementById("ff-countdown").hidden = false;
     startCountdown();
@@ -124,8 +133,11 @@ function resetUI() {
 
 // --- REMINDER ---
 function startReminderTimer() {
-  const interval = Number(localStorage.getItem("ff-reminder-interval"));
-  if (!interval) return;
+  // Hvis brugeren ikke har sat et interval, brug standard 30 min
+  const stored = Number(localStorage.getItem("ff-reminder-interval"));
+  const interval = stored > 0 ? stored : 30;
+  localStorage.setItem("ff-reminder-interval", interval); // sørg for at gemme default hvis ikke sat
+
   const nextTime = Date.now() + interval * 60000;
   localStorage.setItem("ff-next-pause-time", nextTime);
   startCountdown();
@@ -150,8 +162,8 @@ function startCountdown() {
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
 
-    el.textContent =
-       `Næste aktivitet er om ${String(m).padStart(2,"0")} min ${String(s).padStart(2,"0")} sek.`;
+    // Kort, klar tekst: "Næste aktivitet er om: mm:ss"
+    el.textContent = `Næste aktivitet er om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
   }, 1000);
 }
 
@@ -186,7 +198,9 @@ document.getElementById("ff-settings-toggle").onclick = e => {
 
 document.getElementById("ff-reminder-save").onclick = async () => {
   const m = Number(document.getElementById("ff-reminder-input").value);
-  localStorage.setItem("ff-reminder-interval", m);
+  if (m > 0) {
+    localStorage.setItem("ff-reminder-interval", m);
+  }
 
   const ok = await requestNotificationPermission();
   document.getElementById("ff-reminder-feedback").textContent =
