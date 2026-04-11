@@ -30,7 +30,7 @@
     <button id="ff-done-btn" style="margin-top:12px;">Jeg har gjort det</button>
 
     <!-- Microfeedback -->
-    <p id="ff-microfeedback" style="margin-top:10px; font-weight:500;" hidden></p>
+    <p id="ff-microfeedback" style="margin-top:10px; font-weight:500; white-space:pre-line;" hidden></p>
 
     <!-- Reminder countdown -->
     <p id="ff-countdown" style="margin-top:6px; font-size:14px; color:#555;" hidden></p>
@@ -97,9 +97,9 @@ function getRandomActivity() {
   return ffActivities[Math.floor(Math.random() * ffActivities.length)];
 }
 
-// --- MICROFEEDBACK ---
-function formatMicrofeedback(count) {
-  return count === 1 ? `${count} mikropause gennemført.` : `${count} mikropauser gennemført.`;
+// --- MICROFEEDBACK (NY VERSION) ---
+function formatMicrofeedback(todayCount, totalCount, startDate) {
+  return `Aktive mikropauser i dag: ${todayCount}\nAktive mikropauser siden ${startDate}: ${totalCount}`;
 }
 
 // --- VIS AKTIVITET ---
@@ -210,10 +210,33 @@ function startCountdown() {
   }, 1000);
 }
 
-// --- DONE ---
+// --- DONE (NY VERSION) ---
 document.getElementById("ff-done-btn").onclick = () => {
-  const count = Number(localStorage.getItem("ff-pause-count") || 0) + 1;
-  localStorage.setItem("ff-pause-count", count);
+
+  // Total count
+  const total = Number(localStorage.getItem("ff-total-count") || 0) + 1;
+  localStorage.setItem("ff-total-count", total);
+
+  // Daily count
+  const today = new Date().toISOString().slice(0, 10);
+  const lastDay = localStorage.getItem("ff-last-day");
+
+  let todayCount = 1;
+  if (today === lastDay) {
+    todayCount = Number(localStorage.getItem("ff-today-count") || 0) + 1;
+  }
+
+  localStorage.setItem("ff-last-day", today);
+  localStorage.setItem("ff-today-count", todayCount);
+
+  // Startdato (første pause)
+  if (!localStorage.getItem("ff-start-date")) {
+    const d = new Date();
+    const formatted = d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" });
+    localStorage.setItem("ff-start-date", formatted);
+  }
+
+  const startDate = localStorage.getItem("ff-start-date");
 
   // Skjul aktivitetselementer
   document.getElementById("ff-activity-title").hidden = true;
@@ -223,8 +246,9 @@ document.getElementById("ff-done-btn").onclick = () => {
   document.getElementById("ff-activity-countdown").hidden = true;
   document.getElementById("ff-activity-image").hidden = true;
 
+  // Microfeedback
   const fb = document.getElementById("ff-microfeedback");
-  fb.textContent = formatMicrofeedback(count);
+  fb.textContent = formatMicrofeedback(todayCount, total, startDate);
   fb.hidden = false;
 
   startReminderTimer();
