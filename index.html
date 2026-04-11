@@ -10,22 +10,31 @@
 <div id="ff-box" hidden>
 
   <div id="ff-step-activity" hidden>
+
+    <!-- 1: Titel -->
     <p id="ff-activity-text"></p>
 
-    <!-- Aktivitets-timer -->
-    <div id="ff-activity-timer" style="margin-top:10px;">
-      <button id="ff-start-activity">Start 2-minutters timer</button>
-      <div id="ff-activity-countdown" style="font-size:1.4rem; margin-top:6px;" hidden>2:00</div>
-    </div>
-
-    <!-- Illustration -->
+    <!-- 2: Illustration -->
     <img id="ff-activity-image" alt="Øvelse" style="max-width:200px; margin-top:10px;" hidden>
 
+    <!-- 3: Kort tekst (indsættes i samme element som titel via JS) -->
+
+    <!-- 4: Start-knap -->
+    <button id="ff-start-activity" style="margin-top:12px;">Start 2-minutters timer</button>
+
+    <!-- 5: 2-minutters timer -->
+    <div id="ff-activity-countdown" style="font-size:1.4rem; margin-top:6px;" hidden>2:00</div>
+
+    <!-- 6: Jeg har gjort det -->
     <button id="ff-done-btn" style="margin-top:12px;">Jeg har gjort det</button>
 
+    <!-- Microfeedback -->
     <p id="ff-microfeedback" style="margin-top:10px; font-weight:500;" hidden></p>
+
+    <!-- Reminder countdown -->
     <p id="ff-countdown" style="margin-top:6px; font-size:14px; color:#555;" hidden></p>
 
+    <!-- 7: Indstillinger -->
     <p style="margin-top:12px;">
       <a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a>
     </p>
@@ -38,6 +47,7 @@
       <button id="ff-reminder-disable">Slå fra</button>
       <p id="ff-reminder-feedback"></p>
     </div>
+
   </div>
 
 </div>
@@ -73,7 +83,7 @@ function sendReminderNotification() {
   });
 }
 
-// --- ACTIVITIES (renset + illustrationer) ---
+// --- ACTIVITIES ---
 const ffActivities = [
   { title: "Gang på stedet i 2 min", text: "Gå roligt på stedet med lette skridt.", duration: 2, image: "images/gang.png" },
   { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt for at aktivere lægmusklerne.", duration: 2, image: "images/laegloeft.png" },
@@ -91,12 +101,13 @@ function formatMicrofeedback(count) {
   return count === 1 ? `${count} mikropause gennemført.` : `${count} mikropauser gennemført.`;
 }
 
-// --- AKTIVITET ---
+// --- VIS AKTIVITET ---
 function showActivity() {
   const a = getRandomActivity();
 
+  // Titel + tekst i samme element
   document.getElementById("ff-activity-text").textContent =
-    `${a.title} – ${a.text}`;
+    `${a.title}\n${a.text}`;
 
   // Illustration
   const imgEl = document.getElementById("ff-activity-image");
@@ -107,7 +118,7 @@ function showActivity() {
     imgEl.hidden = true;
   }
 
-  // Bind start-knap til aktivitets-timer
+  // Start-knap
   const btn = document.getElementById("ff-start-activity");
   btn.hidden = false;
   btn.onclick = () => {
@@ -115,7 +126,7 @@ function showActivity() {
     startActivityTimer(a.duration);
   };
 
-  // Nulstil aktivitets-timer display
+  // Timer skjules ved ny aktivitet
   document.getElementById("ff-activity-countdown").hidden = true;
 
   document.getElementById("ff-step-activity").hidden = false;
@@ -259,3 +270,4 @@ window.onload = () => {
 
 </body>
 </html>
+
