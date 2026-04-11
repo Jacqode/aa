@@ -12,12 +12,13 @@
   <div id="ff-step-activity" hidden>
 
     <!-- 1: Titel -->
-    <p id="ff-activity-text"></p>
+    <p id="ff-activity-title" style="font-weight:600; font-size:1.2rem;"></p>
 
     <!-- 2: Illustration -->
     <img id="ff-activity-image" alt="Øvelse" style="max-width:200px; margin-top:10px;" hidden>
 
-    <!-- 3: Kort tekst (indsættes i samme element som titel via JS) -->
+    <!-- 3: Kort tekstbeskrivelse -->
+    <p id="ff-activity-description" style="margin-top:10px;"></p>
 
     <!-- 4: Start-knap -->
     <button id="ff-start-activity" style="margin-top:12px;">Start 2-minutters timer</button>
@@ -105,9 +106,8 @@ function formatMicrofeedback(count) {
 function showActivity() {
   const a = getRandomActivity();
 
-  // Titel + tekst i samme element
-  document.getElementById("ff-activity-text").textContent =
-    `${a.title}\n${a.text}`;
+  // Titel
+  document.getElementById("ff-activity-title").textContent = a.title;
 
   // Illustration
   const imgEl = document.getElementById("ff-activity-image");
@@ -117,6 +117,9 @@ function showActivity() {
   } else {
     imgEl.hidden = true;
   }
+
+  // Kort tekstbeskrivelse
+  document.getElementById("ff-activity-description").textContent = a.text;
 
   // Start-knap
   const btn = document.getElementById("ff-start-activity");
@@ -166,7 +169,8 @@ function playActivityDoneSound() {
 function resetUI() {
   document.getElementById("ff-microfeedback").hidden = true;
   document.getElementById("ff-countdown").hidden = true;
-  document.getElementById("ff-activity-text").hidden = false;
+  document.getElementById("ff-activity-title").hidden = false;
+  document.getElementById("ff-activity-description").hidden = false;
   document.getElementById("ff-done-btn").hidden = false;
   localStorage.removeItem("ff-next-pause-time");
   showActivity();
@@ -212,7 +216,8 @@ document.getElementById("ff-done-btn").onclick = () => {
   localStorage.setItem("ff-pause-count", count);
 
   // Skjul aktivitetselementer
-  document.getElementById("ff-activity-text").hidden = true;
+  document.getElementById("ff-activity-title").hidden = true;
+  document.getElementById("ff-activity-description").hidden = true;
   document.getElementById("ff-done-btn").hidden = true;
   document.getElementById("ff-start-activity").hidden = true;
   document.getElementById("ff-activity-countdown").hidden = true;
@@ -270,4 +275,3 @@ window.onload = () => {
 
 </body>
 </html>
-
