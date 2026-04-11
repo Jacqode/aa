@@ -2,11 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  
-  <!-- Flow Focus v0.9.1 — aktiv mikropause, reminder-baseret, lav friktion -->
   <title>Flow Focus</title>
-  
-  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -15,7 +11,17 @@
 
   <div id="ff-step-activity" hidden>
     <p id="ff-activity-text"></p>
-    <button id="ff-done-btn">Jeg har gjort det</button>
+
+    <!-- Aktivitets-timer -->
+    <div id="ff-activity-timer" style="margin-top:10px;">
+      <button id="ff-start-activity">Start 2-minutters timer</button>
+      <div id="ff-activity-countdown" style="font-size:1.4rem; margin-top:6px;" hidden>2:00</div>
+    </div>
+
+    <!-- Illustration -->
+    <img id="ff-activity-image" alt="Øvelse" style="max-width:200px; margin-top:10px;" hidden>
+
+    <button id="ff-done-btn" style="margin-top:12px;">Jeg har gjort det</button>
 
     <p id="ff-microfeedback" style="margin-top:10px; font-weight:500;" hidden></p>
     <p id="ff-countdown" style="margin-top:6px; font-size:14px; color:#555;" hidden></p>
@@ -38,6 +44,7 @@
 
 <script>
 let countdownInterval = null;
+let activityInterval = null;
 
 // --- PWA: Registrér service worker ---
 if ("serviceWorker" in navigator) {
@@ -50,7 +57,7 @@ async function requestNotificationPermission() {
   return permission === "granted";
 }
 
-// --- PWA: Send notifikation med link ---
+// --- PWA: Send notifikation ---
 function sendReminderNotification() {
   if (Notification.permission !== "granted") return;
 
@@ -66,59 +73,78 @@ function sendReminderNotification() {
   });
 }
 
-// --- ACTIVITIES (fast varighed: 2 min) ---
-// Oprindelige tre + tre ekstra med god effekt for kontorarbejde
+// --- ACTIVITIES (renset + illustrationer) ---
 const ffActivities = [
-  { title: "Gang på stedet", text: "Gå roligt på stedet med lette skridt.", duration: 2 },
-  { title: "Stå på tæer", text: "Løft langsomt hælene og sænk igen.", duration: 2 },
-  { title: "Rejs og sæt dig", text: "Rejs dig roligt og sæt dig igen.", duration: 2 },
-
-  // Tre ekstra aktiviteter med god effekt
-  { title: "Nakkestræk og skulderrulninger", text: "Skift mellem blide nakkestræk og rolige skulderrulninger.", duration: 2 },
-  { title: "Siddende benløft og ankelcirkler", text: "Løft skiftevis ben og lav ankelcirkler for bedre blodcirkulation.", duration: 2 },
-  { title: "Hofte- og rygmobilitet", text: "Dynamiske hoftecirkler og let rygmobilisering (cat–cow eller knæ-til-bryst).", duration: 2 }
+  { title: "Gang på stedet i 2 min", text: "Gå roligt på stedet med lette skridt.", duration: 2, image: "images/gang.png" },
+  { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt for at aktivere lægmusklerne.", duration: 2, image: "images/laegloeft.png" },
+  { title: "Rejs og sæt dig i 2 min", text: "Rejs dig roligt og sæt dig igen.", duration: 2, image: "images/rejs.png" },
+  { title: "Armcirkler i 2 min", text: "Stræk armene ud til siderne og lav store cirkler fremad og baglæns.", duration: 2, image: "images/armcirkel.png" },
+  { title: "Benstræk i 2 min", text: "Stræk ét ben ad gangen og hold kort, før du skifter.", duration: 2, image: "images/benstraek.png" }
 ];
 
 function getRandomActivity() {
   return ffActivities[Math.floor(Math.random() * ffActivities.length)];
 }
 
-// --- MICROFEEDBACK (kort og smart) ---
+// --- MICROFEEDBACK ---
 function formatMicrofeedback(count) {
   return count === 1 ? `${count} mikropause gennemført.` : `${count} mikropauser gennemført.`;
 }
 
-// --- FLOW ---
-window.onload = () => {
-  document.getElementById("ff-box").hidden = false;
-
-  // Default reminder interval: 30 minutter (forskning: 2 min aktivitet hver 30 min siddende arbejde)
-  const defaultInterval = 30;
-  document.getElementById("ff-reminder-input").value =
-    localStorage.getItem("ff-reminder-interval") || defaultInterval;
-
-  showActivity();
-
-  // ✅ MINIMAL PATCH: gør countdown synlig i Chrome hvis der allerede er en aktiv timer
-  if (localStorage.getItem("ff-next-pause-time")) {
-    document.getElementById("ff-countdown").hidden = false;
-    startCountdown();
-  }
-};
-
-// --- AKTIVITET UDEN TIDSSTEMPEL, MED VARIGHED ---
+// --- AKTIVITET ---
 function showActivity() {
   const a = getRandomActivity();
 
-  // Gem timestamp + varighed til data (vises ikke i UI)
-  localStorage.setItem("ff-last-activity-timestamp", Date.now());
-  localStorage.setItem("ff-last-activity-duration", a.duration);
-
-  // Vis kun aktivitet + varighed i UI
   document.getElementById("ff-activity-text").textContent =
-    `${a.title} – ${a.text} (${a.duration} min)`;
+    `${a.title} – ${a.text}`;
+
+  // Illustration
+  const imgEl = document.getElementById("ff-activity-image");
+  if (a.image) {
+    imgEl.src = a.image;
+    imgEl.hidden = false;
+  } else {
+    imgEl.hidden = true;
+  }
+
+  // Bind start-knap til aktivitets-timer
+  const btn = document.getElementById("ff-start-activity");
+  btn.onclick = () => {
+    clearInterval(activityInterval);
+    startActivityTimer(a.duration);
+  };
 
   document.getElementById("ff-step-activity").hidden = false;
+}
+
+// --- AKTIVITETS-TIMER ---
+function startActivityTimer(minutes) {
+  let seconds = minutes * 60;
+  const display = document.getElementById("ff-activity-countdown");
+
+  display.hidden = false;
+  updateDisplay();
+
+  activityInterval = setInterval(() => {
+    seconds--;
+    updateDisplay();
+
+    if (seconds <= 0) {
+      clearInterval(activityInterval);
+      playActivityDoneSound();
+    }
+  }, 1000);
+
+  function updateDisplay() {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    display.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+  }
+}
+
+function playActivityDoneSound() {
+  const audio = new Audio("done.mp3");
+  audio.play();
 }
 
 // --- RESET ---
@@ -131,12 +157,11 @@ function resetUI() {
   showActivity();
 }
 
-// --- REMINDER ---
+// --- REMINDER TIMER ---
 function startReminderTimer() {
-  // Hvis brugeren ikke har sat et interval, brug standard 30 min
   const stored = Number(localStorage.getItem("ff-reminder-interval"));
   const interval = stored > 0 ? stored : 30;
-  localStorage.setItem("ff-reminder-interval", interval); // sørg for at gemme default hvis ikke sat
+  localStorage.setItem("ff-reminder-interval", interval);
 
   const nextTime = Date.now() + interval * 60000;
   localStorage.setItem("ff-next-pause-time", nextTime);
@@ -162,16 +187,8 @@ function startCountdown() {
     const m = Math.floor(diff / 60000);
     const s = Math.floor((diff % 60000) / 1000);
 
-    // Kort, klar tekst: "Næste aktivitet er om: mm:ss"
     el.textContent = `Næste aktivitet er om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
   }, 1000);
-}
-
-function continueCountdown() {
-  document.getElementById("ff-activity-text").hidden = true;
-  document.getElementById("ff-done-btn").hidden = true;
-  document.getElementById("ff-microfeedback").hidden = false;
-  startCountdown();
 }
 
 // --- DONE ---
@@ -213,6 +230,22 @@ document.getElementById("ff-reminder-disable").onclick = () => {
   document.getElementById("ff-reminder-feedback").textContent = "Slået fra.";
   document.getElementById("ff-countdown").hidden = true;
   if (countdownInterval) clearInterval(countdownInterval);
+};
+
+// --- INIT ---
+window.onload = () => {
+  document.getElementById("ff-box").hidden = false;
+
+  const defaultInterval = 30;
+  document.getElementById("ff-reminder-input").value =
+    localStorage.getItem("ff-reminder-interval") || defaultInterval;
+
+  showActivity();
+
+  if (localStorage.getItem("ff-next-pause-time")) {
+    document.getElementById("ff-countdown").hidden = false;
+    startCountdown();
+  }
 };
 </script>
 
