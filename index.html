@@ -12,7 +12,6 @@
     #ff-start-activity, #ff-done-btn { margin-top:12px; }
     #ff-activity-countdown { font-size:1.4rem; margin-top:6px; }
     #ff-microfeedback { margin-top:10px; font-weight:500; white-space:pre-line; }
-    #ff-countdown { margin-top:6px; font-size:14px; color:#555; }
     #ff-settings { margin-top:10px; }
   </style>
 </head>
@@ -31,7 +30,6 @@
     <button id="ff-done-btn">Jeg har gjort det</button>
 
     <p id="ff-microfeedback" hidden></p>
-    <p id="ff-countdown" hidden></p>
 
     <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
@@ -90,10 +88,11 @@ function formatMicrofeedback(today, total, startDate, nextTime) {
   const nextClock = next.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    "Aktive mikropauser\n" +
-    `I alt i dag: ${today}\n` +
-    `I alt siden ${startDate}: ${total}\n` +
-    `Næste aktive pause er kl. ${nextClock}\n` +
+    "Mikropauser\n" +
+    `- i dag: ${today}\n` +
+    `- i alt: ${total}\n` +
+    `Næste mikropause er kl. ${nextClock}.\n` +
+    "\n" +
     "God arbejdslyst indtil da!"
   );
 }
@@ -143,7 +142,6 @@ function startActivityTimer(minutes) {
 
 function resetUI() {
   el("ff-microfeedback").hidden = true;
-  el("ff-countdown").hidden = true;
   el("ff-activity-title").hidden = false;
   el("ff-activity-description").hidden = false;
   el("ff-done-btn").hidden = false;
@@ -157,13 +155,11 @@ function startReminderTimer() {
 
   const nextTime = Date.now() + interval * 60000;
   localStorage.setItem("ff-next-pause-time", nextTime);
+
   startCountdown();
 }
 
 function startCountdown() {
-  const box = el("ff-countdown");
-  box.hidden = false;
-
   clearInterval(countdownInterval);
   countdownInterval = setInterval(() => {
     const nextTime = Number(localStorage.getItem("ff-next-pause-time"));
@@ -173,12 +169,7 @@ function startCountdown() {
       clearInterval(countdownInterval);
       sendReminderNotification();
       resetUI();
-      return;
     }
-
-    const m = Math.floor(diff / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    box.textContent = `Næste aktivitet er om: ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
   }, 1000);
 }
 
@@ -203,13 +194,12 @@ el("ff-done-btn").onclick = () => {
   }
 
   const startDate = localStorage.getItem("ff-start-date");
+  startReminderTimer();
+  const nextTime = localStorage.getItem("ff-next-pause-time");
 
   ["ff-activity-title","ff-activity-description","ff-done-btn",
    "ff-start-activity","ff-activity-countdown","ff-activity-image"]
    .forEach(id => el(id).hidden = true);
-
-  startReminderTimer();
-  const nextTime = localStorage.getItem("ff-next-pause-time");
 
   el("ff-microfeedback").textContent =
     formatMicrofeedback(todayCount, total, startDate, nextTime);
@@ -234,7 +224,6 @@ el("ff-reminder-disable").onclick = () => {
   localStorage.removeItem("ff-reminder-interval");
   localStorage.removeItem("ff-next-pause-time");
   el("ff-reminder-feedback").textContent = "Slået fra.";
-  el("ff-countdown").hidden = true;
   clearInterval(countdownInterval);
 };
 
@@ -246,7 +235,6 @@ window.onload = () => {
   showActivity();
 
   if (localStorage.getItem("ff-next-pause-time")) {
-    el("ff-countdown").hidden = false;
     startCountdown();
   }
 };
