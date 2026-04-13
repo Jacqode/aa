@@ -2,15 +2,23 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v095</title>
+  <title>Flow Focus v096</title>
   <link rel="manifest" href="manifest.json">
 
   <style>
     #ff-activity-title { font-weight:600; font-size:1.2rem; }
-    #ff-activity-image { max-width:200px; margin-top:10px; }
     #ff-activity-description { margin-top:10px; }
     #ff-start-activity { margin-top:12px; }
     #ff-activity-countdown { font-size:1.4rem; margin-top:6px; }
+
+    /* FIX: reserver plads til billedet, så knappen ikke hopper */
+    #ff-activity-image {
+      max-width:200px;
+      margin-top:10px;
+      display:block;
+      min-height:120px; /* ← stabiliserer layoutet */
+    }
+
     #ff-microfeedback { margin-top:10px; font-weight:500; white-space:pre-line; }
     #ff-settings { margin-top:10px; }
     .energy-buttons button { margin-right:6px; margin-top:6px; }
@@ -24,14 +32,14 @@
     <p id="ff-activity-title"></p>
     <p id="ff-activity-description"></p>
 
-    <!-- OPTIONAL TIMER -->
+    <!-- TIMER (valgfri) -->
     <button id="ff-start-activity">Start 2-minutters timer</button>
     <div id="ff-activity-countdown" hidden>2:00</div>
 
-    <!-- ILLUSTRATION NOW MOVED HERE -->
+    <!-- ILLUSTRATION (nu stabilt placeret) -->
     <img id="ff-activity-image" alt="Øvelse" hidden>
 
-    <!-- ALWAYS VISIBLE ENERGY BUTTONS -->
+    <!-- ENERGIKNAPPER (altid synlige) -->
     <div id="ff-energy-buttons" class="energy-buttons">
       <p>Hvordan føles energien nu?</p>
       <button onclick="completeBreak('mindre')">Mindre</button>
@@ -148,7 +156,6 @@ function startActivityTimer(minutes) {
     if (seconds <= 0) {
       clearInterval(activityInterval);
       new Audio("done.mp3").play();
-      // Energiknapper er allerede synlige
     }
   }, 1000);
 }
