@@ -2,17 +2,18 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v092</title>
+  <title>Flow Focus v093</title>
   <link rel="manifest" href="manifest.json">
 
   <style>
     #ff-activity-title { font-weight:600; font-size:1.2rem; }
     #ff-activity-image { max-width:200px; margin-top:10px; }
     #ff-activity-description { margin-top:10px; }
-    #ff-start-activity, #ff-done-btn { margin-top:12px; }
+    #ff-start-activity { margin-top:12px; }
     #ff-activity-countdown { font-size:1.4rem; margin-top:6px; }
     #ff-microfeedback { margin-top:10px; font-weight:500; white-space:pre-line; }
     #ff-settings { margin-top:10px; }
+    .energy-buttons button { margin-right:6px; margin-top:6px; }
   </style>
 </head>
 <body>
@@ -26,8 +27,6 @@
 
     <button id="ff-start-activity">Start 2-minutters timer</button>
     <div id="ff-activity-countdown" hidden>2:00</div>
-
-    <button id="ff-done-btn">Jeg har gjort det</button>
 
     <p id="ff-microfeedback" hidden></p>
 
@@ -71,10 +70,10 @@ function sendReminderNotification() {
 
 const ffActivities = [
   { title: "Gang på stedet i 2 min", text: "Gå roligt på stedet med lette skridt.", duration: 2, image: "images/gang.png" },
-  { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt for at aktivere lægmusklerne.", duration: 2, image: "images/laegloeft.png" },
+  { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt.", duration: 2, image: "images/laegloeft.png" },
   { title: "Rejs og sæt dig i 2 min", text: "Rejs dig roligt og sæt dig igen.", duration: 2, image: "images/rejs.png" },
-  { title: "Armcirkler i 2 min", text: "Stræk armene ud til siderne og lav store cirkler fremad og baglæns.", duration: 2, image: "images/armcirkel.png" },
-  { title: "Benstræk i 2 min", text: "Stræk ét ben ad gangen og hold kort, før du skifter.", duration: 2, image: "images/benstraek.png" }
+  { title: "Armcirkler i 2 min", text: "Lav store cirkler fremad og baglæns.", duration: 2, image: "images/armcirkel.png" },
+  { title: "Benstræk i 2 min", text: "Stræk ét ben ad gangen.", duration: 2, image: "images/benstraek.png" }
 ];
 
 const el = id => document.getElementById(id);
@@ -137,44 +136,40 @@ function startActivityTimer(minutes) {
     if (seconds <= 0) {
       clearInterval(activityInterval);
       new Audio("done.mp3").play();
+      showEnergyButtons();
     }
   }, 1000);
 }
 
-function resetUI() {
-  el("ff-microfeedback").hidden = true;
-  el("ff-activity-title").hidden = false;
-  el("ff-activity-description").hidden = false;
-  el("ff-done-btn").hidden = false;
-  localStorage.removeItem("ff-next-pause-time");
-  showActivity();
+function showEnergyButtons() {
+  const container = document.createElement("div");
+  container.className = "energy-buttons";
+  container.innerHTML = `
+    <p>Hvordan føles energien nu?</p>
+    <button onclick="completeBreak('mindre')">Mindre</button>
+    <button onclick="completeBreak('samme')">Samme</button>
+    <button onclick="completeBreak('mere')">Mere</button>
+    <button onclick="completeBreak('ved_ikke')">Ved ikke</button>
+  `;
+  el("ff-step-activity").appendChild(container);
 }
 
-function startReminderTimer() {
-  const interval = Number(localStorage.getItem("ff-reminder-interval")) || 30;
-  localStorage.setItem("ff-reminder-interval", interval);
+function completeBreak(delta) {
+  // 1) break_completed
+  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: "demo-user-1",
+      type: "break_completed",
+      timestamp: Date.now()
+    })
+  });
 
-  const nextTime = Date.now() + interval * 60000;
-  localStorage.setItem("ff-next-pause-time", nextTime);
+  // 2) energy_delta
+  sendEnergyDelta(delta);
 
-  startCountdown();
-}
-
-function startCountdown() {
-  clearInterval(countdownInterval);
-  countdownInterval = setInterval(() => {
-    const nextTime = Number(localStorage.getItem("ff-next-pause-time"));
-    const diff = nextTime - Date.now();
-
-    if (diff <= 0) {
-      clearInterval(countdownInterval);
-      sendReminderNotification();
-      resetUI();
-    }
-  }, 1000);
-}
-
-el("ff-done-btn").onclick = () => {
+  // 3) local stats
   const total = (Number(localStorage.getItem("ff-total-count")) || 0) + 1;
   localStorage.setItem("ff-total-count", total);
 
@@ -195,28 +190,14 @@ el("ff-done-btn").onclick = () => {
   }
 
   const startDate = localStorage.getItem("ff-start-date");
-  startReminderTimer();
-  const nextTime = localStorage.getItem("ff-next-pause-time");
-
-  ["ff-activity-title","ff-activity-description","ff-done-btn",
-   "ff-start-activity","ff-activity-countdown","ff-activity-image"]
-   .forEach(id => el(id).hidden = true);
+  const nextTime = Date.now() + (Number(localStorage.getItem("ff-reminder-interval")) || 30) * 60000;
 
   el("ff-microfeedback").textContent =
     formatMicrofeedback(todayCount, total, startDate, nextTime);
   el("ff-microfeedback").hidden = false;
 
-  // ⭐ ENERGIKNAPPER (indsat her)
-  const energyDiv = document.createElement("div");
-  energyDiv.innerHTML = `
-    <p>Hvordan føles energien nu?</p>
-    <button onclick="sendEnergyDelta('mindre')">Mindre</button>
-    <button onclick="sendEnergyDelta('samme')">Samme</button>
-    <button onclick="sendEnergyDelta('mere')">Mere</button>
-    <button onclick="sendEnergyDelta('ved_ikke')">Ved ikke</button>
-  `;
-  el("ff-microfeedback").insertAdjacentElement("afterend", energyDiv);
-};
+  startReminderTimer();
+}
 
 el("ff-settings-toggle").onclick = e => {
   e.preventDefault();
@@ -251,7 +232,6 @@ window.onload = () => {
   }
 };
 
-/* ⭐ ENERGIDATA → WORKER */
 function sendEnergyDelta(value) {
   fetch("https://workerff092.jakobhelkjaer.workers.dev/api/event", {
     method: "POST",
