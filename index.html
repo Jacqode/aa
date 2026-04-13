@@ -205,6 +205,17 @@ el("ff-done-btn").onclick = () => {
   el("ff-microfeedback").textContent =
     formatMicrofeedback(todayCount, total, startDate, nextTime);
   el("ff-microfeedback").hidden = false;
+
+  // ⭐ ENERGIKNAPPER (indsat her)
+  const energyDiv = document.createElement("div");
+  energyDiv.innerHTML = `
+    <p>Hvordan føles energien nu?</p>
+    <button onclick="sendEnergyDelta('mindre')">Mindre</button>
+    <button onclick="sendEnergyDelta('samme')">Samme</button>
+    <button onclick="sendEnergyDelta('mere')">Mere</button>
+    <button onclick="sendEnergyDelta('ved_ikke')">Ved ikke</button>
+  `;
+  el("ff-microfeedback").insertAdjacentElement("afterend", energyDiv);
 };
 
 el("ff-settings-toggle").onclick = e => {
@@ -239,6 +250,20 @@ window.onload = () => {
     startCountdown();
   }
 };
+
+/* ⭐ ENERGIDATA → WORKER */
+function sendEnergyDelta(value) {
+  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: "demo-user-1",
+      type: "energy_delta",
+      value: value,
+      timestamp: Date.now()
+    })
+  });
+}
 </script>
 
 </body>
