@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v096</title>
+  <title>Flow Focus v097</title>
   <link rel="manifest" href="manifest.json">
 
   <style>
@@ -16,12 +16,30 @@
       max-width:200px;
       margin-top:10px;
       display:block;
-      min-height:120px; /* ← stabiliserer layoutet */
+      min-height:120px;
     }
 
-    #ff-microfeedback { margin-top:10px; font-weight:500; white-space:pre-line; }
+    #ff-microfeedback { margin-top:20px; font-weight:500; }
     #ff-settings { margin-top:10px; }
     .energy-buttons button { margin-right:6px; margin-top:6px; }
+
+    table.energy-matrix {
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table.energy-matrix th,
+    table.energy-matrix td {
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    table.energy-matrix th {
+      background: #f3f3f3;
+    }
+    table.energy-matrix td:first-child {
+      font-weight: bold;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -36,10 +54,10 @@
     <button id="ff-start-activity">Start 2-minutters timer</button>
     <div id="ff-activity-countdown" hidden>2:00</div>
 
-    <!-- ILLUSTRATION (nu stabilt placeret) -->
+    <!-- ILLUSTRATION -->
     <img id="ff-activity-image" alt="Øvelse" hidden>
 
-    <!-- ENERGIKNAPPER (altid synlige) -->
+    <!-- ENERGIKNAPPER -->
     <div id="ff-energy-buttons" class="energy-buttons">
       <p>Hvordan føles din energi nu efter aktiviteten?</p>
       <button onclick="completeBreak('mindre')">Mindre</button>
@@ -48,7 +66,7 @@
       <button onclick="completeBreak('ved_ikke')">Ved ikke</button>
     </div>
 
-    <p id="ff-microfeedback" hidden></p>
+    <div id="ff-microfeedback" hidden></div>
 
     <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
@@ -102,20 +120,48 @@ function getRandomActivity() {
   return ffActivities[Math.floor(Math.random() * ffActivities.length)];
 }
 
-function formatMicrofeedback(today, total, startDate, nextTime) {
-  const next = new Date(Number(nextTime));
-  const nextClock = next.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+/* ---------------- MATRIX GENERATOR ---------------- */
 
-  return (
-    "Mikropauser\n" +
-    `- i dag: ${today}\n` +
-    `- i alt: ${total}\n` +
-    "\n" +
-    `Næste mikropause er kl. ${nextClock}.\n` +
-    "\n" +
-    "God arbejdslyst indtil da!"
-  );
+function generateEnergyMatrix(events) {
+  const hours = [8,9,10,11,12,13,14,15,16,17,18];
+  const levels = ["mindre", "samme", "mere", "ved_ikke"];
+
+  const matrix = {};
+  levels.forEach(l => {
+    matrix[l] = {};
+    hours.forEach(h => matrix[l][h] = 0);
+  });
+
+  events.forEach(ev => {
+    const d = new Date(ev.timestamp);
+    const hour = d.getHours();
+    if (hours.includes(hour) && levels.includes(ev.value)) {
+      matrix[ev.value][hour]++;
+    }
+  });
+
+  let html = "<table class='energy-matrix'><tr><th></th>";
+  hours.forEach(h => html += `<th>${h}</th>`);
+  html += "</tr>";
+
+  levels.forEach(level => {
+    html += `<tr><td>${level}</td>`;
+    hours.forEach(h => html += `<td>${matrix[level][h]}</td>`);
+    html += "</tr>";
+  });
+
+  html += "</table>";
+  return html;
 }
+
+function formatMicrofeedback(events) {
+  return `
+    <h3>Energimatrix for dagen</h3>
+    ${generateEnergyMatrix(events)}
+  `;
+}
+
+/* ---------------- ACTIVITY FLOW ---------------- */
 
 function showActivity() {
   const a = getRandomActivity();
@@ -175,32 +221,13 @@ function completeBreak(delta) {
   // 2) energy_delta
   sendEnergyDelta(delta);
 
-  // 3) local stats
-  const total = (Number(localStorage.getItem("ff-total-count")) || 0) + 1;
-  localStorage.setItem("ff-total-count", total);
-
-  const today = new Date().toISOString().slice(0, 10);
-  const lastDay = localStorage.getItem("ff-last-day");
-  const todayCount = today === lastDay
-    ? (Number(localStorage.getItem("ff-today-count")) || 0) + 1
-    : 1;
-
-  localStorage.setItem("ff-last-day", today);
-  localStorage.setItem("ff-today-count", todayCount);
-
-  if (!localStorage.getItem("ff-start-date")) {
-    const d = new Date();
-    localStorage.setItem("ff-start-date",
-      d.toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })
-    );
-  }
-
-  const startDate = localStorage.getItem("ff-start-date");
-  const nextTime = Date.now() + (Number(localStorage.getItem("ff-reminder-interval")) || 30) * 60000;
-
-  el("ff-microfeedback").textContent =
-    formatMicrofeedback(todayCount, total, startDate, nextTime);
-  el("ff-microfeedback").hidden = false;
+  // 3) fetch all events and show matrix
+  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/events?user_id=demo-user-1")
+    .then(r => r.json())
+    .then(events => {
+      el("ff-microfeedback").innerHTML = formatMicrofeedback(events);
+      el("ff-microfeedback").hidden = false;
+    });
 
   startReminderTimer();
 }
