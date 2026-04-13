@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v094</title>
+  <title>Flow Focus v095</title>
   <link rel="manifest" href="manifest.json">
 
   <style>
@@ -22,12 +22,14 @@
   <div id="ff-step-activity" hidden>
 
     <p id="ff-activity-title"></p>
-    <img id="ff-activity-image" alt="Øvelse" hidden>
     <p id="ff-activity-description"></p>
 
     <!-- OPTIONAL TIMER -->
     <button id="ff-start-activity">Start 2-minutters timer</button>
     <div id="ff-activity-countdown" hidden>2:00</div>
+
+    <!-- ILLUSTRATION NOW MOVED HERE -->
+    <img id="ff-activity-image" alt="Øvelse" hidden>
 
     <!-- ALWAYS VISIBLE ENERGY BUTTONS -->
     <div id="ff-energy-buttons" class="energy-buttons">
@@ -146,7 +148,7 @@ function startActivityTimer(minutes) {
     if (seconds <= 0) {
       clearInterval(activityInterval);
       new Audio("done.mp3").play();
-      // Timer slutter, men energiknapper er allerede synlige
+      // Energiknapper er allerede synlige
     }
   }, 1000);
 }
@@ -245,4 +247,3 @@ function sendEnergyDelta(value) {
 
 </body>
 </html>
-
