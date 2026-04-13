@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v093</title>
+  <title>Flow Focus v094</title>
   <link rel="manifest" href="manifest.json">
 
   <style>
@@ -25,8 +25,18 @@
     <img id="ff-activity-image" alt="Øvelse" hidden>
     <p id="ff-activity-description"></p>
 
+    <!-- OPTIONAL TIMER -->
     <button id="ff-start-activity">Start 2-minutters timer</button>
     <div id="ff-activity-countdown" hidden>2:00</div>
+
+    <!-- ALWAYS VISIBLE ENERGY BUTTONS -->
+    <div id="ff-energy-buttons" class="energy-buttons">
+      <p>Hvordan føles energien nu?</p>
+      <button onclick="completeBreak('mindre')">Mindre</button>
+      <button onclick="completeBreak('samme')">Samme</button>
+      <button onclick="completeBreak('mere')">Mere</button>
+      <button onclick="completeBreak('ved_ikke')">Ved ikke</button>
+    </div>
 
     <p id="ff-microfeedback" hidden></p>
 
@@ -136,22 +146,9 @@ function startActivityTimer(minutes) {
     if (seconds <= 0) {
       clearInterval(activityInterval);
       new Audio("done.mp3").play();
-      showEnergyButtons();
+      // Timer slutter, men energiknapper er allerede synlige
     }
   }, 1000);
-}
-
-function showEnergyButtons() {
-  const container = document.createElement("div");
-  container.className = "energy-buttons";
-  container.innerHTML = `
-    <p>Hvordan føles energien nu?</p>
-    <button onclick="completeBreak('mindre')">Mindre</button>
-    <button onclick="completeBreak('samme')">Samme</button>
-    <button onclick="completeBreak('mere')">Mere</button>
-    <button onclick="completeBreak('ved_ikke')">Ved ikke</button>
-  `;
-  el("ff-step-activity").appendChild(container);
 }
 
 function completeBreak(delta) {
