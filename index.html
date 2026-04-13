@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v098</title>
+  <title>Flow Focus v099</title>
   <link rel="manifest" href="manifest.json">
 
   <style>
@@ -11,7 +11,6 @@
     #ff-start-activity { margin-top:12px; }
     #ff-activity-countdown { font-size:1.4rem; margin-top:6px; }
 
-    /* FIX: reserver plads til billedet, så knappen ikke hopper */
     #ff-activity-image {
       max-width:200px;
       margin-top:10px;
@@ -51,14 +50,11 @@
     <p id="ff-activity-title"></p>
     <p id="ff-activity-description"></p>
 
-    <!-- TIMER (valgfri) -->
     <button id="ff-start-activity">Start 2-minutters timer</button>
     <div id="ff-activity-countdown" hidden>2:00</div>
 
-    <!-- ILLUSTRATION -->
     <img id="ff-activity-image" alt="Øvelse" hidden>
 
-    <!-- ENERGIKNAPPER -->
     <div id="ff-energy-buttons" class="energy-buttons">
       <p>Hvordan føles din energi nu efter aktiviteten?</p>
       <button onclick="completeBreak('mindre')">Mindre</button>
@@ -84,7 +80,6 @@
 </div>
 
 <script>
-let countdownInterval = null;
 let activityInterval = null;
 
 if ("serviceWorker" in navigator) {
@@ -105,7 +100,7 @@ const ffActivities = [
 
 const el = id => document.getElementById(id);
 
-/* ---------------- MATRIX GENERATOR ---------------- */
+/* ---------------- MATRIX ---------------- */
 
 function generateEnergyMatrix(events) {
   const hours = [8,9,10,11,12,13,14,15,16,17,18];
@@ -146,7 +141,7 @@ function formatMicrofeedback(events) {
   `;
 }
 
-/* ---------------- ACTIVITY FLOW ---------------- */
+/* ---------------- FLOW ---------------- */
 
 function showActivity() {
   const a = ffActivities[Math.floor(Math.random() * ffActivities.length)];
@@ -192,7 +187,7 @@ function startActivityTimer(minutes) {
 }
 
 function completeBreak(delta) {
-  // 1) break_completed
+  // break_completed
   fetch("https://workerff092.jakobhelkjaer.workers.dev/api/event", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -203,7 +198,7 @@ function completeBreak(delta) {
     })
   });
 
-  // 2) energy_delta
+  // energy_delta
   fetch("https://workerff092.jakobhelkjaer.workers.dev/api/event", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -215,7 +210,7 @@ function completeBreak(delta) {
     })
   });
 
-  // 3) fetch all today's events and show matrix
+  // hent dagens events
   fetch("https://workerff092.jakobhelkjaer.workers.dev/api/events/user/demo-user-1")
     .then(r => r.json())
     .then(events => {
@@ -240,9 +235,7 @@ el("ff-reminder-save").onclick = async () => {
 
 el("ff-reminder-disable").onclick = () => {
   localStorage.removeItem("ff-reminder-interval");
-  localStorage.removeItem("ff-next-pause-time");
   el("ff-reminder-feedback").textContent = "Slået fra.";
-  clearInterval(countdownInterval);
 };
 
 window.onload = () => {
