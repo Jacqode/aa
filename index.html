@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v097</title>
+  <title>Flow Focus v098</title>
   <link rel="manifest" href="manifest.json">
 
   <style>
@@ -20,8 +20,6 @@
     }
 
     #ff-microfeedback { margin-top:20px; font-weight:500; }
-    #ff-settings { margin-top:10px; }
-    .energy-buttons button { margin-right:6px; margin-top:6px; }
 
     table.energy-matrix {
       border-collapse: collapse;
@@ -40,6 +38,9 @@
       font-weight: bold;
       text-align: left;
     }
+
+    .energy-buttons button { margin-right:6px; margin-top:6px; }
+    #ff-settings { margin-top:10px; }
   </style>
 </head>
 <body>
@@ -94,18 +95,6 @@ async function requestNotificationPermission() {
   return (await Notification.requestPermission()) === "granted";
 }
 
-function sendReminderNotification() {
-  if (Notification.permission !== "granted") return;
-  navigator.serviceWorker.getRegistration().then(reg => {
-    reg?.showNotification("Flow Focus", {
-      body: "Tid til en aktiv mikropause – tryk for at åbne Flow Focus",
-      icon: "icon-192.png",
-      badge: "icon-192.png",
-      data: { url: "https://jacqode.github.io/aa" }
-    });
-  });
-}
-
 const ffActivities = [
   { title: "Gang på stedet i 2 min", text: "Gå roligt på stedet med lette skridt.", duration: 2, image: "images/gang.png" },
   { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt.", duration: 2, image: "images/laegloeft.png" },
@@ -115,10 +104,6 @@ const ffActivities = [
 ];
 
 const el = id => document.getElementById(id);
-
-function getRandomActivity() {
-  return ffActivities[Math.floor(Math.random() * ffActivities.length)];
-}
 
 /* ---------------- MATRIX GENERATOR ---------------- */
 
@@ -164,7 +149,7 @@ function formatMicrofeedback(events) {
 /* ---------------- ACTIVITY FLOW ---------------- */
 
 function showActivity() {
-  const a = getRandomActivity();
+  const a = ffActivities[Math.floor(Math.random() * ffActivities.length)];
   el("ff-activity-title").textContent = a.title;
   el("ff-activity-description").textContent = a.text;
 
@@ -219,17 +204,24 @@ function completeBreak(delta) {
   });
 
   // 2) energy_delta
-  sendEnergyDelta(delta);
+  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: "demo-user-1",
+      type: "energy_delta",
+      value: delta,
+      timestamp: Date.now()
+    })
+  });
 
-  // 3) fetch all events and show matrix
-  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/events?user_id=demo-user-1")
+  // 3) fetch all today's events and show matrix
+  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/events/user/demo-user-1")
     .then(r => r.json())
     .then(events => {
       el("ff-microfeedback").innerHTML = formatMicrofeedback(events);
       el("ff-microfeedback").hidden = false;
     });
-
-  startReminderTimer();
 }
 
 el("ff-settings-toggle").onclick = e => {
@@ -259,24 +251,7 @@ window.onload = () => {
     localStorage.getItem("ff-reminder-interval") || 30;
 
   showActivity();
-
-  if (localStorage.getItem("ff-next-pause-time")) {
-    startCountdown();
-  }
 };
-
-function sendEnergyDelta(value) {
-  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/event", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      user_id: "demo-user-1",
-      type: "energy_delta",
-      value: value,
-      timestamp: Date.now()
-    })
-  });
-}
 </script>
 
 </body>
