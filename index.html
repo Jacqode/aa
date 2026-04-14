@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v099</title>
+  <title>Flow Focus v100</title>
   <link rel="manifest" href="manifest.json">
 
   <style>
@@ -55,7 +55,7 @@
 
     <img id="ff-activity-image" alt="Øvelse" hidden>
 
-    <div id="ff-energy-buttons" class="energy-buttons">
+    <div class="energy-buttons">
       <p>Hvordan føles din energi nu efter aktiviteten?</p>
       <button onclick="completeBreak('mindre')">Mindre</button>
       <button onclick="completeBreak('samme')">Samme</button>
@@ -135,10 +135,10 @@ function generateEnergyMatrix(events) {
 }
 
 function formatMicrofeedback(events) {
-  return `
-    <h3>Energimatrix for dagen</h3>
-    ${generateEnergyMatrix(events)}
-  `;
+  return (
+    "<h3>Energimatrix for dagen</h3>" +
+    generateEnergyMatrix(events)
+  );
 }
 
 /* ---------------- FLOW ---------------- */
@@ -214,8 +214,8 @@ function completeBreak(delta) {
   fetch("https://workerff092.jakobhelkjaer.workers.dev/api/events/user/demo-user-1")
     .then(r => r.json())
     .then(events => {
-      el("ff-microfeedback").innerHTML = formatMicrofeedback(events);
       el("ff-microfeedback").hidden = false;
+      el("ff-microfeedback").innerHTML = formatMicrofeedback(events);
     });
 }
 
