@@ -4,70 +4,51 @@
   <meta charset="UTF-8">
   <title>Flow Focus v100</title>
   <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 
   <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding:16px; }
     #ff-activity-title { font-weight:600; font-size:1.2rem; }
     #ff-activity-description { margin-top:10px; }
     #ff-start-activity { margin-top:12px; }
     #ff-activity-countdown { font-size:1.4rem; margin-top:6px; }
-
-    #ff-activity-image {
-      max-width:200px;
-      margin-top:10px;
-      display:block;
-      min-height:120px;
-    }
-
+    #ff-activity-image { max-width:200px; margin-top:10px; display:block; min-height:120px; }
     #ff-microfeedback { margin-top:20px; font-weight:500; }
-
-    table.energy-matrix {
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    table.energy-matrix th,
-    table.energy-matrix td {
-      border: 1px solid #ccc;
-      padding: 4px 6px;
-      text-align: center;
-    }
-    table.energy-matrix th {
-      background: #f3f3f3;
-    }
-    table.energy-matrix td:first-child {
-      font-weight: bold;
-      text-align: left;
-    }
-
+    table.energy-matrix { border-collapse: collapse; margin-top: 10px; width:100%; max-width:720px; }
+    table.energy-matrix th, table.energy-matrix td { border: 1px solid #ccc; padding: 4px 6px; text-align: center; }
+    table.energy-matrix th { background: #f3f3f3; }
+    table.energy-matrix td:first-child { font-weight: bold; text-align: left; }
     .energy-buttons button { margin-right:6px; margin-top:6px; }
     #ff-settings { margin-top:10px; }
+    .hidden { display:none !important; }
   </style>
 </head>
 <body>
 
-<div id="ff-box" hidden>
-  <div id="ff-step-activity" hidden>
+<div id="ff-box" class="hidden">
+  <div id="ff-step-activity" class="hidden">
 
     <p id="ff-activity-title"></p>
     <p id="ff-activity-description"></p>
 
     <button id="ff-start-activity">Start 2-minutters timer</button>
-    <div id="ff-activity-countdown" hidden>2:00</div>
+    <div id="ff-activity-countdown" class="hidden">2:00</div>
 
-    <img id="ff-activity-image" alt="Øvelse" hidden>
+    <img id="ff-activity-image" alt="Øvelse" class="hidden">
 
-    <div class="energy-buttons">
+    <div class="energy-buttons" id="ff-energy-buttons">
       <p>Hvordan føles din energi nu efter aktiviteten?</p>
-      <button onclick="completeBreak('mindre')">Mindre</button>
-      <button onclick="completeBreak('samme')">Samme</button>
-      <button onclick="completeBreak('mere')">Mere</button>
-      <button onclick="completeBreak('ved_ikke')">Ved ikke</button>
+      <button data-value="mindre">Mindre</button>
+      <button data-value="samme">Samme</button>
+      <button data-value="mere">Mere</button>
+      <button data-value="ved_ikke">Ved ikke</button>
     </div>
 
-    <div id="ff-microfeedback" hidden></div>
+    <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
 
     <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
-    <div id="ff-settings" hidden>
+    <div id="ff-settings" class="hidden">
       <h4>Påmindelser</h4>
       <input id="ff-reminder-input" type="number" min="1" style="width:60px;"> minutter
       <br><br>
@@ -80,16 +61,12 @@
 </div>
 
 <script>
-let activityInterval = null;
+/* ---------------- Helpers ---------------- */
+const el = id => document.getElementById(id);
+const ORIGIN = "https://jacqode.github.io"; // production origin; change to '*' for dev if needed
+const WORKER_BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-
-async function requestNotificationPermission() {
-  return (await Notification.requestPermission()) === "granted";
-}
-
+/* ---------------- Activities ---------------- */
 const ffActivities = [
   { title: "Gang på stedet i 2 min", text: "Gå roligt på stedet med lette skridt.", duration: 2, image: "images/gang.png" },
   { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt.", duration: 2, image: "images/laegloeft.png" },
@@ -98,19 +75,13 @@ const ffActivities = [
   { title: "Benstræk i 2 min", text: "Stræk ét ben ad gangen.", duration: 2, image: "images/benstraek.png" }
 ];
 
-const el = id => document.getElementById(id);
-
-/* ---------------- MATRIX ---------------- */
-
+/* ---------------- Matrix rendering ---------------- */
 function generateEnergyMatrix(events) {
   const hours = [8,9,10,11,12,13,14,15,16,17,18];
   const levels = ["mindre", "samme", "mere", "ved_ikke"];
 
   const matrix = {};
-  levels.forEach(l => {
-    matrix[l] = {};
-    hours.forEach(h => matrix[l][h] = 0);
-  });
+  levels.forEach(l => { matrix[l] = {}; hours.forEach(h => matrix[l][h] = 0); });
 
   events.forEach(ev => {
     const d = new Date(ev.timestamp);
@@ -135,13 +106,11 @@ function generateEnergyMatrix(events) {
 }
 
 function formatMicrofeedback(events) {
-  return (
-    "<h3>Energimatrix for dagen</h3>" +
-    generateEnergyMatrix(events)
-  );
+  return "<h3>Energimatrix for dagen</h3>" + generateEnergyMatrix(events);
 }
 
-/* ---------------- FLOW ---------------- */
+/* ---------------- UI flow ---------------- */
+let activityInterval = null;
 
 function showActivity() {
   const a = ffActivities[Math.floor(Math.random() * ffActivities.length)];
@@ -150,13 +119,14 @@ function showActivity() {
 
   if (a.image) {
     el("ff-activity-image").src = a.image;
-    el("ff-activity-image").hidden = false;
+    el("ff-activity-image").classList.remove("hidden");
   } else {
-    el("ff-activity-image").hidden = true;
+    el("ff-activity-image").classList.add("hidden");
   }
 
-  el("ff-activity-countdown").hidden = true;
-  el("ff-step-activity").hidden = false;
+  el("ff-activity-countdown").classList.add("hidden");
+  el("ff-step-activity").classList.remove("hidden");
+  el("ff-box").classList.remove("hidden");
 
   el("ff-start-activity").onclick = () => {
     clearInterval(activityInterval);
@@ -167,7 +137,7 @@ function showActivity() {
 function startActivityTimer(minutes) {
   let seconds = minutes * 60;
   const display = el("ff-activity-countdown");
-  display.hidden = false;
+  display.classList.remove("hidden");
 
   const update = () => {
     const m = Math.floor(seconds / 60);
@@ -181,70 +151,101 @@ function startActivityTimer(minutes) {
     update();
     if (seconds <= 0) {
       clearInterval(activityInterval);
-      new Audio("done.mp3").play();
+      try { new Audio("done.mp3").play(); } catch(e) {}
     }
   }, 1000);
 }
 
-function completeBreak(delta) {
-  // break_completed
-  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/event", {
+/* ---------------- Network / events ---------------- */
+async function postEvent(payload) {
+  const url = WORKER_BASE + "/api/event";
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+    body: JSON.stringify(payload),
+    mode: "cors",
+    credentials: "omit"
+  });
+  return res.json();
+}
+
+async function fetchEventsForUser(userId) {
+  const url = WORKER_BASE + "/api/events/user/" + encodeURIComponent(userId);
+  const res = await fetch(url, { method: "GET", mode: "cors", credentials: "omit" });
+  return res.json();
+}
+
+async function completeBreak(delta) {
+  try {
+    // break_completed
+    await postEvent({
       user_id: "demo-user-1",
       type: "break_completed",
-      timestamp: Date.now()
-    })
-  });
+      timestamp: new Date().toISOString()
+    });
 
-  // energy_delta
-  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/event", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+    // energy_delta
+    await postEvent({
       user_id: "demo-user-1",
       type: "energy_delta",
       value: delta,
-      timestamp: Date.now()
-    })
-  });
-
-  // hent dagens events
-  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/events/user/demo-user-1")
-    .then(r => r.json())
-    .then(events => {
-      el("ff-microfeedback").hidden = false;
-      el("ff-microfeedback").innerHTML = formatMicrofeedback(events);
+      timestamp: new Date().toISOString()
     });
+
+    // hent dagens events og vis matrix
+    const events = await fetchEventsForUser("demo-user-1");
+    el("ff-microfeedback").classList.remove("hidden");
+    el("ff-microfeedback").innerHTML = formatMicrofeedback(Array.isArray(events) ? events : []);
+  } catch (err) {
+    console.error("Network error:", err);
+    el("ff-microfeedback").classList.remove("hidden");
+    el("ff-microfeedback").innerHTML = "<p>Der opstod en netværksfejl. Tjek konsollen.</p>";
+  }
 }
 
-el("ff-settings-toggle").onclick = e => {
-  e.preventDefault();
-  el("ff-settings").hidden = !el("ff-settings").hidden;
-};
+/* ---------------- Event binding ---------------- */
+function bindEnergyButtons() {
+  document.querySelectorAll('.energy-buttons button').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const val = this.getAttribute('data-value');
+      completeBreak(val);
+    });
+  });
+}
 
-el("ff-reminder-save").onclick = async () => {
+/* ---------------- Settings handlers ---------------- */
+el("ff-settings-toggle").addEventListener('click', e => {
+  e.preventDefault();
+  el("ff-settings").classList.toggle("hidden");
+});
+
+el("ff-reminder-save").addEventListener('click', async () => {
   const m = Number(el("ff-reminder-input").value);
   if (m > 0) localStorage.setItem("ff-reminder-interval", m);
-
   const ok = await requestNotificationPermission();
-  el("ff-reminder-feedback").textContent =
-    ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
-};
+  el("ff-reminder-feedback").textContent = ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
+});
 
-el("ff-reminder-disable").onclick = () => {
+el("ff-reminder-disable").addEventListener('click', () => {
   localStorage.removeItem("ff-reminder-interval");
   el("ff-reminder-feedback").textContent = "Slået fra.";
-};
+});
 
-window.onload = () => {
-  el("ff-box").hidden = false;
-  el("ff-reminder-input").value =
-    localStorage.getItem("ff-reminder-interval") || 30;
+/* ---------------- Notifications helper ---------------- */
+async function requestNotificationPermission() {
+  try {
+    return (await Notification.requestPermission()) === "granted";
+  } catch (e) {
+    return false;
+  }
+}
 
+/* ---------------- Init ---------------- */
+window.addEventListener('load', () => {
+  el("ff-reminder-input").value = localStorage.getItem("ff-reminder-interval") || 30;
+  bindEnergyButtons();
   showActivity();
-};
+});
 </script>
 
 </body>
