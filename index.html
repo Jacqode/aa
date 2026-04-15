@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v102</title>
+  <title>Flow Focus v103</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="manifest" href="manifest.json">
 
@@ -44,11 +44,13 @@
       <button data-value="ved_ikke">Ved ikke</button>
     </div>
 
-    <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
-
     <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
     <div id="ff-settings" class="hidden">
+
+      <!-- ⭐ NY PLACERING: Energimatrix øverst i Indstillinger -->
+      <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
+
       <h4>Påmindelser</h4>
       <input id="ff-reminder-input" type="number" min="1" style="width:60px;"> minutter
       <br><br>
@@ -235,7 +237,7 @@ el("ff-reminder-save").addEventListener('click', async () => {
   el("ff-reminder-feedback").textContent =
     ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
 
-  startReminderTimer();   /* ← AFGØRENDE */
+  startReminderTimer();
 });
 
 el("ff-reminder-disable").addEventListener('click', () => {
