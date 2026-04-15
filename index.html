@@ -63,7 +63,6 @@
 <script>
 /* ---------------- Helpers ---------------- */
 const el = id => document.getElementById(id);
-const ORIGIN = "https://jacqode.github.io"; // production origin; change to '*' for dev if needed
 const WORKER_BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 
 /* ---------------- Activities ---------------- */
@@ -177,14 +176,12 @@ async function fetchEventsForUser(userId) {
 
 async function completeBreak(delta) {
   try {
-    // break_completed
     await postEvent({
       user_id: "demo-user-1",
       type: "break_completed",
       timestamp: new Date().toISOString()
     });
 
-    // energy_delta
     await postEvent({
       user_id: "demo-user-1",
       type: "energy_delta",
@@ -192,10 +189,20 @@ async function completeBreak(delta) {
       timestamp: new Date().toISOString()
     });
 
-    // hent dagens events og vis matrix
     const events = await fetchEventsForUser("demo-user-1");
+
+    const interval = Number(localStorage.getItem("ff-reminder-interval") || 30);
+    const next = new Date(Date.now() + interval * 60000);
+    const nextPauseTime = next.toLocaleTimeString("da-DK", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
     el("ff-microfeedback").classList.remove("hidden");
-    el("ff-microfeedback").innerHTML = formatMicrofeedback(Array.isArray(events) ? events : []);
+    el("ff-microfeedback").innerHTML =
+      `<p>Du påmindes om næste pause kl. ${nextPauseTime}.<br>God arbejdslyst indtil da.</p>` +
+      formatMicrofeedback(events);
+
   } catch (err) {
     console.error("Network error:", err);
     el("ff-microfeedback").classList.remove("hidden");
