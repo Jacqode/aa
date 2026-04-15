@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v100</title>
+  <title>Flow Focus v101</title>
   <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width,initial-scale=1">
 
@@ -200,8 +200,9 @@ async function completeBreak(delta) {
 
     el("ff-microfeedback").classList.remove("hidden");
     el("ff-microfeedback").innerHTML =
-      `<p>Du påmindes om næste pause kl. ${nextPauseTime}.<br>God arbejdslyst indtil da.</p>` +
-      formatMicrofeedback(events);
+      `<p>Tak. Dit energiudbytte er registreret.</p>
+       <p>Du påmindes om næste pause kl. ${nextPauseTime}.<br>God arbejdslyst indtil da.</p>
+       ${formatMicrofeedback(events)}`;
 
   } catch (err) {
     console.error("Network error:", err);
