@@ -64,8 +64,6 @@
 
 <script>
 /* ---------------- DEFAULT REMINDER LOGIC ---------------- */
-// Påmindelser er altid slået til første gang appen åbnes (30 min)
-// Hvis bruger nogensinde slår dem til → permanent aktiveret
 if (localStorage.getItem("ff-reminder-interval") === null) {
   localStorage.setItem("ff-reminder-interval", "30");
 }
@@ -207,9 +205,10 @@ async function completeBreak(delta) {
       minute: "2-digit"
     });
 
+    /* ---------------- UPDATED TEXT ---------------- */
     el("ff-microfeedback").innerHTML =
-      `<p>Tak. Dit energiudbytte er registreret.</p>
-       <p>Du påmindes om næste pause kl. ${nextPauseTime}.<br>God arbejdslyst indtil da.</p>
+      `<p>Din registrering af energi efter aktivitet er gemt.</p>
+       <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>
        ${formatMicrofeedback(events)}`;
 
   } catch (err) {
