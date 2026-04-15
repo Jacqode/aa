@@ -44,12 +44,15 @@
       <button data-value="ved_ikke">Ved ikke</button>
     </div>
 
+    <!-- ★ NY PLACERING: microfeedback direkte under energiknapper -->
+    <div id="ff-microfeedback" aria-live="polite"></div>
+
     <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
     <div id="ff-settings" class="hidden">
 
       <!-- Matrix vises altid når Indstillinger er åbent -->
-      <div id="ff-microfeedback" aria-live="polite"></div>
+      <div id="ff-matrix"></div> <!-- ★ NYT: matrix flyttet hertil -->
 
       <h4>Påmindelser</h4>
       <input id="ff-reminder-input" type="number" min="1" style="width:60px;"> minutter
@@ -63,16 +66,15 @@
 </div>
 
 <script>
-/* ---------------- DEFAULT REMINDER LOGIC ---------------- */
+/* DEFAULT REMINDER LOGIC */
 if (localStorage.getItem("ff-reminder-interval") === null) {
   localStorage.setItem("ff-reminder-interval", "30");
 }
 
-/* ---------------- Helpers ---------------- */
 const el = id => document.getElementById(id);
 const WORKER_BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 
-/* ---------------- Activities ---------------- */
+/* Activities */
 const ffActivities = [
   { title: "Gang på stedet i 2 min", text: "Gå roligt på stedet med lette skridt.", duration: 2, image: "images/gang.png" },
   { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt.", duration: 2, image: "images/laegloeft.png" },
@@ -81,7 +83,7 @@ const ffActivities = [
   { title: "Benstræk i 2 min", text: "Stræk ét ben ad gangen.", duration: 2, image: "images/benstraek.png" }
 ];
 
-/* ---------------- Matrix rendering ---------------- */
+/* Matrix */
 function generateEnergyMatrix(events) {
   const hours = [8,9,10,11,12,13,14,15,16,17,18];
   const levels = ["mindre", "samme", "mere", "ved_ikke"];
@@ -115,7 +117,7 @@ function formatMicrofeedback(events) {
   return "<h3>Energimatrix for dagen</h3>" + generateEnergyMatrix(events);
 }
 
-/* ---------------- UI flow ---------------- */
+/* UI flow */
 let activityInterval = null;
 
 function showActivity() {
@@ -162,7 +164,7 @@ function startActivityTimer(minutes) {
   }, 1000);
 }
 
-/* ---------------- Network / events ---------------- */
+/* Network */
 async function postEvent(payload) {
   const url = WORKER_BASE + "/api/event";
   const res = await fetch(url, {
@@ -181,6 +183,7 @@ async function fetchEventsForUser(userId) {
   return res.json();
 }
 
+/* COMPLETE BREAK — ★ OPDATERET PLACERING */
 async function completeBreak(delta) {
   try {
     await postEvent({
@@ -205,11 +208,13 @@ async function completeBreak(delta) {
       minute: "2-digit"
     });
 
-    /* ---------------- UPDATED TEXT ---------------- */
+    /* ★ NY PLACERING: microfeedback direkte under energiknapper */
     el("ff-microfeedback").innerHTML =
       `<p>Din registrering af energi efter aktivitet er gemt.</p>
-       <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>
-       ${formatMicrofeedback(events)}`;
+       <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
+
+    /* Matrix vises kun i Indstillinger */
+    el("ff-matrix").innerHTML = formatMicrofeedback(events);
 
   } catch (err) {
     console.error("Network error:", err);
@@ -217,7 +222,7 @@ async function completeBreak(delta) {
   }
 }
 
-/* ---------------- Event binding ---------------- */
+/* Bindings */
 function bindEnergyButtons() {
   document.querySelectorAll('.energy-buttons button').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -227,7 +232,7 @@ function bindEnergyButtons() {
   });
 }
 
-/* ---------------- Settings handlers ---------------- */
+/* Settings */
 el("ff-settings-toggle").addEventListener('click', async e => {
   e.preventDefault();
   const box = el("ff-settings");
@@ -235,10 +240,11 @@ el("ff-settings-toggle").addEventListener('click', async e => {
 
   if (!box.classList.contains("hidden")) {
     const events = await fetchEventsForUser("demo-user-1");
-    el("ff-microfeedback").innerHTML = formatMicrofeedback(events);
+    el("ff-matrix").innerHTML = formatMicrofeedback(events);
   }
 });
 
+/* Reminders */
 el("ff-reminder-save").addEventListener('click', async () => {
   const m = Number(el("ff-reminder-input").value);
   if (m > 0) localStorage.setItem("ff-reminder-interval", m);
@@ -255,7 +261,7 @@ el("ff-reminder-disable").addEventListener('click', () => {
   el("ff-reminder-feedback").textContent = "Slået fra.";
 });
 
-/* ---------------- Notifications helper ---------------- */
+/* Notifications */
 async function requestNotificationPermission() {
   try {
     return (await Notification.requestPermission()) === "granted";
@@ -264,7 +270,6 @@ async function requestNotificationPermission() {
   }
 }
 
-/* ---------------- OS-notifikation ---------------- */
 function sendReminderNotification() {
   if (Notification.permission !== "granted") return;
 
@@ -280,7 +285,6 @@ function sendReminderNotification() {
   });
 }
 
-/* ---------------- Reminder timer ---------------- */
 function startReminderTimer() {
   const interval = Number(localStorage.getItem("ff-reminder-interval") || 30);
 
@@ -289,7 +293,7 @@ function startReminderTimer() {
   }, interval * 60000);
 }
 
-/* ---------------- Init ---------------- */
+/* Init */
 window.addEventListener('load', () => {
   el("ff-reminder-input").value = localStorage.getItem("ff-reminder-interval") || 30;
   bindEnergyButtons();
