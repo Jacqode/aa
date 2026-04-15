@@ -230,8 +230,12 @@ el("ff-settings-toggle").addEventListener('click', e => {
 el("ff-reminder-save").addEventListener('click', async () => {
   const m = Number(el("ff-reminder-input").value);
   if (m > 0) localStorage.setItem("ff-reminder-interval", m);
+
   const ok = await requestNotificationPermission();
-  el("ff-reminder-feedback").textContent = ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
+  el("ff-reminder-feedback").textContent =
+    ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
+
+  startReminderTimer();   /* ← AFGØRENDE LINJE */
 });
 
 el("ff-reminder-disable").addEventListener('click', () => {
@@ -246,6 +250,29 @@ async function requestNotificationPermission() {
   } catch (e) {
     return false;
   }
+}
+
+/* ---------------- OS-notifikation (indsat) ---------------- */
+function sendReminderNotification() {
+  if (Notification.permission !== "granted") return;
+
+  navigator.serviceWorker.getRegistration().then(reg => {
+    if (reg) {
+      reg.showNotification("Flow Focus", {
+        body: "Tid til en aktiv mikropause – tryk for at åbne Flow Focus",
+        icon: "icon-192.png",
+        badge: "icon-192.png",
+        data: { url: "https://jacqode.github.io/aa" }
+      });
+    }
+  });
+}
+
+/* ---------------- Reminder timer ---------------- */
+function startReminderTimer() {
+  const interval = Number(localStorage.getItem("ff-reminder-interval") || 30);
+  const nextTime = Date.now() + interval * 60000;
+  localStorage.setItem("ff-next-pause-time", nextTime);
 }
 
 /* ---------------- Init ---------------- */
