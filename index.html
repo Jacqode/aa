@@ -63,13 +63,6 @@
 </div>
 
 <script>
-/* ---------------- DEFAULT REMINDER LOGIC ---------------- */
-// Påmindelser er altid slået til første gang appen åbnes (30 min)
-// Hvis bruger nogensinde slår dem til → permanent aktiveret
-if (localStorage.getItem("ff-reminder-interval") === null) {
-  localStorage.setItem("ff-reminder-interval", "30");
-}
-
 /* ---------------- Helpers ---------------- */
 const el = id => document.getElementById(id);
 const WORKER_BASE = "https://workerff092.jakobhelkjaer.workers.dev";
@@ -300,3 +293,4 @@ window.addEventListener('load', () => {
 
 </body>
 </html>
+
