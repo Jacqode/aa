@@ -235,7 +235,7 @@ el("ff-reminder-save").addEventListener('click', async () => {
   el("ff-reminder-feedback").textContent =
     ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
 
-  startReminderTimer();   /* ← AFGØRENDE LINJE */
+  startReminderTimer();   /* ← AFGØRENDE */
 });
 
 el("ff-reminder-disable").addEventListener('click', () => {
@@ -252,7 +252,7 @@ async function requestNotificationPermission() {
   }
 }
 
-/* ---------------- OS-notifikation (indsat) ---------------- */
+/* ---------------- OS-notifikation ---------------- */
 function sendReminderNotification() {
   if (Notification.permission !== "granted") return;
 
@@ -271,8 +271,10 @@ function sendReminderNotification() {
 /* ---------------- Reminder timer ---------------- */
 function startReminderTimer() {
   const interval = Number(localStorage.getItem("ff-reminder-interval") || 30);
-  const nextTime = Date.now() + interval * 60000;
-  localStorage.setItem("ff-next-pause-time", nextTime);
+
+  setTimeout(() => {
+    sendReminderNotification();
+  }, interval * 60000);
 }
 
 /* ---------------- Init ---------------- */
