@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v112</title>
+  <title>Flow Focus v113</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="manifest" href="manifest.json">
 
@@ -44,8 +44,8 @@
       <button data-value="ved_ikke">Ved ikke</button>
     </div>
 
-    <!-- Microfeedback direkte under knapper -->
-    <div id="ff-microfeedback" aria-live="polite"></div>
+    <!-- Microfeedback direkte under knapper; starter skjult og vises kun efter klik -->
+    <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
 
     <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
@@ -142,7 +142,7 @@ function showActivity() {
   el("ff-step-activity").classList.remove("hidden");
   el("ff-box").classList.remove("hidden");
 
-  // Ensure activity UI is visible
+  // Ensure activity UI is visible (microfeedback stays hidden until user clicks)
   showActivityUI();
 
   el("ff-start-activity").onclick = () => {
@@ -159,9 +159,11 @@ function hideActivityUI() {
   el("ff-activity-countdown").classList.add("hidden");
   el("ff-activity-image").classList.add("hidden");
   el("ff-energy-buttons").classList.add("hidden");
+  // microfeedback must be shown only after click, so hide it here
+  el("ff-microfeedback").classList.add("hidden");
 }
 
-/* Show the activity UI elements again */
+/* Show the activity UI elements again (microfeedback remains hidden until next click) */
 function showActivityUI() {
   el("ff-activity-title").classList.remove("hidden");
   el("ff-activity-description").classList.remove("hidden");
@@ -171,6 +173,8 @@ function showActivityUI() {
     el("ff-activity-image").classList.remove("hidden");
   }
   el("ff-energy-buttons").classList.remove("hidden");
+  // keep microfeedback hidden until user clicks an energy button
+  el("ff-microfeedback").classList.add("hidden");
 }
 
 function startActivityTimer(minutes) {
@@ -243,6 +247,9 @@ async function completeBreak(delta) {
       `<p>Klik registreret.</p>
        <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
 
+    // Vis microfeedback (only this and settings remain visible)
+    el("ff-microfeedback").classList.remove("hidden");
+
     // Skjul aktivitetselementerne indtil næste aktivitetstid
     hideActivityUI();
 
@@ -263,6 +270,7 @@ async function completeBreak(delta) {
   } catch (err) {
     console.error("Network error:", err);
     el("ff-microfeedback").innerHTML = "<p>Der opstod en netværksfejl. Tjek konsollen.</p>";
+    el("ff-microfeedback").classList.remove("hidden");
   }
 }
 
