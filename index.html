@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v109</title>
+  <title>Flow Focus v110</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="manifest" href="manifest.json">
 
@@ -203,8 +203,6 @@ async function completeBreak(delta) {
       timestamp: new Date().toISOString()
     });
 
-    const events = await fetchEventsForUser("demo-user-1");
-
     const interval = Number(localStorage.getItem("ff-reminder-interval") || 30);
     const next = new Date(Date.now() + interval * 60000);
     const nextPauseTime = next.toLocaleTimeString("da-DK", {
@@ -216,7 +214,7 @@ async function completeBreak(delta) {
       `<p>Klik registreret.</p>
        <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
 
-    el("ff-matrix").innerHTML = formatMicrofeedback(events);
+    /* Matrix fjernet her — vises kun i Indstillinger */
 
   } catch (err) {
     console.error("Network error:", err);
