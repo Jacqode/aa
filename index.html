@@ -1,77 +1,71 @@
 <!DOCTYPE html>
 <html lang="da">
 <head>
-  <meta charset="utf-8">
-  <title>Flow Focus v117</title>
+  <meta charset="UTF-8">
+  <title>Flow Focus v118</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding:16px; color:#111; }
-    #ff-activity-title { font-weight:600; font-size:1.15rem; margin:0 0 6px 0; }
-    #ff-activity-description { margin:0 0 12px 0; color:#333; }
-    #ff-start-activity { margin-top:6px; padding:8px 12px; }
-    #ff-activity-countdown { font-size:1.2rem; margin-top:8px; }
-    #ff-activity-image { max-width:200px; margin-top:10px; display:block; min-height:80px; }
-    #ff-microfeedback { margin-top:10px; background:#f7f9fb; padding:10px; border-radius:6px; color:#0b3b2e; }
-    #ff-microfeedback p { margin:4px 0; line-height:1.3; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding:16px; }
+    #ff-activity-title { font-weight:600; font-size:1.2rem; }
+    #ff-activity-description { margin-top:10px; }
+    #ff-start-activity { margin-top:12px; }
+    #ff-activity-countdown { font-size:1.4rem; margin-top:6px; }
+    #ff-activity-image { max-width:200px; margin-top:10px; display:block; min-height:120px; }
+    #ff-microfeedback p { margin:4px 0; }
     table.energy-matrix { border-collapse: collapse; margin-top: 10px; width:100%; max-width:720px; }
-    table.energy-matrix th, table.energy-matrix td { border: 1px solid #e0e0e0; padding: 6px 8px; text-align: center; font-size:0.9rem; }
-    table.energy-matrix th { background: #fafafa; font-weight:600; }
-    table.energy-matrix td:first-child { font-weight:600; text-align:left; }
-    .energy-buttons button { margin-right:8px; margin-top:8px; padding:8px 10px; }
-    #ff-settings { margin-top:10px; padding:10px; border-radius:6px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+    table.energy-matrix th, table.energy-matrix td { border: 1px solid #ccc; padding: 4px 6px; text-align: center; }
+    table.energy-matrix th { background: #f3f3f3; }
+    table.energy-matrix td:first-child { font-weight: bold; text-align: left; }
+    .energy-buttons button { margin-right:6px; margin-top:6px; }
+    #ff-settings { margin-top:10px; }
     .hidden { display:none !important; }
-    a#ff-settings-toggle { color:#0b66c3; text-decoration:none; font-weight:600; }
-    a#ff-settings-toggle:focus { outline:2px solid #cfe6ff; outline-offset:2px; }
   </style>
 </head>
 <body>
 
-<div id="ff-box" class="hidden" aria-live="polite">
+<div id="ff-box" class="hidden">
   <div id="ff-step-activity" class="hidden">
 
-    <p id="ff-activity-title" aria-hidden="true"></p>
-    <p id="ff-activity-description" aria-hidden="true"></p>
+    <p id="ff-activity-title"></p>
+    <p id="ff-activity-description"></p>
 
-    <button id="ff-start-activity" class="hidden" aria-hidden="true">Start 2-minutters timer</button>
-    <div id="ff-activity-countdown" class="hidden" aria-hidden="true">2:00</div>
+    <button id="ff-start-activity">Start 2-minutters timer</button>
+    <div id="ff-activity-countdown" class="hidden">2:00</div>
 
-    <img id="ff-activity-image" alt="Øvelse" class="hidden" aria-hidden="true">
+    <img id="ff-activity-image" alt="Øvelse" class="hidden">
 
-    <div class="energy-buttons" id="ff-energy-buttons" aria-hidden="true">
-      <p style="margin:0 0 6px 0;">Hvordan føles din energi nu efter aktiviteten?</p>
+    <div class="energy-buttons" id="ff-energy-buttons">
+      <p>Hvordan føles din energi nu efter aktiviteten?</p>
       <button data-value="mindre">Mindre</button>
       <button data-value="samme">Samme</button>
       <button data-value="mere">Mere</button>
       <button data-value="ved_ikke">Ved ikke</button>
     </div>
 
-    <!-- Microfeedback og settings-link starter skjult og vises KUN efter klik -->
+    <!-- Microfeedback starter skjult og vises kun efter klik -->
     <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
+
+    <!-- Indstillingslink starter skjult og vises kun efter klik -->
     <p id="ff-settings-link" class="hidden"><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
-    <div id="ff-settings" class="hidden" aria-hidden="true">
-      <div id="ff-matrix" aria-live="polite"></div>
+    <div id="ff-settings" class="hidden">
+      <div id="ff-matrix"></div>
 
-      <h4 style="margin:10px 0 6px 0;">Påmindelser</h4>
-      <label for="ff-reminder-input" style="font-size:0.95rem; color:#333;">Interval</label>
-      <input id="ff-reminder-input" type="number" min="1" style="width:70px; margin-left:8px;"> minutter
-      <div style="margin-top:10px;">
-        <button id="ff-reminder-save">Gem</button>
-        <button id="ff-reminder-disable">Slå fra</button>
-      </div>
-      <p id="ff-reminder-feedback" style="margin-top:8px; color:#444;"></p>
+      <h4>Påmindelser</h4>
+      <input id="ff-reminder-input" type="number" min="1" style="width:60px;"> minutter
+      <br><br>
+      <button id="ff-reminder-save">Gem</button>
+      <button id="ff-reminder-disable">Slå fra</button>
+      <p id="ff-reminder-feedback"></p>
     </div>
 
   </div>
 </div>
 
 <script>
-/* v116 - Flow Focus
-   - Microfeedback + Indstillinger vises KUN efter bruger klik på energiknap
-   - Aktivitetselementer skjules efter klik og genvises ved næste aktivitetstid
-   - Matrix hentes kun når Indstillinger åbnes
-*/
-
+/* DEFAULT REMINDER LOGIC */
 if (localStorage.getItem("ff-reminder-interval") === null) {
   localStorage.setItem("ff-reminder-interval", "30");
 }
@@ -79,6 +73,7 @@ if (localStorage.getItem("ff-reminder-interval") === null) {
 const el = id => document.getElementById(id);
 const WORKER_BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 
+/* Activities */
 const ffActivities = [
   { title: "Gang på stedet i 2 min", text: "Gå roligt på stedet med lette skridt.", duration: 2, image: "images/gang.png" },
   { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt.", duration: 2, image: "images/laegloeft.png" },
@@ -87,9 +82,11 @@ const ffActivities = [
   { title: "Benstræk i 2 min", text: "Stræk ét ben ad gangen.", duration: 2, image: "images/benstraek.png" }
 ];
 
+/* Matrix */
 function generateEnergyMatrix(events) {
   const hours = [8,9,10,11,12,13,14,15,16,17,18];
   const levels = ["mindre", "samme", "mere", "ved_ikke"];
+
   const matrix = {};
   levels.forEach(l => { matrix[l] = {}; hours.forEach(h => matrix[l][h] = 0); });
 
@@ -104,77 +101,43 @@ function generateEnergyMatrix(events) {
   let html = "<table class='energy-matrix'><tr><th></th>";
   hours.forEach(h => html += `<th>${h}</th>`);
   html += "</tr>";
+
   levels.forEach(level => {
     html += `<tr><td>${level}</td>`;
     hours.forEach(h => html += `<td>${matrix[level][h]}</td>`);
     html += "</tr>";
   });
+
   html += "</table>";
   return html;
 }
 
 function formatMicrofeedback(events) {
-  return "<h3 style='margin:0 0 8px 0;'>Energimatrix for dagen</h3>" + generateEnergyMatrix(events);
+  return "<h3>Energimatrix for dagen</h3>" + generateEnergyMatrix(events);
 }
 
-/* UI state */
+/* UI flow */
 let activityInterval = null;
 let reShowTimeoutId = null;
 
-/* Utility: show/hide groups */
-function showActivityUI() {
-  el("ff-activity-title").classList.remove("hidden");
-  el("ff-activity-title").setAttribute("aria-hidden","false");
-  el("ff-activity-description").classList.remove("hidden");
-  el("ff-activity-description").setAttribute("aria-hidden","false");
-  el("ff-start-activity").classList.remove("hidden");
-  el("ff-start-activity").setAttribute("aria-hidden","false");
-  // countdown remains hidden until timer starts
-  if (el("ff-activity-image").getAttribute("src")) {
-    el("ff-activity-image").classList.remove("hidden");
-    el("ff-activity-image").setAttribute("aria-hidden","false");
-  }
-  el("ff-energy-buttons").classList.remove("hidden");
-  el("ff-energy-buttons").setAttribute("aria-hidden","false");
-
-  // ensure microfeedback + settings link + settings panel are hidden when activity UI is visible
-  el("ff-microfeedback").classList.add("hidden");
-  el("ff-settings-link").classList.add("hidden");
-  el("ff-settings").classList.add("hidden");
-  el("ff-settings").setAttribute("aria-hidden","true");
-  el("ff-matrix").innerHTML = "";
-}
-
-function hideActivityUI() {
-  el("ff-activity-title").classList.add("hidden");
-  el("ff-activity-title").setAttribute("aria-hidden","true");
-  el("ff-activity-description").classList.add("hidden");
-  el("ff-activity-description").setAttribute("aria-hidden","true");
-  el("ff-start-activity").classList.add("hidden");
-  el("ff-start-activity").setAttribute("aria-hidden","true");
-  el("ff-activity-countdown").classList.add("hidden");
-  el("ff-activity-countdown").setAttribute("aria-hidden","true");
-  el("ff-activity-image").classList.add("hidden");
-  el("ff-activity-image").setAttribute("aria-hidden","true");
-  el("ff-energy-buttons").classList.add("hidden");
-  el("ff-energy-buttons").setAttribute("aria-hidden","true");
-}
-
-/* Activity selection and display */
+/* Show activity (NO timestamp anymore) */
 function showActivity() {
   const a = ffActivities[Math.floor(Math.random() * ffActivities.length)];
-  const now = new Date().toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
 
-  el("ff-activity-title").textContent = `${a.title})`;
+  el("ff-activity-title").textContent = a.title;
   el("ff-activity-description").textContent = a.text;
 
   if (a.image) {
     el("ff-activity-image").src = a.image;
+    el("ff-activity-image").classList.remove("hidden");
   } else {
-    el("ff-activity-image").removeAttribute("src");
+    el("ff-activity-image").classList.add("hidden");
   }
 
-  // show activity UI and ensure microfeedback/settings are hidden
+  el("ff-activity-countdown").classList.add("hidden");
+  el("ff-step-activity").classList.remove("hidden");
+  el("ff-box").classList.remove("hidden");
+
   showActivityUI();
 
   el("ff-start-activity").onclick = () => {
@@ -183,16 +146,39 @@ function showActivity() {
   };
 }
 
+function hideActivityUI() {
+  el("ff-activity-title").classList.add("hidden");
+  el("ff-activity-description").classList.add("hidden");
+  el("ff-start-activity").classList.add("hidden");
+  el("ff-activity-countdown").classList.add("hidden");
+  el("ff-activity-image").classList.add("hidden");
+  el("ff-energy-buttons").classList.add("hidden");
+}
+
+function showActivityUI() {
+  el("ff-activity-title").classList.remove("hidden");
+  el("ff-activity-description").classList.remove("hidden");
+  el("ff-start-activity").classList.remove("hidden");
+  if (el("ff-activity-image").getAttribute("src")) {
+    el("ff-activity-image").classList.remove("hidden");
+  }
+  el("ff-energy-buttons").classList.remove("hidden");
+
+  el("ff-microfeedback").classList.add("hidden");
+  el("ff-settings-link").classList.add("hidden");
+  el("ff-settings").classList.add("hidden");
+  el("ff-matrix").innerHTML = "";
+}
+
 function startActivityTimer(minutes) {
   let seconds = minutes * 60;
   const display = el("ff-activity-countdown");
   display.classList.remove("hidden");
-  display.setAttribute("aria-hidden","false");
 
   const update = () => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    display.textContent = `${m}:${s.toString().padStart(2,"0")}`;
+    display.textContent = `${m}:${s.toString().padStart(2, "0")}`;
   };
 
   update();
@@ -206,79 +192,77 @@ function startActivityTimer(minutes) {
   }, 1000);
 }
 
-/* Network helpers */
+/* Network */
 async function postEvent(payload) {
-  try {
-    const url = WORKER_BASE + "/api/event";
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      mode: "cors",
-      credentials: "omit"
-    });
-  } catch (e) {
-    console.warn("postEvent failed", e);
-  }
+  const url = WORKER_BASE + "/api/event";
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    mode: "cors",
+    credentials: "omit"
+  });
+  return res.json();
 }
 
 async function fetchEventsForUser(userId) {
-  try {
-    const url = WORKER_BASE + "/api/events/user/" + encodeURIComponent(userId);
-    const res = await fetch(url, { method: "GET", mode: "cors", credentials: "omit" });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch (e) {
-    console.warn("fetchEventsForUser failed", e);
-    return [];
-  }
+  const url = WORKER_BASE + "/api/events/user/" + encodeURIComponent(userId);
+  const res = await fetch(url, { method: "GET", mode: "cors", credentials: "omit" });
+  return res.json();
 }
 
-/* COMPLETE BREAK: called when user clicks an energy button */
+/* COMPLETE BREAK */
 async function completeBreak(delta) {
   try {
-    await postEvent({ user_id: "demo-user-1", type: "break_completed", timestamp: new Date().toISOString() });
-    await postEvent({ user_id: "demo-user-1", type: "energy_delta", value: delta, timestamp: new Date().toISOString() });
+    await postEvent({
+      user_id: "demo-user-1",
+      type: "break_completed",
+      timestamp: new Date().toISOString()
+    });
+
+    await postEvent({
+      user_id: "demo-user-1",
+      type: "energy_delta",
+      value: delta,
+      timestamp: new Date().toISOString()
+    });
 
     const interval = Number(localStorage.getItem("ff-reminder-interval") || 30);
     const next = new Date(Date.now() + interval * 60000);
-    const nextPauseTime = next.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+    const nextPauseTime = next.toLocaleTimeString("da-DK", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
-    // Evidensbaseret, ikke-anmassende microfeedback (din valgte tekst)
     el("ff-microfeedback").innerHTML =
-      `<p><strong>Tak for at tage pausen.</strong></p>
+      `<p>Tak for at tage pausen.</p>
        <p>Næste aktivitet er kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
 
-    // Vis kun microfeedback og settings-link
     el("ff-microfeedback").classList.remove("hidden");
     el("ff-settings-link").classList.remove("hidden");
 
-    // Skjul aktivitetselementerne indtil næste aktivitetstid
     hideActivityUI();
 
-    // Ryd evt. tidligere timeout
     if (reShowTimeoutId) {
       clearTimeout(reShowTimeoutId);
       reShowTimeoutId = null;
     }
 
-    // Sæt timeout til at genvise aktivitetselementerne præcis ved næste tid
     const msUntilNext = next.getTime() - Date.now();
     reShowTimeoutId = setTimeout(() => {
-      // Når tiden indtræffer: vælg og vis en ny aktivitet (microfeedback + settings link skjules i showActivityUI)
       showActivity();
       reShowTimeoutId = null;
     }, Math.max(0, msUntilNext));
 
   } catch (err) {
-    console.error("completeBreak error:", err);
-    el("ff-microfeedback").innerHTML = "<p>Der opstod en netværksfejl. Tjek konsollen.</p>";
+    console.error("Network error:", err);
+    el("ff-microfeedback").innerHTML = "<p>Der opstod en netværksfejl.</p>";
     el("ff-microfeedback").classList.remove("hidden");
     el("ff-settings-link").classList.remove("hidden");
   }
 }
 
-/* Bind energy buttons */
+/* Bindings */
 function bindEnergyButtons() {
   document.querySelectorAll('.energy-buttons button').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -288,29 +272,31 @@ function bindEnergyButtons() {
   });
 }
 
-/* Settings toggle: fetch matrix only when opened */
+/* Settings */
 el("ff-settings-toggle").addEventListener('click', async e => {
   e.preventDefault();
   const box = el("ff-settings");
   box.classList.toggle("hidden");
-  const isHidden = box.classList.contains("hidden");
-  box.setAttribute("aria-hidden", isHidden ? "true" : "false");
 
-  if (!isHidden) {
-    // fetch events and render matrix
-    const events = await fetchEventsForUser("demo-user-1");
-    el("ff-matrix").innerHTML = formatMicrofeedback(events);
-  } else {
-    el("ff-matrix").innerHTML = "";
+  if (!box.classList.contains("hidden")) {
+    try {
+      const events = await fetchEventsForUser("demo-user-1");
+      el("ff-matrix").innerHTML = formatMicrofeedback(events);
+    } catch (err) {
+      el("ff-matrix").innerHTML = "<p>Kunne ikke hente data.</p>";
+    }
   }
 });
 
-/* Reminders controls */
+/* Reminders */
 el("ff-reminder-save").addEventListener('click', async () => {
   const m = Number(el("ff-reminder-input").value);
   if (m > 0) localStorage.setItem("ff-reminder-interval", m);
+
   const ok = await requestNotificationPermission();
-  el("ff-reminder-feedback").textContent = ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
+  el("ff-reminder-feedback").textContent =
+    ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
+
   startReminderTimer();
 });
 
@@ -319,7 +305,7 @@ el("ff-reminder-disable").addEventListener('click', () => {
   el("ff-reminder-feedback").textContent = "Slået fra.";
 });
 
-/* Notifications helpers */
+/* Notifications */
 async function requestNotificationPermission() {
   try {
     return (await Notification.requestPermission()) === "granted";
@@ -330,6 +316,7 @@ async function requestNotificationPermission() {
 
 function sendReminderNotification() {
   if (Notification.permission !== "granted") return;
+
   navigator.serviceWorker.getRegistration().then(reg => {
     if (reg) {
       reg.showNotification("Flow Focus", {
@@ -344,24 +331,19 @@ function sendReminderNotification() {
 
 function startReminderTimer() {
   const interval = Number(localStorage.getItem("ff-reminder-interval") || 30);
-  setTimeout(() => sendReminderNotification(), interval * 60000);
+
+  setTimeout(() => {
+    sendReminderNotification();
+  }, interval * 60000);
 }
 
 /* Init */
 window.addEventListener('load', () => {
-  // set reminder input
   el("ff-reminder-input").value = localStorage.getItem("ff-reminder-interval") || 30;
-
-  // show container
-  el("ff-box").classList.remove("hidden");
-  el("ff-step-activity").classList.remove("hidden");
-
   bindEnergyButtons();
-  // show first activity; microfeedback + settings link remain hidden until user clicks an energy button
   showActivity();
 });
 </script>
 
 </body>
 </html>
-
