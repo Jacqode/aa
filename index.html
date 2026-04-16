@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v111</title>
+  <title>Flow Focus v112</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="manifest" href="manifest.json">
 
@@ -117,7 +117,9 @@ function formatMicrofeedback(events) {
 
 /* UI flow */
 let activityInterval = null;
+let reShowTimeoutId = null;
 
+/* Choose and display an activity */
 function showActivity() {
   const a = ffActivities[Math.floor(Math.random() * ffActivities.length)];
 
@@ -140,10 +142,35 @@ function showActivity() {
   el("ff-step-activity").classList.remove("hidden");
   el("ff-box").classList.remove("hidden");
 
+  // Ensure activity UI is visible
+  showActivityUI();
+
   el("ff-start-activity").onclick = () => {
     clearInterval(activityInterval);
     startActivityTimer(a.duration);
   };
+}
+
+/* Hide the activity UI elements (title, description, start, countdown, image, energy buttons) */
+function hideActivityUI() {
+  el("ff-activity-title").classList.add("hidden");
+  el("ff-activity-description").classList.add("hidden");
+  el("ff-start-activity").classList.add("hidden");
+  el("ff-activity-countdown").classList.add("hidden");
+  el("ff-activity-image").classList.add("hidden");
+  el("ff-energy-buttons").classList.add("hidden");
+}
+
+/* Show the activity UI elements again */
+function showActivityUI() {
+  el("ff-activity-title").classList.remove("hidden");
+  el("ff-activity-description").classList.remove("hidden");
+  el("ff-start-activity").classList.remove("hidden");
+  // countdown remains hidden until timer starts
+  if (el("ff-activity-image").getAttribute("src")) {
+    el("ff-activity-image").classList.remove("hidden");
+  }
+  el("ff-energy-buttons").classList.remove("hidden");
 }
 
 function startActivityTimer(minutes) {
@@ -203,6 +230,7 @@ async function completeBreak(delta) {
       timestamp: new Date().toISOString()
     });
 
+    // Beregn næste pause-tid ud fra brugerens indstilling
     const interval = Number(localStorage.getItem("ff-reminder-interval") || 30);
     const next = new Date(Date.now() + interval * 60000);
     const nextPauseTime = next.toLocaleTimeString("da-DK", {
@@ -210,12 +238,28 @@ async function completeBreak(delta) {
       minute: "2-digit"
     });
 
-    // Microfeedback direkte under knapper
+    // Vis kun microfeedback (og behold Indstillinger synlig)
     el("ff-microfeedback").innerHTML =
       `<p>Klik registreret.</p>
        <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
 
-    // Matrix vises kun når brugeren åbner Indstillinger (ff-settings-toggle)
+    // Skjul aktivitetselementerne indtil næste aktivitetstid
+    hideActivityUI();
+
+    // Ryd evt. tidligere timeout
+    if (reShowTimeoutId) {
+      clearTimeout(reShowTimeoutId);
+      reShowTimeoutId = null;
+    }
+
+    // Sæt timeout til at genvise aktivitetselementerne præcis ved næste tid
+    const msUntilNext = next.getTime() - Date.now();
+    reShowTimeoutId = setTimeout(() => {
+      // Når tiden indtræffer: vælg og vis en ny aktivitet
+      showActivity();
+      reShowTimeoutId = null;
+    }, Math.max(0, msUntilNext));
+
   } catch (err) {
     console.error("Network error:", err);
     el("ff-microfeedback").innerHTML = "<p>Der opstod en netværksfejl. Tjek konsollen.</p>";
