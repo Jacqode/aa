@@ -122,7 +122,8 @@ let activityInterval = null;
 
 function showActivity() {
   const a = ffActivities[Math.floor(Math.random() * ffActivities.length)];
-  el("ff-activity-title").textContent = a.title;
+  const now = new Date().toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+  el("ff-activity-title").textContent = `${a.title} (aktivitet givet kl. ${now})`;
   el("ff-activity-description").textContent = a.text;
 
   if (a.image) {
