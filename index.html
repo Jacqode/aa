@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v114</title>
+  <title>Flow Focus v115</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="manifest" href="manifest.json">
 
@@ -50,7 +50,7 @@
     <!-- Indstillingslink starter skjult og vises kun efter klik -->
     <p id="ff-settings-link" class="hidden"><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
-    <div id="ff-settings" class="hidden">
+    <div id="ff-settings" class="hidden" aria-hidden="true">
       <div id="ff-matrix"></div>
 
       <h4>Påmindelser</h4>
@@ -246,12 +246,12 @@ async function completeBreak(delta) {
       minute: "2-digit"
     });
 
-    // Vis kun microfeedback (og vis indstillingslink). Alt andet skjules.
+    // Evidensbaseret, ikke-anmasende microfeedback
     el("ff-microfeedback").innerHTML =
-      `<p>Klik registreret.</p>
-       <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
+      `<p>Tak for at tage pausen.</p>
+       <p>Næste aktivitet er kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
 
-    // Vis microfeedback og indstillingslink
+    // Vis microfeedback og indstillingslink (kun disse to)
     el("ff-microfeedback").classList.remove("hidden");
     el("ff-settings-link").classList.remove("hidden");
 
@@ -295,6 +295,7 @@ el("ff-settings-toggle").addEventListener('click', async e => {
   e.preventDefault();
   const box = el("ff-settings");
   box.classList.toggle("hidden");
+  box.setAttribute("aria-hidden", box.classList.contains("hidden") ? "true" : "false");
 
   if (!box.classList.contains("hidden")) {
     try {
