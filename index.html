@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v108</title>
+  <title>Flow Focus v109</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="manifest" href="manifest.json">
 
@@ -13,7 +13,7 @@
     #ff-start-activity { margin-top:12px; }
     #ff-activity-countdown { font-size:1.4rem; margin-top:6px; }
     #ff-activity-image { max-width:200px; margin-top:10px; display:block; min-height:120px; }
-    #ff-microfeedback { margin-top:20px; font-weight:500; }
+    #ff-microfeedback p { margin:4px 0; }
     table.energy-matrix { border-collapse: collapse; margin-top: 10px; width:100%; max-width:720px; }
     table.energy-matrix th, table.energy-matrix td { border: 1px solid #ccc; padding: 4px 6px; text-align: center; }
     table.energy-matrix th { background: #f3f3f3; }
@@ -44,15 +44,13 @@
       <button data-value="ved_ikke">Ved ikke</button>
     </div>
 
-    <!-- ★ NY PLACERING: microfeedback direkte under energiknapper -->
+    <!-- Microfeedback direkte under knapper -->
     <div id="ff-microfeedback" aria-live="polite"></div>
 
     <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
     <div id="ff-settings" class="hidden">
-
-      <!-- Matrix vises altid når Indstillinger er åbent -->
-      <div id="ff-matrix"></div> <!-- ★ NYT: matrix flyttet hertil -->
+      <div id="ff-matrix"></div>
 
       <h4>Påmindelser</h4>
       <input id="ff-reminder-input" type="number" min="1" style="width:60px;"> minutter
@@ -122,7 +120,12 @@ let activityInterval = null;
 
 function showActivity() {
   const a = ffActivities[Math.floor(Math.random() * ffActivities.length)];
-  const now = new Date().toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+
+  const now = new Date().toLocaleTimeString("da-DK", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
   el("ff-activity-title").textContent = `${a.title} (aktivitet givet kl. ${now})`;
   el("ff-activity-description").textContent = a.text;
 
@@ -184,7 +187,7 @@ async function fetchEventsForUser(userId) {
   return res.json();
 }
 
-/* COMPLETE BREAK — ★ OPDATERET PLACERING */
+/* COMPLETE BREAK */
 async function completeBreak(delta) {
   try {
     await postEvent({
@@ -209,12 +212,10 @@ async function completeBreak(delta) {
       minute: "2-digit"
     });
 
-    /* ★ NY PLACERING: microfeedback direkte under energiknapper */
     el("ff-microfeedback").innerHTML =
       `<p>Klik registreret.</p>
        <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
 
-    /* Matrix vises kun i Indstillinger */
     el("ff-matrix").innerHTML = formatMicrofeedback(events);
 
   } catch (err) {
