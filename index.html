@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v110</title>
+  <title>Flow Focus v111</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="manifest" href="manifest.json">
 
@@ -81,7 +81,7 @@ const ffActivities = [
   { title: "Benstræk i 2 min", text: "Stræk ét ben ad gangen.", duration: 2, image: "images/benstraek.png" }
 ];
 
-/* Matrix */
+/* Matrix rendering */
 function generateEnergyMatrix(events) {
   const hours = [8,9,10,11,12,13,14,15,16,17,18];
   const levels = ["mindre", "samme", "mere", "ved_ikke"];
@@ -210,12 +210,12 @@ async function completeBreak(delta) {
       minute: "2-digit"
     });
 
+    // Microfeedback direkte under knapper
     el("ff-microfeedback").innerHTML =
       `<p>Klik registreret.</p>
        <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
 
-    /* Matrix fjernet her — vises kun i Indstillinger */
-
+    // Matrix vises kun når brugeren åbner Indstillinger (ff-settings-toggle)
   } catch (err) {
     console.error("Network error:", err);
     el("ff-microfeedback").innerHTML = "<p>Der opstod en netværksfejl. Tjek konsollen.</p>";
@@ -239,8 +239,14 @@ el("ff-settings-toggle").addEventListener('click', async e => {
   box.classList.toggle("hidden");
 
   if (!box.classList.contains("hidden")) {
-    const events = await fetchEventsForUser("demo-user-1");
-    el("ff-matrix").innerHTML = formatMicrofeedback(events);
+    // Hent events og generer matrix kun når Indstillinger åbnes
+    try {
+      const events = await fetchEventsForUser("demo-user-1");
+      el("ff-matrix").innerHTML = formatMicrofeedback(events);
+    } catch (err) {
+      console.error("Failed to load events:", err);
+      el("ff-matrix").innerHTML = "<p>Kunne ikke hente data til matrix.</p>";
+    }
   }
 });
 
