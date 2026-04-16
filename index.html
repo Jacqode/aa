@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <title>Flow Focus v113</title>
+  <title>Flow Focus v114</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="manifest" href="manifest.json">
 
@@ -44,10 +44,11 @@
       <button data-value="ved_ikke">Ved ikke</button>
     </div>
 
-    <!-- Microfeedback direkte under knapper; starter skjult og vises kun efter klik -->
+    <!-- Microfeedback starter skjult og vises kun efter klik -->
     <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
 
-    <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
+    <!-- Indstillingslink starter skjult og vises kun efter klik -->
+    <p id="ff-settings-link" class="hidden"><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
     <div id="ff-settings" class="hidden">
       <div id="ff-matrix"></div>
@@ -142,7 +143,7 @@ function showActivity() {
   el("ff-step-activity").classList.remove("hidden");
   el("ff-box").classList.remove("hidden");
 
-  // Ensure activity UI is visible (microfeedback stays hidden until user clicks)
+  // Ensure activity UI is visible and microfeedback + settings link are hidden
   showActivityUI();
 
   el("ff-start-activity").onclick = () => {
@@ -159,11 +160,9 @@ function hideActivityUI() {
   el("ff-activity-countdown").classList.add("hidden");
   el("ff-activity-image").classList.add("hidden");
   el("ff-energy-buttons").classList.add("hidden");
-  // microfeedback must be shown only after click, so hide it here
-  el("ff-microfeedback").classList.add("hidden");
 }
 
-/* Show the activity UI elements again (microfeedback remains hidden until next click) */
+/* Show the activity UI elements again (microfeedback and settings link remain hidden until click) */
 function showActivityUI() {
   el("ff-activity-title").classList.remove("hidden");
   el("ff-activity-description").classList.remove("hidden");
@@ -173,8 +172,13 @@ function showActivityUI() {
     el("ff-activity-image").classList.remove("hidden");
   }
   el("ff-energy-buttons").classList.remove("hidden");
-  // keep microfeedback hidden until user clicks an energy button
+
+  // Ensure microfeedback and settings link are hidden when activity UI is shown
   el("ff-microfeedback").classList.add("hidden");
+  el("ff-settings-link").classList.add("hidden");
+  // Also ensure settings panel is closed
+  el("ff-settings").classList.add("hidden");
+  el("ff-matrix").innerHTML = "";
 }
 
 function startActivityTimer(minutes) {
@@ -242,13 +246,14 @@ async function completeBreak(delta) {
       minute: "2-digit"
     });
 
-    // Vis kun microfeedback (og behold Indstillinger synlig)
+    // Vis kun microfeedback (og vis indstillingslink). Alt andet skjules.
     el("ff-microfeedback").innerHTML =
       `<p>Klik registreret.</p>
        <p>Du påmindes om næste aktivitet kl. ${nextPauseTime}.<br>God arbejdslyst indtil da!</p>`;
 
-    // Vis microfeedback (only this and settings remain visible)
+    // Vis microfeedback og indstillingslink
     el("ff-microfeedback").classList.remove("hidden");
+    el("ff-settings-link").classList.remove("hidden");
 
     // Skjul aktivitetselementerne indtil næste aktivitetstid
     hideActivityUI();
@@ -262,7 +267,7 @@ async function completeBreak(delta) {
     // Sæt timeout til at genvise aktivitetselementerne præcis ved næste tid
     const msUntilNext = next.getTime() - Date.now();
     reShowTimeoutId = setTimeout(() => {
-      // Når tiden indtræffer: vælg og vis en ny aktivitet
+      // Når tiden indtræffer: vælg og vis en ny aktivitet (microfeedback + settings link skjules i showActivityUI)
       showActivity();
       reShowTimeoutId = null;
     }, Math.max(0, msUntilNext));
@@ -271,6 +276,7 @@ async function completeBreak(delta) {
     console.error("Network error:", err);
     el("ff-microfeedback").innerHTML = "<p>Der opstod en netværksfejl. Tjek konsollen.</p>";
     el("ff-microfeedback").classList.remove("hidden");
+    el("ff-settings-link").classList.remove("hidden");
   }
 }
 
@@ -284,14 +290,13 @@ function bindEnergyButtons() {
   });
 }
 
-/* Settings */
+/* Settings toggle: hent matrix kun når panelet åbnes */
 el("ff-settings-toggle").addEventListener('click', async e => {
   e.preventDefault();
   const box = el("ff-settings");
   box.classList.toggle("hidden");
 
   if (!box.classList.contains("hidden")) {
-    // Hent events og generer matrix kun når Indstillinger åbnes
     try {
       const events = await fetchEventsForUser("demo-user-1");
       el("ff-matrix").innerHTML = formatMicrofeedback(events);
@@ -355,6 +360,7 @@ function startReminderTimer() {
 window.addEventListener('load', () => {
   el("ff-reminder-input").value = localStorage.getItem("ff-reminder-interval") || 30;
   bindEnergyButtons();
+  // Start med at vise en aktivitet; microfeedback + indstillinger er skjult
   showActivity();
 });
 </script>
