@@ -1,293 +1,58 @@
-<!DOCTYPE html>
-<html lang="da">
-<head>
-  <meta charset="UTF-8">
-  <title>Flow Focus v121</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="manifest" href="manifest.json">
-
-  <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding:16px; }
-    #ff-activity-title { font-weight:600; font-size:1.2rem; }
-    #ff-activity-description { margin-top:10px; }
-    #ff-start-activity { margin-top:12px; }
-    #ff-activity-countdown { font-size:1.4rem; margin-top:6px; }
-    #ff-activity-image { max-width:200px; margin-top:10px; display:block; min-height:120px; }
-    #ff-microfeedback { margin-top:20px; font-weight:500; }
-    table.energy-matrix { border-collapse: collapse; margin-top: 10px; width:100%; max-width:720px; }
-    table.energy-matrix th, table.energy-matrix td { border: 1px solid #ccc; padding: 4px 6px; text-align: center; }
-    table.energy-matrix th { background: #f3f3f3; }
-    table.energy-matrix td:first-child { font-weight: bold; text-align: left; }
-    .energy-buttons button { margin-right:6px; margin-top:6px; }
-    #ff-settings { margin-top:10px; }
-    .hidden { display:none !important; }
-    hr.ff-sep { margin:18px 0; opacity:0.18; border:0; border-top:1px solid rgba(0,0,0,0.08); }
-    .section-title { display:flex; align-items:center; gap:8px; font-weight:600; margin:6px 0; }
-    .small-note { color:#666; font-size:0.9rem; margin-top:6px; }
-  </style>
-</head>
-<body>
-
-<div id="ff-box" class="hidden">
-  <div id="ff-step-activity" class="hidden">
-
-    <p id="ff-activity-title"></p>
-    <p id="ff-activity-description"></p>
-
-    <button id="ff-start-activity">Start 2-minutters timer</button>
-    <div id="ff-activity-countdown" class="hidden">2:00</div>
-
-    <img id="ff-activity-image" alt="Øvelse" class="hidden">
-
-    <div class="energy-buttons" id="ff-energy-buttons">
+<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flow Focus v122</title>
+<style>body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}#ff-activity-title{font-weight:600;font-size:1.2rem}#ff-activity-countdown{font-size:1.4rem;margin-top:6px}#ff-activity-image{max-width:200px;margin-top:10px;display:block;min-height:120px}table.energy-matrix{border-collapse:collapse;margin-top:10px;width:100%;max-width:720px}table.energy-matrix th,table.energy-matrix td{border:1px solid #ccc;padding:4px 6px;text-align:center}table.energy-matrix th{background:#f3f3f3}table.energy-matrix td:first-child{text-align:left;font-weight:700}.energy-buttons button{margin-right:6px;margin-top:6px}.hidden{display:none!important}.ff-sep{margin:18px 0;opacity:.18;border:0;border-top:1px solid rgba(0,0,0,.08)}.section-title{display:flex;align-items:center;gap:8px;font-weight:600;margin:6px 0}.small-note{color:#666;font-size:.9rem;margin-top:6px}</style>
+</head><body>
+<div id=ff-box class=hidden>
+  <div id=ff-step-activity class=hidden>
+    <p id=ff-activity-title></p>
+    <p id=ff-activity-description></p>
+    <button id=ff-start-activity>Start 2-minutters timer</button>
+    <div id=ff-activity-countdown class=hidden>2:00</div>
+    <img id=ff-activity-image alt="Øvelse" class=hidden>
+    <div class=energy-buttons id=ff-energy-buttons>
       <p>Hvordan føles din energi nu efter aktiviteten?</p>
-      <button data-value="mindre">Mindre</button>
-      <button data-value="samme">Samme</button>
-      <button data-value="mere">Mere</button>
-      <button data-value="ved_ikke">Ved ikke</button>
+      <button data-value=mindre>Mindre</button>
+      <button data-value=samme>Samme</button>
+      <button data-value=mere>Mere</button>
+      <button data-value=ved_ikke>Ved ikke</button>
     </div>
-
-    <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
-
-    <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
-
-    <div id="ff-settings" class="hidden">
-      <!-- Påmindelser -->
-      <div class="section-title">🔔 Påmindelser</div>
+    <div id=ff-microfeedback class=hidden aria-live=polite></div>
+    <p><a href=# id=ff-settings-toggle>⚙️ Indstillinger</a></p>
+    <div id=ff-settings class=hidden>
+      <div class=section-title>🔔 Påmindelser</div>
       <div>
-        <input id="ff-reminder-input" type="number" min="1" style="width:60px;"> minutter
-        <br><br>
-        <button id="ff-reminder-save">Gem</button>
-        <button id="ff-reminder-disable">Slå fra</button>
-        <p id="ff-reminder-feedback" class="small-note"></p>
+        <input id=ff-reminder-input type=number min=1 style="width:60px"> minutter<br><br>
+        <button id=ff-reminder-save>Gem</button>
+        <button id=ff-reminder-disable>Slå fra</button>
+        <p id=ff-reminder-feedback class=small-note></p>
       </div>
-
-      <hr class="ff-sep">
-
-      <!-- Statistik -->
-      <div class="section-title">📊 Statistik</div>
-      <div id="ff-stats-container" class="small-note">Ingen data endnu.</div>
+      <hr class=ff-sep>
+      <div class=section-title>📊 Statistik</div>
+      <div id=ff-stats-container class=small-note>Ingen data endnu.</div>
     </div>
-
   </div>
 </div>
 
 <script>
-/* ---------------- Cached DOM ---------------- */
-const $ = {
-  box: document.getElementById("ff-box"),
-  stepActivity: document.getElementById("ff-step-activity"),
-  title: document.getElementById("ff-activity-title"),
-  desc: document.getElementById("ff-activity-description"),
-  startBtn: document.getElementById("ff-start-activity"),
-  countdown: document.getElementById("ff-activity-countdown"),
-  image: document.getElementById("ff-activity-image"),
-  energyButtons: document.getElementById("ff-energy-buttons"),
-  microfeedback: document.getElementById("ff-microfeedback"),
-  settingsToggle: document.getElementById("ff-settings-toggle"),
-  settings: document.getElementById("ff-settings"),
-  reminderInput: document.getElementById("ff-reminder-input"),
-  reminderSave: document.getElementById("ff-reminder-save"),
-  reminderDisable: document.getElementById("ff-reminder-disable"),
-  reminderFeedback: document.getElementById("ff-reminder-feedback"),
-  statsContainer: document.getElementById("ff-stats-container")
-};
-
-const WORKER_BASE = "https://workerff092.jakobhelkjaer.workers.dev";
-
-/* ---------------- Activities ---------------- */
-const ffActivities = [
-  { title: "Gang på stedet i 2 min", text: "Gå roligt på stedet med lette skridt.", duration: 2, image: "images/gang.png" },
-  { title: "Lægløft i 2 min", text: "Løft og sænk hælene roligt.", duration: 2, image: "images/laegloeft.png" },
-  { title: "Rejs og sæt dig i 2 min", text: "Rejs dig roligt og sæt dig igen.", duration: 2, image: "images/rejs.png" },
-  { title: "Armcirkler i 2 min", text: "Lav store cirkler fremad og baglæns.", duration: 2, image: "images/armcirkel.png" },
-  { title: "Benstræk i 2 min", text: "Stræk ét ben ad gangen.", duration: 2, image: "images/benstraek.png" }
-];
-
-/* ---------------- Utility fetch wrapper ---------------- */
-async function apiFetch(path, opts = {}) {
-  const url = WORKER_BASE + path;
-  try {
-    const res = await fetch(url, { ...opts, mode: "cors", credentials: "omit" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } catch (err) {
-    console.error("API error", err);
-    throw err;
-  }
-}
-
-/* ---------------- Matrix rendering ---------------- */
-function generateEnergyMatrix(events) {
-  const hours = [8,9,10,11,12,13,14,15,16,17,18];
-  const levels = ["mindre", "samme", "mere", "ved_ikke"];
-  const matrix = {};
-  levels.forEach(l => { matrix[l] = {}; hours.forEach(h => matrix[l][h] = 0); });
-  events.forEach(ev => {
-    const d = new Date(ev.timestamp);
-    const hour = d.getHours();
-    if (hours.includes(hour) && levels.includes(ev.value)) matrix[ev.value][hour]++;
-  });
-  let html = "<table class='energy-matrix'><tr><th></th>";
-  hours.forEach(h => html += `<th>${h}</th>`);
-  html += "</tr>";
-  levels.forEach(level => {
-    html += `<tr><td>${level}</td>`;
-    hours.forEach(h => html += `<td>${matrix[level][h]}</td>`);
-    html += "</tr>";
-  });
-  html += "</table>";
-  return html;
-}
-function formatMicrofeedback(events) {
-  return "<h3>Energimatrix for dagen</h3>" + generateEnergyMatrix(events);
-}
-
-/* ---------------- Activity UI ---------------- */
-let activityInterval = null;
-function showActivity() {
-  const a = ffActivities[Math.floor(Math.random() * ffActivities.length)];
-  $.title.textContent = a.title;
-  $.desc.textContent = a.text;
-  if (a.image) {
-    $.image.src = a.image;
-    $.image.classList.remove("hidden");
-  } else $.image.classList.add("hidden");
-  $.countdown.classList.add("hidden");
-  $.stepActivity.classList.remove("hidden");
-  $.box.classList.remove("hidden");
-  $.startBtn.onclick = () => { clearInterval(activityInterval); startActivityTimer(a.duration); };
-}
-function startActivityTimer(minutes) {
-  let seconds = minutes * 60;
-  $.countdown.classList.remove("hidden");
-  const update = () => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    $.countdown.textContent = `${m}:${s.toString().padStart(2,"0")}`;
-  };
-  update();
-  activityInterval = setInterval(() => {
-    seconds--;
-    update();
-    if (seconds <= 0) {
-      clearInterval(activityInterval);
-      playDoneSound();
-    }
-  }, 1000);
-}
-
-/* ---------------- Lazy audio ---------------- */
-function playDoneSound() {
-  try {
-    const audio = new Audio("done.mp3");
-    audio.play().catch(()=>{/* autoplay blocked on mobile; ignore */});
-  } catch (e) {}
-}
-
-/* ---------------- Events / API ---------------- */
-async function postEvent(payload) {
-  return apiFetch("/api/event", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-}
-async function fetchEventsForUser(userId) {
-  return apiFetch("/api/events/user/" + encodeURIComponent(userId));
-}
-
-async function completeBreak(delta) {
-  try {
-    await postEvent({ user_id: "demo-user-1", type: "break_completed", timestamp: new Date().toISOString() });
-    await postEvent({ user_id: "demo-user-1", type: "energy_delta", value: delta, timestamp: new Date().toISOString() });
-    const events = await fetchEventsForUser("demo-user-1");
-    const interval = Number(localStorage.getItem("ff-reminder-interval") || 30);
-    const next = new Date(Date.now() + interval * 60000);
-    const nextPauseTime = next.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
-    showMicrofeedback(nextPauseTime, formatMicrofeedback(events));
-    startReminderTimer(); // genstart reminder efter gennemført pause
-  } catch (err) {
-    console.error("Network error:", err);
-    $.microfeedback.classList.remove("hidden");
-    $.microfeedback.textContent = "Der opstod en netværksfejl. Tjek konsollen.";
-  }
-}
-
-/* ---------------- UI helpers ---------------- */
-function showMicrofeedback(nextPauseTime, eventsHtml) {
-  $.microfeedback.classList.remove("hidden");
-  $.microfeedback.innerHTML = `
-    <p>Tak. Dit energiudbytte er registreret.</p>
-    <p>Du påmindes om næste pause kl. ${nextPauseTime}.<br>God arbejdslyst indtil da.</p>
-  `;
-  if ($.statsContainer) $.statsContainer.innerHTML = eventsHtml;
-}
-
-/* ---------------- Event binding (delegation) ---------------- */
-$.energyButtons.addEventListener("click", e => {
-  const btn = e.target.closest("button[data-value]");
-  if (!btn) return;
-  completeBreak(btn.dataset.value);
-});
-
-/* ---------------- Settings handlers ---------------- */
-$.settingsToggle.addEventListener('click', e => {
-  e.preventDefault();
-  $.settings.classList.toggle("hidden");
-});
-
-$.reminderSave.addEventListener('click', async () => {
-  const m = Number($.reminderInput.value);
-  if (m > 0) localStorage.setItem("ff-reminder-interval", m);
-  const ok = await requestNotificationPermission();
-  $.reminderFeedback.textContent = ok ? "Påmindelser aktiveret." : "Tillad notifikationer for at få påmindelser.";
-  startReminderTimer();
-});
-
-$.reminderDisable.addEventListener('click', () => {
-  localStorage.removeItem("ff-reminder-interval");
-  $.reminderFeedback.textContent = "Slået fra.";
-  clearReminderTimer();
-});
-
-/* ---------------- Notifications helper ---------------- */
-async function requestNotificationPermission() {
-  try { return (await Notification.requestPermission()) === "granted"; }
-  catch (e) { return false; }
-}
-function sendReminderNotification() {
-  if (Notification.permission !== "granted") return;
-  navigator.serviceWorker.getRegistration().then(reg => {
-    if (reg) reg.showNotification("Flow Focus", {
-      body: "Tid til en aktiv mikropause – tryk for at åbne Flow Focus",
-      icon: "icon-192.png",
-      badge: "icon-192.png",
-      data: { url: "https://jacqode.github.io/aa" }
-    });
-  });
-}
-
-/* ---------------- Reminder timer (single) ---------------- */
-let reminderTimeoutId = null;
-function startReminderTimer() {
-  clearReminderTimer();
-  const minutes = Number(localStorage.getItem("ff-reminder-interval") || 30);
-  reminderTimeoutId = setTimeout(() => {
-    sendReminderNotification();
-    startReminderTimer(); // genstart automatisk
-  }, minutes * 60000);
-}
-function clearReminderTimer() {
-  if (reminderTimeoutId) { clearTimeout(reminderTimeoutId); reminderTimeoutId = null; }
-}
-
-/* ---------------- Init ---------------- */
-window.addEventListener('load', () => {
-  $.reminderInput.value = localStorage.getItem("ff-reminder-interval") || 30;
-  showActivity();
-});
+const ids=["ff-box","ff-step-activity","ff-activity-title","ff-activity-description","ff-start-activity","ff-activity-countdown","ff-activity-image","ff-energy-buttons","ff-microfeedback","ff-settings-toggle","ff-settings","ff-reminder-input","ff-reminder-save","ff-reminder-disable","ff-reminder-feedback","ff-stats-container"].reduce((o,id)=>{o[id]=document.getElementById(id);return o},{});
+const WORKER_BASE="https://workerff092.jakobhelkjaer.workers.dev";
+const A=[{t:"Gang på stedet i 2 min",d:"Gå roligt på stedet med lette skridt.",m:2,i:"images/gang.png"},{t:"Lægløft i 2 min",d:"Løft og sænk hælene roligt.",m:2,i:"images/laegloeft.png"},{t:"Rejs og sæt dig i 2 min",d:"Rejs dig roligt og sæt dig igen.",m:2,i:"images/rejs.png"},{t:"Armcirkler i 2 min",d:"Lav store cirkler fremad og baglæns.",m:2,i:"images/armcirkel.png"},{t:"Benstræk i 2 min",d:"Stræk ét ben ad gangen.",m:2,i:"images/benstraek.png"}];
+const apiFetch=async(p,o={})=>{const r=await fetch(WORKER_BASE+p,{...o,mode:"cors",credentials:"omit"});if(!r.ok)throw new Error(r.status);return r.json()};
+const genMatrix=e=>{const H=[8,9,10,11,12,13,14,15,16,17,18],L=["mindre","samme","mere","ved_ikke"];const M=Object.fromEntries(L.map(l=>[l,Object.fromEntries(H.map(h=>[h,0]))]));e.forEach(ev=>{const h=new Date(ev.timestamp).getHours();if(H.includes(h)&&L.includes(ev.value))M[ev.value][h]++});return"<table class='energy-matrix'><tr><th></th>"+H.map(h=>`<th>${h}</th>`).join("")+"</tr>"+L.map(l=>`<tr><td>${l}</td>`+H.map(h=>`<td>${M[l][h]}</td>`).join("")+"</tr>`).join("")+"</table>"};
+let activityInterval,reminderId;
+function showActivity(){const a=A[Math.floor(Math.random()*A.length)];ids["ff-activity-title"].textContent=a.t;ids["ff-activity-description"].textContent=a.d;if(a.i){ids["ff-activity-image"].src=a.i;ids["ff-activity-image"].classList.remove("hidden")}else ids["ff-activity-image"].classList.add("hidden");ids["ff-activity-countdown"].classList.add("hidden");ids["ff-step-activity"].classList.remove("hidden");ids["ff-box"].classList.remove("hidden");ids["ff-start-activity"].onclick=()=>{clearInterval(activityInterval);startActivityTimer(a.m)}}
+function startActivityTimer(mins){let s=mins*60;ids["ff-activity-countdown"].classList.remove("hidden");const u=()=>ids["ff-activity-countdown"].textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;u();activityInterval=setInterval(()=>{s--;u();if(s<=0){clearInterval(activityInterval);playDoneSound()}},1e3)}
+function playDoneSound(){try{new Audio("done.mp3").play().catch(()=>{})}catch(e){}}
+async function postEvent(p){return apiFetch("/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)})}
+async function fetchEvents(u){return apiFetch("/api/events/user/"+encodeURIComponent(u))}
+async function completeBreak(delta){try{await postEvent({user_id:"demo-user-1",type:"break_completed",timestamp:new Date().toISOString()});await postEvent({user_id:"demo-user-1",type:"energy_delta",value:delta,timestamp:new Date().toISOString()});const ev=await fetchEvents("demo-user-1");const interval=Number(localStorage.getItem("ff-reminder-interval")||30);const next=new Date(Date.now()+interval*6e4);const t=next.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});showMicrofeedback(t,genMatrix(ev));startReminderTimer()}catch(e){console.error(e);ids["ff-microfeedback"].classList.remove("hidden");ids["ff-microfeedback"].textContent="Der opstod en netværksfejl. Tjek konsollen."}}
+function showMicrofeedback(next,html){ids["ff-microfeedback"].classList.remove("hidden");ids["ff-microfeedback"].innerHTML=`<p>Tak. Dit energiudbytte er registreret.</p><p>Du påmindes om næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>`;ids["ff-stats-container"].innerHTML=html}
+ids["ff-energy-buttons"].addEventListener("click",e=>{const b=e.target.closest("button[data-value]");if(!b)return;completeBreak(b.dataset.value)});
+ids["ff-settings-toggle"].addEventListener("click",e=>{e.preventDefault();ids["ff-settings"].classList.toggle("hidden")});
+ids["ff-reminder-save"].addEventListener("click",async()=>{const m=Number(ids["ff-reminder-input"].value);if(m>0)localStorage.setItem("ff-reminder-interval",m);const ok=(await Notification.requestPermission())==="granted";ids["ff-reminder-feedback"].textContent=ok?"Påmindelser aktiveret.":"Tillad notifikationer for at få påmindelser.";startReminderTimer()});
+ids["ff-reminder-disable"].addEventListener("click",()=>{localStorage.removeItem("ff-reminder-interval");ids["ff-reminder-feedback"].textContent="Slået fra.";clearReminderTimer()});
+function sendReminderNotification(){if(Notification.permission!=="granted")return;navigator.serviceWorker.getRegistration().then(r=>r&&r.showNotification("Flow Focus",{body:"Tid til en aktiv mikropause – tryk for at åbne Flow Focus",icon:"icon-192.png",badge:"icon-192.png",data:{url:"https://jacqode.github.io/aa"}}))}
+function startReminderTimer(){clearReminderTimer();const m=Number(localStorage.getItem("ff-reminder-interval")||30);reminderId=setTimeout(()=>{sendReminderNotification();startReminderTimer()},m*6e4)}
+function clearReminderTimer(){if(reminderId){clearTimeout(reminderId);reminderId=null}}
+window.addEventListener("load",()=>{ids["ff-reminder-input"].value=localStorage.getItem("ff-reminder-interval")||30;showActivity()});
 </script>
-
-</body>
-</html>
+</body></html>
