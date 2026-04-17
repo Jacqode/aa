@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v137</title>
+<title>Flow Focus v138</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -22,7 +22,7 @@ h2{margin-bottom:12px;margin-top:0}
 
 <div id="ff-box" class="hidden">
 
-  <!-- AKTIVITET (NY RÆKKEFØLGE + OVERSKRIFT) -->
+  <!-- AKTIVITET -->
   <div id="ff-step-activity" class="hidden">
 
     <!-- ØVELSESOVERSKRIFT -->
@@ -50,7 +50,7 @@ h2{margin-bottom:12px;margin-top:0}
   <!-- MICROFEEDBACK -->
   <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
 
-  <!-- FAST INDSTILLINGER-LINK (SKJULT I FØRSTE SKÆRM) -->
+  <!-- INDSTILLINGER-LINK -->
   <p id="ff-settings-link" class="hidden">
     <a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a>
   </p>
@@ -88,13 +88,19 @@ const el = {
 
 const BASE="https://workerff092.jakobhelkjaer.workers.dev";
 
-/* ---------- Data (RENE TITLER) ---------- */
+/* ---------- v138: Opdaterede øvelser ---------- */
 const acts=[
-  {t:"Gang på stedet",d:"Gå roligt på stedet med lette skridt.",m:2,i:"images/gang.png"},
-  {t:"Lægløft",d:"Løft og sænk hælene roligt.",m:2,i:"images/laegloeft.png"},
-  {t:"Rejs og sæt dig",d:"Rejs dig roligt og sæt dig igen.",m:2,i:"images/rejs.png"},
-  {t:"Armcirkler",d:"Lav store cirkler fremad og baglæns.",m:2,i:"images/armcirkel.png"},
-  {t:"Benstræk",d:"Stræk ét ben ad gangen.",m:2,i:"images/benstraek.png"}
+  {t:"Gang på stedet",d:"Gå roligt rundt i dit eget tempo.",m:2,i:"images/gang.png"},
+  {t:"Lægløft",d:"Lav rolige gentagelser i dit eget tempo.",m:2,i:"images/laegloeft.png"},
+  {t:"Rejs og sæt dig",d:"Rejs og sæt dig roligt i dit eget tempo.",m:2,i:"images/rejs.png"},
+  {t:"Armcirkler",d:"Lav store cirkler fremad og baglæns i dit eget tempo.",m:2,i:"images/armcirkel.png"},
+  {t:"Benstræk",d:"Stræk ét ben ad gangen i roligt tempo.",m:2,i:"images/benstraek.png"},
+
+  /* Nye øvelser fra brugerens liste */
+  {t:"Skulderrulninger",d:"Lav 10 langsomme skulderrulninger i dit eget tempo.",m:2,i:null},
+  {t:"Nakkestræk",d:"Stræk nakken roligt til siderne og frem/tilbage.",m:2,i:null},
+  {t:"Håndledscirkler",d:"Lav langsomme cirkler med begge håndled.",m:2,i:null},
+  {t:"Dyb vejrtrækning",d:"Tag 5 dybe vejrtrækninger (4 ind, 6 ud).",m:2,i:null},
 ];
 
 /* ---------- Helpers ---------- */
@@ -106,17 +112,12 @@ let timer, rem;
 function showAct(){
   const a = acts[Math.random()*acts.length|0];
 
-  // Overskrift
   el.title.textContent = a.t;
-
-  // Trin 2 tekst
   el.step2.textContent = "2. " + a.d;
 
-  // Illustration
   if(a.i){ el.img.src = a.i; el.img.classList.remove("hidden"); }
   else el.img.classList.add("hidden");
 
-  // Reset
   el.cd.classList.add("hidden");
   el.step.classList.remove("hidden");
   el.micro.classList.add("hidden");
@@ -124,7 +125,6 @@ function showAct(){
   el.settingsLink.classList.add("hidden");
   el.box.classList.remove("hidden");
 
-  // Timer start
   el.start.onclick = () => { clearInterval(timer); startTimer(a.m); };
 }
 
@@ -147,17 +147,14 @@ async function complete(v){
     const mins = +(localStorage.getItem("ff-reminder-interval")||30);
     const next = new Date(Date.now()+mins*60000).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 
-    // Skjul aktivitet
     el.step.classList.add("hidden");
 
-    // Vis microfeedback
     el.micro.classList.remove("hidden");
     el.micro.innerHTML = `
       <p>Tak for at tage en aktiv pause. Sådan får vi et sundere arbejdsliv.</p>
       <p>Du påmindes næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>
     `;
 
-    // Vis Indstillinger-linket nu
     el.settingsLink.classList.remove("hidden");
 
     startRem();
@@ -175,7 +172,7 @@ function startRem(){
 
   rem = setTimeout(()=>{
     notify();
-    showAct(); // ⭐ NY ØVELSE VED PÅMINDELSE
+    showAct();
   }, m*60000);
 }
 
@@ -192,7 +189,6 @@ function notify(){
   });
 }
 
-/* ---------- Lyt efter klik på notifikation ---------- */
 navigator.serviceWorker.addEventListener("message", event => {
   if(event.data && event.data.action==="new_exercise"){
     showAct();
