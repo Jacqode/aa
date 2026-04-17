@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v134 virker</title>
+<title>Flow Focus v135</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -112,6 +112,9 @@ function showAct(){
   // Reset
   el.cd.classList.add("hidden");
   el.step.classList.remove("hidden");
+  el.micro.classList.add("hidden");
+  el.settings.classList.add("hidden");
+  el.settingsLink.classList.add("hidden");
   el.box.classList.remove("hidden");
 
   // Timer start
@@ -162,12 +165,35 @@ async function complete(v){
 function startRem(){
   clearTimeout(rem);
   const m = +(localStorage.getItem("ff-reminder-interval")||30);
-  rem = setTimeout(()=>{ notify(); startRem(); }, m*60000);
+
+  rem = setTimeout(()=>{
+    notify();
+
+    // ⭐ NY ØVELSE VED PÅMINDELSE
+    showAct();
+
+  }, m*60000);
 }
+
 function notify(){
   if(Notification.permission!=="granted")return;
-  navigator.serviceWorker.getRegistration().then(r=>r?.showNotification("Flow Focus",{body:"Tid til en aktiv mikropause",icon:"icon-192.png",badge:"icon-192.png"}));
+
+  navigator.serviceWorker.getRegistration().then(reg=>{
+    reg?.showNotification("Flow Focus",{
+      body:"Tid til en aktiv mikropause",
+      icon:"icon-192.png",
+      badge:"icon-192.png",
+      data:{action:"new_exercise"}
+    });
+  });
 }
+
+/* ---------- Lyt efter klik på notifikation ---------- */
+navigator.serviceWorker.addEventListener("message", event => {
+  if(event.data && event.data.action==="new_exercise"){
+    showAct();
+  }
+});
 
 /* ---------- Bindings ---------- */
 el.energy.onclick = e => {
