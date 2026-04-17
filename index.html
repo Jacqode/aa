@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v130</title>
+<title>Flow Focus v131</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -22,18 +22,21 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 
 <div id="ff-box" class="hidden">
 
-  <!-- AKTIVITET -->
+  <!-- AKTIVITET (NUMMERERET) -->
   <div id="ff-step-activity" class="hidden">
 
-    <p id="ff-activity-title"></p>
-    <p id="ff-activity-description"></p>
-
-    <button id="ff-start-activity">Start 2-minutters timer</button>
-    <div id="ff-activity-countdown" class="hidden">2:00</div>
+    <!-- 1 -->
+    <p><strong>1. Lav store cirkler fremad og baglæns.</strong></p>
     <img id="ff-activity-image" class="hidden" alt="Øvelse">
 
+    <!-- 2 -->
+    <p><strong>2. Start timer</strong></p>
+    <button id="ff-start-activity">Start 2-minutters timer</button>
+    <div id="ff-activity-countdown" class="hidden">2:00</div>
+
+    <!-- 3 -->
+    <p><strong>3. Gav aktiviteten dig mere energi?</strong></p>
     <div id="ff-energy-buttons" class="energy-buttons">
-      <p>Gav aktiviteten dig mere energi?</p>
       <button data-value="ja">Ja</button>
       <button data-value="nej">Nej</button>
       <button data-value="ved_ikke">Ved ikke</button>
@@ -96,12 +99,17 @@ let timer, rem;
 /* ---------- UI ---------- */
 function showAct(){
   const a = acts[Math.random()*acts.length|0];
-  el.title.textContent = a.t;
-  el.desc.textContent = a.d;
-  if(a.i){ el.img.src = a.i; el.img.classList.remove("hidden"); } else el.img.classList.add("hidden");
+
+  // illustration
+  if(a.i){ el.img.src = a.i; el.img.classList.remove("hidden"); }
+  else el.img.classList.add("hidden");
+
+  // reset
   el.cd.classList.add("hidden");
   el.step.classList.remove("hidden");
   el.box.classList.remove("hidden");
+
+  // timer start
   el.start.onclick = () => { clearInterval(timer); startTimer(a.m); };
 }
 
@@ -124,10 +132,10 @@ async function complete(v){
     const mins = +(localStorage.getItem("ff-reminder-interval")||30);
     const next = new Date(Date.now()+mins*60000).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 
-    /* SKJUL AKTIVITET */
+    // skjul aktivitet
     el.step.classList.add("hidden");
 
-    /* VIS MICROFEEDBACK */
+    // vis microfeedback
     el.micro.classList.remove("hidden");
     el.micro.innerHTML = `
       <p>Tak for at tage en aktiv pause. Sådan får vi et sundere arbejdsliv.</p>
