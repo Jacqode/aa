@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v135</title>
+<title>Flow Focus v136</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -21,17 +21,17 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 
 <div id="ff-box" class="hidden">
 
-  <!-- AKTIVITET (NUMMERERET) -->
+  <!-- AKTIVITET (NY RÆKKEFØLGE) -->
   <div id="ff-step-activity" class="hidden">
 
     <!-- 1 -->
-    <p><strong id="ff-step1-text">1.</strong></p>
-    <img id="ff-activity-image" class="hidden" alt="Øvelse">
-
-    <!-- 2 -->
-    <p><strong>2. Start timer</strong></p>
+    <p><strong>1. Start timer</strong></p>
     <button id="ff-start-activity">Start 2-minutters timer</button>
     <div id="ff-activity-countdown" class="hidden">2:00</div>
+
+    <!-- 2 -->
+    <p><strong id="ff-step2-text">2.</strong></p>
+    <img id="ff-activity-image" class="hidden" alt="Øvelse">
 
     <!-- 3 -->
     <p><strong>3. Gav aktiviteten dig mere energi?</strong></p>
@@ -72,7 +72,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 const $ = id => document.getElementById(id);
 const el = {
   box: $("ff-box"), step: $("ff-step-activity"),
-  step1: $("ff-step1-text"),
+  step2: $("ff-step2-text"),
   start: $("ff-start-activity"), cd: $("ff-activity-countdown"),
   img: $("ff-activity-image"), energy: $("ff-energy-buttons"),
   micro: $("ff-microfeedback"), settingsLink: $("ff-settings-link"),
@@ -102,8 +102,8 @@ let timer, rem;
 function showAct(){
   const a = acts[Math.random()*acts.length|0];
 
-  // Dynamisk tekst til trin 1
-  el.step1.textContent = "1. " + a.d;
+  // Dynamisk tekst til trin 2
+  el.step2.textContent = "2. " + a.d;
 
   // Illustration
   if(a.i){ el.img.src = a.i; el.img.classList.remove("hidden"); }
