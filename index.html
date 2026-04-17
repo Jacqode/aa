@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v128</title>
+<title>Flow Focus v129</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -41,10 +41,10 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 
   </div>
 
-  <!-- MICROFEEDBACK (FLYTTET HERUD) -->
+  <!-- MICROFEEDBACK (UDENFOR AKTIVITET) -->
   <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
 
-  <!-- INDSTILLINGER LINK -->
+  <!-- FAST INDSTILLINGER-LINK -->
   <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
 
   <!-- INDSTILLINGER PANEL -->
@@ -124,29 +124,15 @@ async function complete(v){
     const mins = +(localStorage.getItem("ff-reminder-interval")||30);
     const next = new Date(Date.now()+mins*60000).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 
-    /* SKJUL KUN AKTIVITET — IKKE MICROFEEDBACK */
+    /* SKJUL AKTIVITET */
     el.step.classList.add("hidden");
 
     /* VIS MICROFEEDBACK */
     el.micro.classList.remove("hidden");
-    el.micro.innerHTML = "";
-
-    const p1 = document.createElement("p");
-    p1.textContent = "Tak for at tage en aktiv pause. Sådan får vi et sundere arbejdsliv.";
-
-    const p2 = document.createElement("p");
-    p2.innerHTML = `Du påmindes næste pause kl. ${next}.<br>God arbejdslyst indtil da.`;
-
-    const p3 = document.createElement("p");
-    const link = document.createElement("a");
-    link.href = "#";
-    link.textContent = "⚙️ Indstillinger";
-    link.onclick = e => { e.preventDefault(); el.settings.classList.toggle("hidden"); };
-    p3.appendChild(link);
-
-    el.micro.appendChild(p1);
-    el.micro.appendChild(p2);
-    el.micro.appendChild(p3);
+    el.micro.innerHTML = `
+      <p>Tak for at tage en aktiv pause. Sådan får vi et sundere arbejdsliv.</p>
+      <p>Du påmindes næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>
+    `;
 
     startRem();
 
