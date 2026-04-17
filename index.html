@@ -1,6 +1,6 @@
 <!doctype html><html lang="da"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v125</title>
+<title>Flow Focus v126</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -121,10 +121,16 @@ async function complete(v){
 
     /* --- VIS KUN DEN NYE TEKST --- */
     el.micro.classList.remove("hidden");
-    el.micro.innerHTML=
+    el.micro.innerHTML =
       `<p>Tak for at tage en aktiv pause. Sådan får vi et sundere arbejdsliv.</p>
        <p>Du påmindes næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>
-       <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>`;
+       <p><a href="#" id="ff-settings-toggle-micro">⚙️ Indstillinger</a></p>`;
+
+    /* GENBIND SETTINGS-KNAPPEN I MICROFEEDBACK */
+    document.getElementById("ff-settings-toggle-micro").onclick = e => {
+      e.preventDefault();
+      el.settings.classList.toggle("hidden");
+    };
 
     startRem();
 
@@ -150,10 +156,12 @@ el.energy.onclick=e=>{
   const b=e.target.closest("button[data-value]");
   if(b)complete(b.dataset.value);
 };
+
 el.setToggle.onclick=e=>{
   e.preventDefault();
   el.settings.classList.toggle("hidden");
 };
+
 el.remSave.onclick=async()=>{
   const m=+el.remIn.value;
   if(m>0)localStorage.setItem("ff-reminder-interval",m);
@@ -161,6 +169,7 @@ el.remSave.onclick=async()=>{
   el.remFb.textContent=ok?"Påmindelser aktiveret.":"Tillad notifikationer.";
   startRem();
 };
+
 el.remDis.onclick=()=>{
   localStorage.removeItem("ff-reminder-interval");
   el.remFb.textContent="Slået fra.";
