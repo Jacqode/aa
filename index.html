@@ -3,12 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v131</title>
+<title>Flow Focus v133</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 .hidden{display:none!important}
-#ff-activity-title{font-weight:600;font-size:1.2rem}
 #ff-activity-countdown{font-size:1.4rem;margin-top:6px}
 #ff-activity-image{max-width:200px;margin-top:10px;display:block;min-height:120px}
 .energy-buttons button{margin:6px 6px 0 0}
@@ -47,8 +46,10 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
   <!-- MICROFEEDBACK -->
   <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
 
-  <!-- FAST INDSTILLINGER-LINK -->
-  <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>
+  <!-- FAST INDSTILLINGER-LINK (SKJULT I FØRSTE SKÆRM) -->
+  <p id="ff-settings-link" class="hidden">
+    <a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a>
+  </p>
 
   <!-- INDSTILLINGER PANEL -->
   <div id="ff-settings" class="hidden">
@@ -71,13 +72,13 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 const $ = id => document.getElementById(id);
 const el = {
   box: $("ff-box"), step: $("ff-step-activity"),
-  title: $("ff-activity-title"), desc: $("ff-activity-description"),
   start: $("ff-start-activity"), cd: $("ff-activity-countdown"),
   img: $("ff-activity-image"), energy: $("ff-energy-buttons"),
-  micro: $("ff-microfeedback"), setToggle: $("ff-settings-toggle"),
-  settings: $("ff-settings"), remIn: $("ff-reminder-input"),
-  remSave: $("ff-reminder-save"), remDis: $("ff-reminder-disable"),
-  remFb: $("ff-reminder-feedback"), stats: $("ff-stats-container")
+  micro: $("ff-microfeedback"), settingsLink: $("ff-settings-link"),
+  setToggle: $("ff-settings-toggle"), settings: $("ff-settings"),
+  remIn: $("ff-reminder-input"), remSave: $("ff-reminder-save"),
+  remDis: $("ff-reminder-disable"), remFb: $("ff-reminder-feedback"),
+  stats: $("ff-stats-container")
 };
 
 const BASE="https://workerff092.jakobhelkjaer.workers.dev";
@@ -100,16 +101,13 @@ let timer, rem;
 function showAct(){
   const a = acts[Math.random()*acts.length|0];
 
-  // illustration
   if(a.i){ el.img.src = a.i; el.img.classList.remove("hidden"); }
   else el.img.classList.add("hidden");
 
-  // reset
   el.cd.classList.add("hidden");
   el.step.classList.remove("hidden");
   el.box.classList.remove("hidden");
 
-  // timer start
   el.start.onclick = () => { clearInterval(timer); startTimer(a.m); };
 }
 
@@ -132,15 +130,18 @@ async function complete(v){
     const mins = +(localStorage.getItem("ff-reminder-interval")||30);
     const next = new Date(Date.now()+mins*60000).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 
-    // skjul aktivitet
+    /* SKJUL AKTIVITET */
     el.step.classList.add("hidden");
 
-    // vis microfeedback
+    /* VIS MICROFEEDBACK */
     el.micro.classList.remove("hidden");
     el.micro.innerHTML = `
       <p>Tak for at tage en aktiv pause. Sådan får vi et sundere arbejdsliv.</p>
       <p>Du påmindes næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>
     `;
+
+    /* VIS INDSTILLINGER-LINKET NU */
+    el.settingsLink.classList.remove("hidden");
 
     startRem();
 
@@ -189,6 +190,7 @@ el.remDis.onclick = () => {
 /* ---------- Init ---------- */
 window.onload = () => {
   el.settings.classList.add("hidden");
+  el.settingsLink.classList.add("hidden");
   el.micro.classList.add("hidden");
   el.remIn.value = localStorage.getItem("ff-reminder-interval")||30;
   showAct();
