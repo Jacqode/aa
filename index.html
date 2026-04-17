@@ -1,6 +1,6 @@
 <!doctype html><html lang="da"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v123</title>
+<title>Flow Focus v124</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -9,10 +9,6 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 #ff-activity-countdown{font-size:1.4rem;margin-top:6px}
 #ff-activity-image{max-width:200px;margin-top:10px;display:block;min-height:120px}
 .energy-buttons button{margin:6px 6px 0 0}
-table.energy-matrix{border-collapse:collapse;margin-top:10px;width:100%;max-width:720px}
-table.energy-matrix th,table.energy-matrix td{border:1px solid #ccc;padding:4px 6px;text-align:center}
-table.energy-matrix th{background:#f3f3f3}
-table.energy-matrix td:first-child{text-align:left;font-weight:700}
 .ff-sep{margin:18px 0;opacity:.18;border:0;border-top:1px solid rgba(0,0,0,.08)}
 .section-title{font-weight:600;margin:6px 0;display:flex;gap:8px;align-items:center}
 .small-note{color:#666;font-size:.9rem;margin-top:6px}
@@ -31,10 +27,9 @@ table.energy-matrix td:first-child{text-align:left;font-weight:700}
     <img id="ff-activity-image" class="hidden" alt="Øvelse">
 
     <div id="ff-energy-buttons" class="energy-buttons">
-      <p>Hvordan føles din energi nu efter aktiviteten?</p>
-      <button data-value="mindre">Mindre</button>
-      <button data-value="samme">Samme</button>
-      <button data-value="mere">Mere</button>
+      <p>Gav aktiviteten dig mere energi?</p>
+      <button data-value="ja">Ja</button>
+      <button data-value="nej">Nej</button>
       <button data-value="ved_ikke">Ved ikke</button>
     </div>
 
@@ -88,15 +83,6 @@ const api = (p,o={}) => fetch(BASE+p,{...o,mode:"cors"}).then(r=>r.ok?r.json():P
 const play = () => new Audio("done.mp3").play().catch(()=>{});
 let timer,rem;
 
-function matrix(ev){
-  const H=[8,9,10,11,12,13,14,15,16,17,18],L=["mindre","samme","mere","ved_ikke"];
-  const M=Object.fromEntries(L.map(l=>[l,Object.fromEntries(H.map(h=>[h,0]))]));
-  ev.forEach(e=>{let h=new Date(e.timestamp).getHours();if(M[e.value]?.[h]!==undefined)M[e.value][h]++});
-  return `<table class=energy-matrix><tr><th></th>${H.map(h=>`<th>${h}</th>`).join("")}</tr>`+
-         L.map(l=>`<tr><td>${l}</td>${H.map(h=>`<td>${M[l][h]}</td>`).join("")}</tr>`).join("")+
-         `</table>`;
-}
-
 /* ---------- UI ---------- */
 function showAct(){
   const a=acts[Math.random()*acts.length|0];
@@ -121,15 +107,27 @@ function startTimer(m){
 async function complete(v){
   try{
     const now=new Date().toISOString();
+
     await api("/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:"demo-user-1",type:"break_completed",timestamp:now})});
     await api("/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:"demo-user-1",type:"energy_delta",value:v,timestamp:now})});
-    const ev=await api("/api/events/user/demo-user-1");
+
     const mins=+(localStorage.getItem("ff-reminder-interval")||30);
     const next=new Date(Date.now()+mins*60000).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
+
+    /* --- SKJUL ALT ANDRE ELEMENTER --- */
+    el.step.classList.add("hidden");
+    el.img.classList.add("hidden");
+    el.cd.classList.add("hidden");
+
+    /* --- VIS KUN DEN TEKST DU ØNSKER --- */
     el.micro.classList.remove("hidden");
-    el.micro.innerHTML=`<p>Tak. Dit energiudbytte er registreret.</p><p>Du påmindes om næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>`;
-    el.stats.innerHTML=matrix(ev);
+    el.micro.innerHTML=
+      `<p>Tak. Dit energiudbytte er registreret.</p>
+       <p>Du påmindes om næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>
+       <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>`;
+
     startRem();
+
   }catch(e){
     el.micro.classList.remove("hidden");
     el.micro.textContent="Netværksfejl.";
