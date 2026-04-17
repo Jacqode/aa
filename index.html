@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v133</title>
+<title>Flow Focus v134</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -25,7 +25,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
   <div id="ff-step-activity" class="hidden">
 
     <!-- 1 -->
-    <p><strong>1. Lav store cirkler fremad og baglæns.</strong></p>
+    <p><strong id="ff-step1-text">1.</strong></p>
     <img id="ff-activity-image" class="hidden" alt="Øvelse">
 
     <!-- 2 -->
@@ -72,6 +72,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 const $ = id => document.getElementById(id);
 const el = {
   box: $("ff-box"), step: $("ff-step-activity"),
+  step1: $("ff-step1-text"),
   start: $("ff-start-activity"), cd: $("ff-activity-countdown"),
   img: $("ff-activity-image"), energy: $("ff-energy-buttons"),
   micro: $("ff-microfeedback"), settingsLink: $("ff-settings-link"),
@@ -101,13 +102,19 @@ let timer, rem;
 function showAct(){
   const a = acts[Math.random()*acts.length|0];
 
+  // Dynamisk tekst til trin 1
+  el.step1.textContent = "1. " + a.d;
+
+  // Illustration
   if(a.i){ el.img.src = a.i; el.img.classList.remove("hidden"); }
   else el.img.classList.add("hidden");
 
+  // Reset
   el.cd.classList.add("hidden");
   el.step.classList.remove("hidden");
   el.box.classList.remove("hidden");
 
+  // Timer start
   el.start.onclick = () => { clearInterval(timer); startTimer(a.m); };
 }
 
@@ -130,17 +137,17 @@ async function complete(v){
     const mins = +(localStorage.getItem("ff-reminder-interval")||30);
     const next = new Date(Date.now()+mins*60000).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 
-    /* SKJUL AKTIVITET */
+    // Skjul aktivitet
     el.step.classList.add("hidden");
 
-    /* VIS MICROFEEDBACK */
+    // Vis microfeedback
     el.micro.classList.remove("hidden");
     el.micro.innerHTML = `
       <p>Tak for at tage en aktiv pause. Sådan får vi et sundere arbejdsliv.</p>
       <p>Du påmindes næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>
     `;
 
-    /* VIS INDSTILLINGER-LINKET NU */
+    // Vis Indstillinger-linket nu
     el.settingsLink.classList.remove("hidden");
 
     startRem();
