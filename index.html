@@ -1,6 +1,6 @@
 <!doctype html><html lang="da"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v124</title>
+<title>Flow Focus v125</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -119,11 +119,11 @@ async function complete(v){
     el.img.classList.add("hidden");
     el.cd.classList.add("hidden");
 
-    /* --- VIS KUN DEN TEKST DU ØNSKER --- */
+    /* --- VIS KUN DEN NYE TEKST --- */
     el.micro.classList.remove("hidden");
     el.micro.innerHTML=
-      `<p>Tak. Dit energiudbytte er registreret.</p>
-       <p>Du påmindes om næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>
+      `<p>Tak for at tage en aktiv pause. Sådan får vi et sundere arbejdsliv.</p>
+       <p>Du påmindes næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>
        <p><a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a></p>`;
 
     startRem();
