@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v136</title>
+<title>Flow Focus v137</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -14,6 +14,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 .ff-sep{margin:18px 0;opacity:.18;border:0;border-top:1px solid rgba(0,0,0,.08)}
 .section-title{font-weight:600;margin:6px 0;display:flex;gap:8px;align-items:center}
 .small-note{color:#666;font-size:.9rem;margin-top:6px}
+h2{margin-bottom:12px;margin-top:0}
 </style>
 </head>
 
@@ -21,8 +22,11 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 
 <div id="ff-box" class="hidden">
 
-  <!-- AKTIVITET (NY RÆKKEFØLGE) -->
+  <!-- AKTIVITET (NY RÆKKEFØLGE + OVERSKRIFT) -->
   <div id="ff-step-activity" class="hidden">
+
+    <!-- ØVELSESOVERSKRIFT -->
+    <h2 id="ff-activity-title"></h2>
 
     <!-- 1 -->
     <p><strong>1. Start timer</strong></p>
@@ -72,7 +76,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
 const $ = id => document.getElementById(id);
 const el = {
   box: $("ff-box"), step: $("ff-step-activity"),
-  step2: $("ff-step2-text"),
+  title: $("ff-activity-title"), step2: $("ff-step2-text"),
   start: $("ff-start-activity"), cd: $("ff-activity-countdown"),
   img: $("ff-activity-image"), energy: $("ff-energy-buttons"),
   micro: $("ff-microfeedback"), settingsLink: $("ff-settings-link"),
@@ -84,13 +88,13 @@ const el = {
 
 const BASE="https://workerff092.jakobhelkjaer.workers.dev";
 
-/* ---------- Data ---------- */
+/* ---------- Data (RENE TITLER) ---------- */
 const acts=[
-  {t:"Gang på stedet i 2 min",d:"Gå roligt på stedet med lette skridt.",m:2,i:"images/gang.png"},
-  {t:"Lægløft i 2 min",d:"Løft og sænk hælene roligt.",m:2,i:"images/laegloeft.png"},
-  {t:"Rejs og sæt dig i 2 min",d:"Rejs dig roligt og sæt dig igen.",m:2,i:"images/rejs.png"},
+  {t:"Gang på stedet",d:"Gå roligt på stedet med lette skridt.",m:2,i:"images/gang.png"},
+  {t:"Lægløft",d:"Løft og sænk hælene roligt.",m:2,i:"images/laegloeft.png"},
+  {t:"Rejs og sæt dig",d:"Rejs dig roligt og sæt dig igen.",m:2,i:"images/rejs.png"},
   {t:"Armcirkler",d:"Lav store cirkler fremad og baglæns.",m:2,i:"images/armcirkel.png"},
-  {t:"Benstræk i 2 min",d:"Stræk ét ben ad gangen.",m:2,i:"images/benstraek.png"}
+  {t:"Benstræk",d:"Stræk ét ben ad gangen.",m:2,i:"images/benstraek.png"}
 ];
 
 /* ---------- Helpers ---------- */
@@ -102,7 +106,10 @@ let timer, rem;
 function showAct(){
   const a = acts[Math.random()*acts.length|0];
 
-  // Dynamisk tekst til trin 2
+  // Overskrift
+  el.title.textContent = a.t;
+
+  // Trin 2 tekst
   el.step2.textContent = "2. " + a.d;
 
   // Illustration
@@ -168,10 +175,7 @@ function startRem(){
 
   rem = setTimeout(()=>{
     notify();
-
-    // ⭐ NY ØVELSE VED PÅMINDELSE
-    showAct();
-
+    showAct(); // ⭐ NY ØVELSE VED PÅMINDELSE
   }, m*60000);
 }
 
