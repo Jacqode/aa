@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v141</title>
+<title>Flow Focus v142</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -22,9 +22,7 @@ h2{margin-bottom:12px;margin-top:0}
 
 <div id="ff-box" class="hidden">
 
-  <!-- AKTIVITET -->
   <div id="ff-step-activity" class="hidden">
-
     <h2 id="ff-activity-title"></h2>
 
     <p><strong>1. Start timer</strong></p>
@@ -40,7 +38,6 @@ h2{margin-bottom:12px;margin-top:0}
       <button data-value="nej">Nej</button>
       <button data-value="ved_ikke">Ved ikke</button>
     </div>
-
   </div>
 
   <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
@@ -81,18 +78,19 @@ const el = {
 
 const BASE="https://workerff092.jakobhelkjaer.workers.dev";
 
-/* ---------- v141: 8 aktiviteter ---------- */
+/* ---------- v142: 9 aktiviteter (uden Gang) ---------- */
 const acts=[
-  {t:"Gang på stedet",d:"Gå roligt rundt i dit eget tempo.",m:2,i:"images/gang.png"},
   {t:"Lægløft",d:"Lav rolige gentagelser i dit eget tempo.",m:2,i:"images/laegloeft.png"},
   {t:"Rejs og sæt dig",d:"Rejs og sæt dig roligt i dit eget tempo.",m:2,i:"images/rejs.png"},
   {t:"Armcirkler",d:"Lav store cirkler fremad og baglæns i dit eget tempo.",m:2,i:"images/armcirkel.png"},
   {t:"Benstræk",d:"Stræk ét ben ad gangen i roligt tempo.",m:2,i:"images/benstraek.png"},
 
-  /* Nye aktiviteter */
   {t:"Armstrækning mod væg",d:"Stå med hænderne mod væggen og stræk armene roligt frem og tilbage.",m:2,i:"images/armstraekning-vaeg.png"},
   {t:"Lunges",d:"Tag et skridt frem og sænk kroppen, skift ben roligt.",m:2,i:"images/lunges.png"},
-  {t:"Sprællemand",d:"Hop med arme og ben ud og ind i roligt tempo.",m:2,i:"images/spraellemand.png"}
+  {t:"Sprællemand",d:"Hop med arme og ben ud og ind i roligt tempo.",m:2,i:"images/spraellemand.png"},
+
+  {t:"Knæløft",d:"Løft skiftevis højre og venstre knæ i roligt tempo.",m:2,i:"images/knaeloeft.png"},
+  {t:"Squats",d:"Bøj i knæene og sænk kroppen, hold ryggen ret.",m:2,i:"images/squats.png"}
 ];
 
 /* ---------- Helpers ---------- */
