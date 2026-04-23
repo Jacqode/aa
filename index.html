@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v142</title>
+<title>Flow Focus v143</title>
 
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
@@ -78,19 +78,21 @@ const el = {
 
 const BASE="https://workerff092.jakobhelkjaer.workers.dev";
 
-/* ---------- v142: 9 aktiviteter (uden Gang) ---------- */
+/* ---------- v143: 9 aktiviteter med standardforklaring ---------- */
+const STD = "Lav så mange gentagelser, du kan, i dit eget tempo.";
+
 const acts=[
-  {t:"Lægløft",d:"Lav rolige gentagelser i dit eget tempo.",m:2,i:"images/laegloeft.png"},
-  {t:"Rejs og sæt dig",d:"Rejs og sæt dig roligt i dit eget tempo.",m:2,i:"images/rejs.png"},
-  {t:"Armcirkler",d:"Lav store cirkler fremad og baglæns i dit eget tempo.",m:2,i:"images/armcirkel.png"},
-  {t:"Benstræk",d:"Stræk ét ben ad gangen i roligt tempo.",m:2,i:"images/benstraek.png"},
+  {t:"Lægløft",d:STD,m:2,i:"images/laegloeft.png"},
+  {t:"Rejs og sæt dig",d:STD,m:2,i:"images/rejs.png"},
+  {t:"Armcirkler",d:STD,m:2,i:"images/armcirkel.png"},
+  {t:"Benstræk",d:STD,m:2,i:"images/benstraek.png"},
 
-  {t:"Armstrækning mod væg",d:"Stå med hænderne mod væggen og stræk armene roligt frem og tilbage.",m:2,i:"images/armstraekning-vaeg.png"},
-  {t:"Lunges",d:"Tag et skridt frem og sænk kroppen, skift ben roligt.",m:2,i:"images/lunges.png"},
-  {t:"Sprællemand",d:"Hop med arme og ben ud og ind i roligt tempo.",m:2,i:"images/spraellemand.png"},
+  {t:"Armstrækning mod væg",d:STD,m:2,i:"images/armstraekning-vaeg.png"},
+  {t:"Lunges",d:STD,m:2,i:"images/lunges.png"},
+  {t:"Sprællemand",d:STD,m:2,i:"images/spraellemand.png"},
 
-  {t:"Knæløft",d:"Løft skiftevis højre og venstre knæ i roligt tempo.",m:2,i:"images/knaeloeft.png"},
-  {t:"Squats",d:"Bøj i knæene og sænk kroppen, hold ryggen ret.",m:2,i:"images/squats.png"}
+  {t:"Knæløft",d:STD,m:2,i:"images/knaeloeft.png"},
+  {t:"Squats",d:STD,m:2,i:"images/squats.png"}
 ];
 
 /* ---------- Helpers ---------- */
@@ -131,11 +133,22 @@ async function complete(v){
   try{
     const now = new Date().toISOString();
 
-    await api("/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:"demo-user-1",type:"break_completed",timestamp:now})});
-    await api("/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:"demo-user-1",type:"energy_delta",value:v,timestamp:now})});
+    await api("/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      user_id:"demo-user-1",
+      type:"break_completed",
+      timestamp:now
+    })});
+
+    await api("/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      user_id:"demo-user-1",
+      type:"energy_delta",
+      value:v,
+      timestamp:now
+    })});
 
     const mins = +(localStorage.getItem("ff-reminder-interval")||30);
-    const next = new Date(Date.now()+mins*60000).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
+    const next = new Date(Date.now()+mins*60000)
+      .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 
     el.step.classList.add("hidden");
 
