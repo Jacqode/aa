@@ -3,234 +3,114 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v143</title>
-
+<title>Flow Focus</title>
 <style>
-body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;padding:16px}
-.hidden{display:none!important}
-#ff-activity-countdown{font-size:1.4rem;margin-top:6px}
-#ff-activity-image{max-width:200px;margin-top:10px;display:block;min-height:120px}
-.energy-buttons button{margin:6px 6px 0 0}
-.ff-sep{margin:18px 0;opacity:.18;border:0;border-top:1px solid rgba(0,0,0,.08)}
-.section-title{font-weight:600;margin:6px 0;display:flex;gap:8px;align-items:center}
-.small-note{color:#666;font-size:.9rem;margin-top:6px}
-h2{margin-bottom:12px;margin-top:0}
+body{font-family:system-ui;padding:16px}
+.hidden{display:none}
+#img{max-width:200px;margin-top:10px}
+#feed{margin-top:20px;font-size:.9rem;color:#444}
 </style>
 </head>
 
 <body>
 
-<div id="ff-box" class="hidden">
+<h2 id="title"></h2>
+<img id="img" class="hidden">
+<button id="start">Start 2 min</button>
+<div id="count" class="hidden">2:00</div>
 
-  <div id="ff-step-activity" class="hidden">
-    <h2 id="ff-activity-title"></h2>
-
-    <p><strong>1. Start timer</strong></p>
-    <button id="ff-start-activity">Start 2-minutters timer</button>
-    <div id="ff-activity-countdown" class="hidden">2:00</div>
-
-    <p><strong id="ff-step2-text">2.</strong></p>
-    <img id="ff-activity-image" class="hidden" alt="Øvelse">
-
-    <p><strong>3. Gav aktiviteten dig mere energi?</strong></p>
-    <div id="ff-energy-buttons" class="energy-buttons">
-      <button data-value="ja">Ja</button>
-      <button data-value="nej">Nej</button>
-      <button data-value="ved_ikke">Ved ikke</button>
-    </div>
-  </div>
-
-  <div id="ff-microfeedback" class="hidden" aria-live="polite"></div>
-
-  <p id="ff-settings-link" class="hidden">
-    <a href="#" id="ff-settings-toggle">⚙️ Indstillinger</a>
-  </p>
-
-  <div id="ff-settings" class="hidden">
-    <div class="section-title">🔔 Påmindelser</div>
-    <input id="ff-reminder-input" type="number" min="1" style="width:60px"> minutter<br><br>
-    <button id="ff-reminder-save">Gem</button>
-    <button id="ff-reminder-disable">Slå fra</button>
-    <p id="ff-reminder-feedback" class="small-note"></p>
-
-    <hr class="ff-sep">
-
-    <div class="section-title">📊 Statistik</div>
-    <div id="ff-stats-container" class="small-note">Ingen data endnu.</div>
-  </div>
-
+<div id="energy" class="hidden">
+  <p>Gav aktiviteten dig mere energi?</p>
+  <button data-v="ja">Ja</button>
+  <button data-v="nej">Nej</button>
+  <button data-v="ved_ikke">Ved ikke</button>
 </div>
 
+<div id="micro" class="hidden"></div>
+
+<h3>Team feed</h3>
+<div id="feed">Indlæser…</div>
+
 <script>
-/* ---------- DOM cache ---------- */
-const $ = id => document.getElementById(id);
-const el = {
-  box: $("ff-box"), step: $("ff-step-activity"),
-  title: $("ff-activity-title"), step2: $("ff-step2-text"),
-  start: $("ff-start-activity"), cd: $("ff-activity-countdown"),
-  img: $("ff-activity-image"), energy: $("ff-energy-buttons"),
-  micro: $("ff-microfeedback"), settingsLink: $("ff-settings-link"),
-  setToggle: $("ff-settings-toggle"), settings: $("ff-settings"),
-  remIn: $("ff-reminder-input"), remSave: $("ff-reminder-save"),
-  remDis: $("ff-reminder-disable"), remFb: $("ff-reminder-feedback"),
-  stats: $("ff-stats-container")
-};
+/* --- Magic link identitet --- */
+const p=new URLSearchParams(location.search);
+if(p.get("team")) localStorage.setItem("team",p.get("team"));
+if(p.get("name")) localStorage.setItem("name",p.get("name"));
+const TEAM=localStorage.getItem("team")||"demo";
+const NAME=localStorage.getItem("name")||"Ukendt";
 
-const BASE="https://workerff092.jakobhelkjaer.workers.dev";
-
-/* ---------- v143: 9 aktiviteter med standardforklaring ---------- */
-const STD = "Lav så mange gentagelser, du kan, i dit eget tempo.";
-
+/* --- Aktiviteter --- */
 const acts=[
-  {t:"Lægløft",d:STD,m:2,i:"images/laegloeft.png"},
-  {t:"Rejs og sæt dig",d:STD,m:2,i:"images/rejs.png"},
-  {t:"Armcirkler",d:STD,m:2,i:"images/armcirkel.png"},
-  {t:"Benstræk",d:STD,m:2,i:"images/benstraek.png"},
-
-  {t:"Armstrækning mod væg",d:STD,m:2,i:"images/armstraekning-vaeg.png"},
-  {t:"Lunges",d:STD,m:2,i:"images/lunges.png"},
-  {t:"Sprællemand",d:STD,m:2,i:"images/spraellemand.png"},
-
-  {t:"Knæløft",d:STD,m:2,i:"images/knaeloeft.png"},
-  {t:"Squats",d:STD,m:2,i:"images/squats.png"}
+  {t:"Lægløft",i:"images/laegloeft.png"},
+  {t:"Squats",i:"images/squats.png"},
+  {t:"Armcirkler",i:"images/armcirkel.png"}
 ];
 
-/* ---------- Helpers ---------- */
-const api = (p,o={}) => fetch(BASE+p,{...o,mode:"cors"}).then(r=>r.ok?r.json():Promise.reject(r.status));
-const play = () => new Audio("done.mp3").play().catch(()=>{});
-let timer, rem;
+/* --- DOM --- */
+const title=$("title"), img=$("img"), start=$("start"),
+      count=$("count"), energy=$("energy"), micro=$("micro"), feed=$("feed");
+function $(id){return document.getElementById(id)}
 
-/* ---------- UI ---------- */
+let timer;
+
+/* --- API helper --- */
+const BASE="https://workerff092.jakobhelkjaer.workers.dev";
+const api=(p,o={})=>fetch(BASE+p,{...o,mode:"cors"}).then(r=>r.json());
+
+/* --- Autostart aktivitet --- */
 function showAct(){
-  const a = acts[Math.random()*acts.length|0];
-
-  el.title.textContent = a.t;
-  el.step2.textContent = "2. " + a.d;
-
-  if(a.i){ el.img.src = a.i; el.img.classList.remove("hidden"); }
-  else el.img.classList.add("hidden");
-
-  el.cd.classList.add("hidden");
-  el.step.classList.remove("hidden");
-  el.micro.classList.add("hidden");
-  el.settings.classList.add("hidden");
-  el.settingsLink.classList.add("hidden");
-  el.box.classList.remove("hidden");
-
-  el.start.onclick = () => { clearInterval(timer); startTimer(a.m); };
+  const a=acts[Math.random()*acts.length|0];
+  title.textContent=a.t;
+  img.src=a.i; img.classList.remove("hidden");
+  energy.classList.add("hidden");
+  micro.classList.add("hidden");
+  count.classList.add("hidden");
 }
 
-function startTimer(m){
-  let s = m*60;
-  el.cd.classList.remove("hidden");
-  const upd = () => el.cd.textContent = `${(s/60|0)}:${String(s%60).padStart(2,"0")}`;
+/* --- Timer --- */
+function startTimer(){
+  let s=120;
+  count.classList.remove("hidden");
+  const upd=()=>count.textContent=`${(s/60|0)}:${String(s%60).padStart(2,"0")}`;
   upd();
-  timer = setInterval(()=>{ s--; upd(); if(s<=0){ clearInterval(timer); play(); } }, 1000);
+  timer=setInterval(()=>{s--;upd();if(s<=0){clearInterval(timer);energy.classList.remove("hidden");}},1000);
 }
 
-/* ---------- Events ---------- */
+/* --- Send event + microfeedback --- */
 async function complete(v){
-  try{
-    const now = new Date().toISOString();
-
-    await api("/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      user_id:"demo-user-1",
-      type:"break_completed",
+  const now=new Date().toISOString();
+  await api("/api/event",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      team_id:TEAM,
+      display_name:NAME,
+      activity:title.textContent,
+      energy:v,
       timestamp:now
-    })});
-
-    await api("/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      user_id:"demo-user-1",
-      type:"energy_delta",
-      value:v,
-      timestamp:now
-    })});
-
-    const mins = +(localStorage.getItem("ff-reminder-interval")||30);
-    const next = new Date(Date.now()+mins*60000)
-      .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-
-    el.step.classList.add("hidden");
-
-    el.micro.classList.remove("hidden");
-    el.micro.innerHTML = `
-      <p>Tak for at tage en aktiv pause. Sådan får vi et sundere arbejdsliv.</p>
-      <p>Du påmindes næste pause kl. ${next}.<br>God arbejdslyst indtil da.</p>
-    `;
-
-    el.settingsLink.classList.remove("hidden");
-
-    startRem();
-
-  }catch(e){
-    el.micro.classList.remove("hidden");
-    el.micro.textContent="Netværksfejl.";
-  }
-}
-
-/* ---------- Reminders ---------- */
-function startRem(){
-  clearTimeout(rem);
-  const m = +(localStorage.getItem("ff-reminder-interval")||30);
-
-  rem = setTimeout(()=>{
-    notify();
-    showAct();
-  }, m*60000);
-}
-
-function notify(){
-  if(Notification.permission!=="granted")return;
-
-  navigator.serviceWorker.getRegistration().then(reg=>{
-    reg?.showNotification("Flow Focus",{
-      body:"Tid til en aktiv mikropause",
-      icon:"icon-192.png",
-      badge:"icon-192.png",
-      data:{action:"new_exercise"}
-    });
+    })
   });
+
+  micro.classList.remove("hidden");
+  micro.textContent="Tak for pausen. Godt gået!";
+  energy.classList.add("hidden");
+  loadFeed();
 }
 
-navigator.serviceWorker.addEventListener("message", event => {
-  if(event.data && event.data.action==="new_exercise"){
-    showAct();
-  }
-});
+/* --- Team feed --- */
+async function loadFeed(){
+  const rows=await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
+  feed.innerHTML=rows.map(r=>
+    `${r.display_name}: ${r.activity} kl. ${new Date(r.timestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})}`
+  ).join("<br>");
+}
 
-/* ---------- Bindings ---------- */
-el.energy.onclick = e => {
-  const b = e.target.closest("button[data-value]");
-  if(b) complete(b.dataset.value);
-};
+/* --- Bindings --- */
+start.onclick=()=>{clearInterval(timer);startTimer()};
+energy.onclick=e=>{const b=e.target.closest("button[data-v]");if(b)complete(b.dataset.v)};
 
-el.setToggle.onclick = e => {
-  e.preventDefault();
-  el.settings.classList.toggle("hidden");
-};
-
-el.remSave.onclick = async () => {
-  const m = +el.remIn.value;
-  if(m>0) localStorage.setItem("ff-reminder-interval",m);
-  const ok = (await Notification.requestPermission())==="granted";
-  el.remFb.textContent = ok ? "Påmindelser aktiveret." : "Tillad notifikationer.";
-  startRem();
-};
-
-el.remDis.onclick = () => {
-  localStorage.removeItem("ff-reminder-interval");
-  el.remFb.textContent="Slået fra.";
-  clearTimeout(rem);
-};
-
-/* ---------- Init ---------- */
-window.onload = () => {
-  el.settings.classList.add("hidden");
-  el.settingsLink.classList.add("hidden");
-  el.micro.classList.add("hidden");
-  el.remIn.value = localStorage.getItem("ff-reminder-interval")||30;
-  showAct();
-};
+/* --- Init (AUTOSTART) --- */
+window.onload=()=>{showAct();loadFeed()};
 </script>
 
 </body>
