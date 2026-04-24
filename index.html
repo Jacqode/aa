@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v146</title>
+<title>Flow Focus v147</title>
 <style>
 body{font-family:system-ui;padding:16px}
 .hidden{display:none}
@@ -33,48 +33,55 @@ body{font-family:system-ui;padding:16px}
 
 <script>
 /* --- Magic link identitet --- */
-const p=new URLSearchParams(location.search);
+const p = new URLSearchParams(location.search);
 
-// ⭐ INVITE: hent team + navn via invite-ID
-if(p.get("invite")){
-  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/invite?invite_id="+p.get("invite"))
-    .then(r=>r.json())
-    .then(d=>{
-      if(d.team_id) localStorage.setItem("team", d.team_id);
-      if(d.display_name) localStorage.setItem("name", d.display_name);
+// INVITE: hent team + navn via invite-ID
+if (p.get("invite")) {
+  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/invite?invite_id=" + p.get("invite"))
+    .then(r => r.json())
+    .then(d => {
+      if (d.team_id) localStorage.setItem("team", d.team_id);
+      if (d.display_name) localStorage.setItem("name", d.display_name);
     });
 }
 
-// eksisterende magic-link fallback
-if(p.get("team")) localStorage.setItem("team",p.get("team"));
-if(p.get("name")) localStorage.setItem("name",p.get("name"));
+// fallback
+if (p.get("team")) localStorage.setItem("team", p.get("team"));
+if (p.get("name")) localStorage.setItem("name", p.get("name"));
 
-const TEAM=localStorage.getItem("team")||"demo";
-const NAME=localStorage.getItem("name")||"Ukendt";
+const TEAM = localStorage.getItem("team") || "demo";
+const NAME = localStorage.getItem("name") || "Ukendt";
 
 /* --- Aktiviteter --- */
-const acts=[
-  {t:"Lægløft",i:"images/laegloeft.png"},
-  {t:"Squats",i:"images/squats.png"},
-  {t:"Armcirkler",i:"images/armcirkel.png"}
+const acts = [
+  { t: "Lægløft", i: "images/laegloeft.png" },
+  { t: "Squats", i: "images/squats.png" },
+  { t: "Armcirkler", i: "images/armcirkel.png" }
 ];
 
 /* --- DOM --- */
-const title=$("title"), img=$("img"), start=$("start"),
-      count=$("count"), energy=$("energy"), micro=$("micro"), feed=$("feed");
-function $(id){return document.getElementById(id)}
+function $(id){ return document.getElementById(id) }
+
+const title = $("title");
+const img = $("img");
+const start = $("start");
+const count = $("count");
+const energy = $("energy");
+const micro = $("micro");
+const feed = $("feed");
 
 let timer;
 
 /* --- API helper --- */
-const BASE="https://workerff092.jakobhelkjaer.workers.dev";
-const api=(p,o={})=>fetch(BASE+p,{...o,mode:"cors"}).then(r=>r.json());
+const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
+const api = (p, o={}) => fetch(BASE+p, { ...o, mode:"cors" }).then(r => r.json());
 
 /* --- Autostart aktivitet --- */
 function showAct(){
-  const a=acts[Math.random()*acts.length|0];
-  title.textContent=a.t;
-  img.src=a.i; img.classList.remove("hidden");
+  const a = acts[Math.random()*acts.length | 0];
+  title.textContent = a.t;
+  img.src = a.i;
+  img.classList.remove("hidden");
   energy.classList.add("hidden");
   micro.classList.add("hidden");
   count.classList.add("hidden");
@@ -82,48 +89,64 @@ function showAct(){
 
 /* --- Timer --- */
 function startTimer(){
-  let s=120;
+  let s = 120;
   count.classList.remove("hidden");
-  const upd=()=>count.textContent=`${(s/60|0)}:${String(s%60).padStart(2,"0")}`;
+  const upd = () => count.textContent = `${(s/60|0)}:${String(s%60).padStart(2,"0")}`;
   upd();
-  timer=setInterval(()=>{s--;upd();if(s<=0){clearInterval(timer);energy.classList.remove("hidden");}},1000);
+  timer = setInterval(() => {
+    s--;
+    upd();
+    if (s <= 0) {
+      clearInterval(timer);
+      energy.classList.remove("hidden");
+    }
+  }, 1000);
 }
 
 /* --- Send event + microfeedback --- */
 async function complete(v){
-  const now=new Date().toISOString();
-  await api("/api/event",{
+  const now = new Date().toISOString();
+
+  await api("/api/event", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
-      team_id:TEAM,
-      display_name:NAME,
-      activity:title.textContent,
-      energy:v,
-      timestamp:now
+      team_id: TEAM,
+      display_name: NAME,
+      activity: title.textContent,
+      energy: v,
+      timestamp: now
     })
   });
 
   micro.classList.remove("hidden");
-  micro.textContent="Tak for pausen. Godt gået!";
+  micro.textContent = "Tak for pausen. Godt gået!";
   energy.classList.add("hidden");
   loadFeed();
 }
 
 /* --- Team feed --- */
 async function loadFeed(){
-  const rows=await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
-  feed.innerHTML=rows.map(r=>
-    `${r.display_name}: ${r.activity} kl. ${new Date(r.timestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})}`
+  const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
+  feed.innerHTML = rows.map(r =>
+    `${r.display_name}: ${r.activity} kl. ${
+      new Date(r.timestamp).toLocaleTimeString("da-DK", {
+        hour:"2-digit",
+        minute:"2-digit"
+      })
+    }`
   ).join("<br>");
 }
 
 /* --- Bindings --- */
-start.onclick=()=>{clearInterval(timer);startTimer()};
-energy.onclick=e=>{const b=e.target.closest("button[data-v]");if(b)complete(b.dataset.v)};
+start.onclick = () => { clearInterval(timer); startTimer() };
+energy.onclick = e => {
+  const b = e.target.closest("button[data-v]");
+  if (b) complete(b.dataset.v);
+};
 
-/* --- Init (AUTOSTART) --- */
-window.onload=()=>{showAct();loadFeed()};
+/* --- Init --- */
+window.onload = () => { showAct(); loadFeed() };
 </script>
 
 </body>
