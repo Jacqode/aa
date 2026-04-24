@@ -1,87 +1,129 @@
-<!doctype html>
+og med index? <!doctype html>
 <html lang="da">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus Admin</title>
+<title>Flow Focus v146</title>
 <style>
-body{font-family:system-ui;padding:20px;max-width:600px}
-input,button{padding:8px;font-size:1rem;margin-top:8px}
-#invites{margin-top:20px}
-.inv{padding:6px 0;border-bottom:1px solid #ddd}
+body{font-family:system-ui;padding:16px}
+.hidden{display:none}
+#img{max-width:200px;margin-top:10px}
+#feed{margin-top:20px;font-size:.9rem;color:#444}
 </style>
 </head>
 
 <body>
 
-<h2>Admin – Invite generator</h2>
+<h2 id="title"></h2>
+<img id="img" class="hidden">
+<button id="start">Start 2 min</button>
+<div id="count" class="hidden">2:00</div>
 
-<label>Navn</label><br>
-<input id="name" placeholder="Indtast navn">
+<div id="energy" class="hidden">
+  <p>Gav aktiviteten dig mere energi?</p>
+  <button data-v="ja">Ja</button>
+  <button data-v="nej">Nej</button>
+  <button data-v="ved_ikke">Ved ikke</button>
+</div>
 
-<br><br>
+<div id="micro" class="hidden"></div>
 
-<label>Team ID</label><br>
-<input id="team" placeholder="TEAM123" value="TEAM123">
-
-<br><br>
-
-<button id="gen">Generér invite-link</button>
-
-<div id="out" style="margin-top:20px"></div>
-
-<hr style="margin:30px 0">
-
-<h2>Eksisterende invites</h2>
-<div id="invites">Indlæser…</div>
+<h3>Team feed</h3>
+<div id="feed">Indlæser…</div>
 
 <script>
+/* --- Magic link identitet --- */
+const p=new URLSearchParams(location.search);
+
+// ⭐ INVITE: hent team + navn via invite-ID
+if(p.get("invite")){
+  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/invite?invite_id="+p.get("invite"))
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.team_id) localStorage.setItem("team", d.team_id);
+      if(d.display_name) localStorage.setItem("name", d.display_name);
+    });
+}
+
+// eksisterende magic-link fallback
+if(p.get("team")) localStorage.setItem("team",p.get("team"));
+if(p.get("name")) localStorage.setItem("name",p.get("name"));
+
+const TEAM=localStorage.getItem("team")||"demo";
+const NAME=localStorage.getItem("name")||"Ukendt";
+
+/* --- Aktiviteter --- */
+const acts=[
+  {t:"Lægløft",i:"images/laegloeft.png"},
+  {t:"Squats",i:"images/squats.png"},
+  {t:"Armcirkler",i:"images/armcirkel.png"}
+];
+
+/* --- DOM --- */
+const title=$("title"), img=$("img"), start=$("start"),
+      count=$("count"), energy=$("energy"), micro=$("micro"), feed=$("feed");
+function $(id){return document.getElementById(id)}
+
+let timer;
+
+/* --- API helper --- */
 const BASE="https://workerff092.jakobhelkjaer.workers.dev";
+const api=(p,o={})=>fetch(BASE+p,{...o,mode:"cors"}).then(r=>r.json());
 
-// --- Opret invite ---
-document.getElementById("gen").onclick = async () => {
-  const name=document.getElementById("name").value.trim();
-  const team=document.getElementById("team").value.trim();
+/* --- Autostart aktivitet --- */
+function showAct(){
+  const a=acts[Math.random()*acts.length|0];
+  title.textContent=a.t;
+  img.src=a.i; img.classList.remove("hidden");
+  energy.classList.add("hidden");
+  micro.classList.add("hidden");
+  count.classList.add("hidden");
+}
 
-  if(!name || !team){
-    document.getElementById("out").textContent="Udfyld begge felter.";
-    return;
-  }
+/* --- Timer --- */
+function startTimer(){
+  let s=120;
+  count.classList.remove("hidden");
+  const upd=()=>count.textContent=`${(s/60|0)}:${String(s%60).padStart(2,"0")}`;
+  upd();
+  timer=setInterval(()=>{s--;upd();if(s<=0){clearInterval(timer);energy.classList.remove("hidden");}},1000);
+}
 
-  const r=await fetch(BASE+"/api/invite",{
+/* --- Send event + microfeedback --- */
+async function complete(v){
+  const now=new Date().toISOString();
+  await api("/api/event",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({team_id:team, display_name:name})
+    body:JSON.stringify({
+      team_id:TEAM,
+      display_name:NAME,
+      activity:title.textContent,
+      energy:v,
+      timestamp:now
+    })
   });
 
-  const d=await r.json();
-  document.getElementById("out").innerHTML=
-    `<a href="${d.link}" target="_blank">${d.link}</a>`;
-
-  loadInvites();
-};
-
-// --- Hent alle invites (kræver at du laver et endpoint senere) ---
-async function loadInvites(){
-  const r = await fetch(BASE+"/api/all_invites"); // du laver dette endpoint senere
-  const rows = await r.json();
-
-  document.getElementById("invites").innerHTML = rows.map(inv =>
-    `<div class="inv">
-       <strong>${inv.display_name}</strong> (${inv.team_id})<br>
-       ID: ${inv.invite_id}<br>
-       <button onclick="delInvite('${inv.invite_id}')">Slet</button>
-     </div>`
-  ).join("");
+  micro.classList.remove("hidden");
+  micro.textContent="Tak for pausen. Godt gået!";
+  energy.classList.add("hidden");
+  loadFeed();
 }
 
-// --- Slet invite ---
-async function delInvite(id){
-  await fetch(BASE+"/api/invite?invite_id="+id,{method:"DELETE"});
-  loadInvites();
+/* --- Team feed --- */
+async function loadFeed(){
+  const rows=await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
+  feed.innerHTML=rows.map(r=>
+    `${r.display_name}: ${r.activity} kl. ${new Date(r.timestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})}`
+  ).join("<br>");
 }
 
-loadInvites();
+/* --- Bindings --- */
+start.onclick=()=>{clearInterval(timer);startTimer()};
+energy.onclick=e=>{const b=e.target.closest("button[data-v]");if(b)complete(b.dataset.v)};
+
+/* --- Init (AUTOSTART) --- */
+window.onload=()=>{showAct();loadFeed()};
 </script>
 
 </body>
