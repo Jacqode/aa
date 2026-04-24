@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus</title>
+<title>Flow Focus v146</title>
 <style>
 body{font-family:system-ui;padding:16px}
 .hidden{display:none}
@@ -34,8 +34,21 @@ body{font-family:system-ui;padding:16px}
 <script>
 /* --- Magic link identitet --- */
 const p=new URLSearchParams(location.search);
+
+// ⭐ INVITE: hent team + navn via invite-ID
+if(p.get("invite")){
+  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/invite?invite_id="+p.get("invite"))
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.team_id) localStorage.setItem("team", d.team_id);
+      if(d.display_name) localStorage.setItem("name", d.display_name);
+    });
+}
+
+// eksisterende magic-link fallback
 if(p.get("team")) localStorage.setItem("team",p.get("team"));
 if(p.get("name")) localStorage.setItem("name",p.get("name"));
+
 const TEAM=localStorage.getItem("team")||"demo";
 const NAME=localStorage.getItem("name")||"Ukendt";
 
