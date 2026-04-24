@@ -32,10 +32,8 @@ body{font-family:system-ui;padding:16px}
 <div id="feed">Indlæser…</div>
 
 <script>
-/* --- Magic link identitet --- */
 const p = new URLSearchParams(location.search);
 
-// INVITE: hent team + navn via invite-ID
 if (p.get("invite")) {
   fetch("https://workerff092.jakobhelkjaer.workers.dev/api/invite?invite_id=" + p.get("invite"))
     .then(r => r.json())
@@ -45,21 +43,18 @@ if (p.get("invite")) {
     });
 }
 
-// fallback
 if (p.get("team")) localStorage.setItem("team", p.get("team"));
 if (p.get("name")) localStorage.setItem("name", p.get("name"));
 
 const TEAM = localStorage.getItem("team") || "demo";
 const NAME = localStorage.getItem("name") || "Ukendt";
 
-/* --- Aktiviteter --- */
 const acts = [
   { t: "Lægløft", i: "images/laegloeft.png" },
   { t: "Squats", i: "images/squats.png" },
   { t: "Armcirkler", i: "images/armcirkel.png" }
 ];
 
-/* --- DOM --- */
 function $(id){ return document.getElementById(id) }
 
 const title = $("title");
@@ -72,11 +67,9 @@ const feed = $("feed");
 
 let timer;
 
-/* --- API helper --- */
 const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 const api = (p, o={}) => fetch(BASE+p, { ...o, mode:"cors" }).then(r => r.json());
 
-/* --- Autostart aktivitet --- */
 function showAct(){
   const a = acts[Math.random()*acts.length | 0];
   title.textContent = a.t;
@@ -87,7 +80,6 @@ function showAct(){
   count.classList.add("hidden");
 }
 
-/* --- Timer --- */
 function startTimer(){
   let s = 120;
   count.classList.remove("hidden");
@@ -103,7 +95,6 @@ function startTimer(){
   }, 1000);
 }
 
-/* --- Send event + microfeedback --- */
 async function complete(v){
   const now = new Date().toISOString();
 
@@ -125,7 +116,6 @@ async function complete(v){
   loadFeed();
 }
 
-/* --- Team feed --- */
 async function loadFeed(){
   const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
   feed.innerHTML = rows.map(r =>
@@ -138,14 +128,12 @@ async function loadFeed(){
   ).join("<br>");
 }
 
-/* --- Bindings --- */
 start.onclick = () => { clearInterval(timer); startTimer() };
 energy.onclick = e => {
   const b = e.target.closest("button[data-v]");
   if (b) complete(b.dataset.v);
 };
 
-/* --- Init --- */
 window.onload = () => { showAct(); loadFeed() };
 </script>
 
