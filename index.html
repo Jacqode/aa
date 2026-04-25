@@ -3,16 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v156</title>
+<title>Flow Focus v157</title>
 
 <style>
-body{font-family:system-ui;padding:16px}
+body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
 .hidden{display:none}
-#img{max-width:200px;margin-top:10px}
-#feed{margin-top:20px;font-size:.9rem;color:#444}
+#img{max-width:200px;margin-top:10px;display:block}
+#feed{margin-top:20px;font-size:.95rem;color:#444}
 #micro{margin-top:12px;color:green}
-#controls{margin-top:12px}
-button{margin-right:8px}
+#controls{margin-top:12px;display:flex;align-items:center;gap:12px}
+button{cursor:pointer}
+#meta{font-size:.85rem;color:#666;margin-top:8px}
 </style>
 </head>
 
@@ -23,16 +24,17 @@ button{margin-right:8px}
 <div id="controls">
   <button id="start">Start 2 min</button>
   <div id="count" class="hidden">2:00</div>
+  <div id="meta" class="hidden"></div>
 </div>
 
-<div id="energy">
-  <p>Hvordan er din energi efter aktiviteten?</p>
+<div id="energy" class="hidden" aria-live="polite">
+  <p><strong>Hvordan er din energi efter aktiviteten?</strong></p>
   <button data-v="ja">Ja</button>
   <button data-v="nej">Nej</button>
   <button data-v="ved_ikke">Ved ikke</button>
 </div>
 
-<div id="micro" class="hidden"></div>
+<div id="micro" class="hidden" role="status"></div>
 
 <h3>Team feed</h3>
 <div id="feed">Indlæser…</div>
@@ -43,13 +45,13 @@ const p = new URLSearchParams(location.search);
 if (p.get("team")) localStorage.setItem("team", p.get("team"));
 if (p.get("name")) localStorage.setItem("name", p.get("name"));
 
-const TEAM = localStorage.getItem("team") || "demo";
-const NAME = localStorage.getItem("name") || "Ukendt";
+const TEAM = (localStorage.getItem("team") || "demo").trim();
+const NAME = (localStorage.getItem("name") || "Ukendt").trim();
 
 /* ---------- DEVICE-ID ---------- */
 let DEVICE = localStorage.getItem("device_id");
 if (!DEVICE) {
-  DEVICE = "dev_" + crypto.randomUUID().slice(0,12);
+  DEVICE = "dev_" + (crypto && crypto.randomUUID ? crypto.randomUUID().slice(0,12) : Math.random().toString(36).slice(2,14));
   localStorage.setItem("device_id", DEVICE);
 }
 
@@ -58,54 +60,46 @@ const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 async function api(path, opts = {}) {
   try {
     const res = await fetch(BASE + path, { ...opts, mode: "cors" });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); } catch(e) { json = text; }
     if (!res.ok) {
-      console.error("API error", res.status, res.statusText, path);
-      let txt = "";
-      try { txt = await res.text(); } catch(e){}
-      console.error("API body:", txt);
-      return null;
+      console.error("API error", path, res.status, res.statusText, json);
+      return { ok:false, status: res.status, body: json };
     }
-    return await res.json();
+    return { ok:true, status: res.status, body: json };
   } catch (err) {
     console.error("Network/API fetch failed:", err, path);
-    return null;
+    return { ok:false, status: 0, body: null, error: err };
   }
 }
 
 /* ---------- REGISTER DEVICE (non-blocking) ---------- */
 async function registerDevice(){
-  try {
-    await api("/api/register", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        device_id: DEVICE,
-        team_id: TEAM,
-        display_name: NAME,
-        last_seen: new Date().toISOString()
-      })
-    });
-  } catch (e) {
-    console.error("registerDevice failed", e);
-  }
+  const payload = {
+    device_id: DEVICE,
+    team_id: TEAM,
+    display_name: NAME,
+    last_seen: new Date().toISOString()
+  };
+  const r = await api("/api/register", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload)
+  });
+  if (!r.ok) console.warn("registerDevice failed", r);
 }
 
 /* ---------- UI helpers ---------- */
 function $(id){ return document.getElementById(id) }
-function escapeHtml(s){
-  return String(s||"")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#39;");
-}
+function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 
 /* ---------- ELEMENTS ---------- */
 const titleEl = document.getElementById("title");
 const img = $("img");
 const start = $("start");
 const count = $("count");
+const meta = $("meta");
 const energy = $("energy");
 const micro = $("micro");
 const feed = $("feed");
@@ -129,12 +123,16 @@ function showAct(){
   count.classList.add("hidden");
   micro.classList.add("hidden");
 
+  // Vis team + navn metadata
+  meta.textContent = `Team: ${TEAM} · Navn: ${NAME}`;
+  meta.classList.remove("hidden");
+
   // Vis energispørgsmålet med det samme
   energy.classList.remove("hidden");
 }
 
+/* ---------- TIMER ---------- */
 function startTimer(){
-  // disable start while running
   start.disabled = true;
   let s = 120;
   count.classList.remove("hidden");
@@ -153,22 +151,26 @@ function startTimer(){
 /* ---------- SEND EVENT ---------- */
 async function complete(v){
   const now = new Date().toISOString();
+  const payload = {
+    team_id: TEAM,
+    display_name: NAME,
+    device_id: DEVICE,
+    activity: titleEl.textContent || "Ukendt",
+    energy: v,
+    timestamp: now
+  };
 
-  try {
-    await api("/api/event", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        team_id: TEAM,
-        display_name: NAME,
-        device_id: DEVICE,
-        activity: titleEl.textContent || "Ukendt",
-        energy: v,
-        timestamp: now
-      })
-    });
-  } catch (e) {
-    console.error("complete() failed", e);
+  const r = await api("/api/event", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload)
+  });
+
+  if (!r.ok) {
+    micro.classList.remove("hidden");
+    micro.textContent = "Kunne ikke sende. Prøv igen.";
+    console.error("event failed", r);
+    return;
   }
 
   micro.classList.remove("hidden");
@@ -179,24 +181,34 @@ async function complete(v){
 /* ---------- TEAM FEED ---------- */
 async function loadFeed(){
   feed.textContent = "Indlæser…";
-  try {
-    const rows = await api(`/api/team_feed?team_id=${encodeURIComponent(TEAM)}&limit=20`);
-    if (!rows || !Array.isArray(rows) || rows.length === 0) {
-      feed.textContent = "Ingen aktiviteter endnu.";
-      return;
-    }
-
-    feed.innerHTML = rows.map(r => {
-      const name = r.display_name || "Ukendt";
-      const act = r.activity || "Aktivitet";
-      const ts = r.timestamp ? new Date(r.timestamp) : null;
-      const time = ts ? ts.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"}) : "–";
-      return `${escapeHtml(name)}: ${escapeHtml(act)} kl. ${time}`;
-    }).join("<br>");
-  } catch (err) {
-    console.error("loadFeed error", err);
-    feed.textContent = "Kunne ikke hente feed. Prøv igen senere.";
+  const path = `/api/team_feed?team_id=${encodeURIComponent(TEAM)}&limit=20`;
+  const r = await api(path);
+  if (!r.ok) {
+    feed.textContent = "Kunne ikke hente feed.";
+    console.error("loadFeed failed", r);
+    return;
   }
+
+  const rows = r.body;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    feed.textContent = "Ingen aktiviteter endnu.";
+    return;
+  }
+
+  // Sort by timestamp descending if possible
+  rows.sort((a,b) => {
+    const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+    const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+    return tb - ta;
+  });
+
+  feed.innerHTML = rows.map(rw => {
+    const name = escapeHtml(rw.display_name || "Ukendt");
+    const act = escapeHtml(rw.activity || "Aktivitet");
+    const ts = rw.timestamp ? new Date(rw.timestamp) : null;
+    const time = ts ? ts.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"}) : "–";
+    return `${name}: ${act} kl. ${time}`;
+  }).join("<br>");
 }
 
 /* ---------- EVENTS ---------- */
@@ -211,10 +223,15 @@ energy.addEventListener("click", e => {
 });
 
 /* ---------- INIT ---------- */
-window.addEventListener("load", () => {
-  registerDevice();
+window.addEventListener("load", async () => {
+  // show UI immediately
   showAct();
-  loadFeed();
+
+  // register device (non-blocking)
+  registerDevice();
+
+  // initial feed load
+  await loadFeed();
 
   // refresh feed periodically
   setInterval(loadFeed, 15000);
