@@ -10,13 +10,6 @@ body{font-family:system-ui;padding:16px}
 .hidden{display:none}
 #img{max-width:200px;margin-top:10px}
 #feed{margin-top:20px;font-size:.9rem;color:#444}
-#nameModal{
-  position:fixed;top:0;left:0;right:0;bottom:0;
-  background:#0008;display:flex;align-items:center;justify-content:center;
-}
-#nameBox{
-  background:white;padding:20px;border-radius:8px;max-width:300px;width:90%;
-}
 #adminPanel{
   margin-top:30px;
   padding:16px;
@@ -41,14 +34,6 @@ body{font-family:system-ui;padding:16px}
 </head>
 
 <body>
-
-<div id="nameModal" class="hidden">
-  <div id="nameBox">
-    <h3>Hvad vil du kaldes?</h3>
-    <input id="nameInput" style="width:100%;padding:8px;font-size:1rem">
-    <button id="nameSave" style="margin-top:10px;width:100%">Gem</button>
-  </div>
-</div>
 
 <h2 id="title"></h2>
 <img id="img" class="hidden">
@@ -84,30 +69,33 @@ body{font-family:system-ui;padding:16px}
 </div>
 
 <script>
+/* ----------------------------------------------------
+   AUTOJOIN (team + name fra URL)
+---------------------------------------------------- */
 const p = new URLSearchParams(location.search);
-if (p.get("team")) localStorage.setItem("team", p.get("team"));
-const TEAM = localStorage.getItem("team") || "demo";
 
+if (p.get("team")) localStorage.setItem("team", p.get("team"));
+if (p.get("name")) localStorage.setItem("name", p.get("name"));
+
+const TEAM = localStorage.getItem("team") || "demo";
+const NAME = localStorage.getItem("name") || "Ukendt";
+
+/* ----------------------------------------------------
+   DEVICE-ID
+---------------------------------------------------- */
 let DEVICE = localStorage.getItem("device_id");
 if (!DEVICE) {
   DEVICE = "dev_" + crypto.randomUUID().slice(0,12);
   localStorage.setItem("device_id", DEVICE);
 }
 
-let NAME = localStorage.getItem("name");
-const nameModal = document.getElementById("nameModal");
-const nameInput = document.getElementById("nameInput");
-const nameSave = document.getElementById("nameSave");
-
-function ensureName(){
-  if (!NAME) nameModal.classList.remove("hidden");
-}
-
+/* ----------------------------------------------------
+   REGISTER DEVICE
+---------------------------------------------------- */
 const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 const api = (p, o={}) => fetch(BASE+p, { ...o, mode:"cors" }).then(r => r.json());
 
 async function registerDevice(){
-  if (!NAME) return;
   await api("/api/register", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
@@ -119,16 +107,9 @@ async function registerDevice(){
   });
 }
 
-nameSave.onclick = async () => {
-  const v = nameInput.value.trim();
-  if (!v) return;
-  NAME = v;
-  localStorage.setItem("name", NAME);
-  nameModal.classList.add("hidden");
-  await registerDevice();
-  loadFeed();
-};
-
+/* ----------------------------------------------------
+   AKTIVITETER
+---------------------------------------------------- */
 const acts = [
   { t: "Lægløft", i: "images/laegloeft.png" },
   { t: "Squats", i: "images/squats.png" },
@@ -191,6 +172,9 @@ async function complete(v){
   loadFeed();
 }
 
+/* ----------------------------------------------------
+   TEAM FEED
+---------------------------------------------------- */
 async function loadFeed(){
   const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
   feed.innerHTML = rows.map(r =>
@@ -200,6 +184,9 @@ async function loadFeed(){
   ).join("<br>");
 }
 
+/* ----------------------------------------------------
+   ADMIN DASHBOARD
+---------------------------------------------------- */
 const adminPanel = $("adminPanel");
 const adminTable = $("adminTable").querySelector("tbody");
 
@@ -226,6 +213,9 @@ adminTable.onclick = async e => {
   loadAdmin();
 };
 
+/* ----------------------------------------------------
+   INIT
+---------------------------------------------------- */
 start.onclick = () => { clearInterval(timer); startTimer() };
 energy.onclick = e => {
   const b = e.target.closest("button[data-v]");
@@ -233,8 +223,7 @@ energy.onclick = e => {
 };
 
 window.onload = () => {
-  ensureName();
-  if (NAME) registerDevice();
+  registerDevice();
   showAct();
   loadFeed();
   loadAdmin();
