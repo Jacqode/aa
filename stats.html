@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow Focus Stats v152</title>
+<style>
+body{font-family:system-ui;padding:16px}
+h3{margin-top:24px}
+</style>
+</head>
+
+<body>
+
+<h2>Statistik</h2>
+<div id="stats">Indlæser…</div>
+
+<script>
+const p = new URLSearchParams(location.search);
+const TEAM = p.get("team") || "demo";
+
+const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
+const api = (p,o={}) => fetch(BASE+p,{...o,mode:"cors"}).then(r=>r.json());
+
+function $(id){return document.getElementById(id)}
+
+async function loadStats(){
+  const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=500`);
+
+  const total = rows.length;
+  const yes = rows.filter(r => r.energy === "ja").length;
+  const no = rows.filter(r => r.energy === "nej").length;
+  const maybe = rows.filter(r => r.energy === "ved_ikke").length;
+
+  $("stats").innerHTML = `
+    <h3>Antal pauser</h3>
+    ${total}
+
+    <h3>Energiscore</h3>
+    Ja: ${yes}<br>
+    Nej: ${no}<br>
+    Ved ikke: ${maybe}<br>
+
+    <h3>Procenter</h3>
+    Ja: ${(yes/total*100||0).toFixed(0)}%<br>
+    Nej: ${(no/total*100||0).toFixed(0)}%<br>
+    Ved ikke: ${(maybe/total*100||0).toFixed(0)}%
+  `;
+}
+
+window.onload = loadStats;
+</script>
+
+</body>
+</html>
