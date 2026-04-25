@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v153</title>
+<title>Flow Focus v154</title>
 
 <style>
 body{font-family:system-ui;padding:16px}
@@ -71,7 +71,9 @@ const acts = [
 
 function $(id){ return document.getElementById(id) }
 
-const titleEl = $("title");
+/* ⭐ KORREKT FIX ⭐ */
+const titleEl = document.getElementById("title");
+
 const img = $("img");
 const start = $("start");
 const count = $("count");
