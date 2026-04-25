@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v152</title>
+<title>Flow Focus v153</title>
 
 <style>
 body{font-family:system-ui;padding:16px}
@@ -33,9 +33,6 @@ body{font-family:system-ui;padding:16px}
 <div id="feed">Indlæser…</div>
 
 <script>
-/* ----------------------------------------------------
-   AUTOJOIN (team + name fra URL)
----------------------------------------------------- */
 const p = new URLSearchParams(location.search);
 
 if (p.get("team")) localStorage.setItem("team", p.get("team"));
@@ -44,24 +41,15 @@ if (p.get("name")) localStorage.setItem("name", p.get("name"));
 const TEAM = localStorage.getItem("team") || "demo";
 const NAME = localStorage.getItem("name") || "Ukendt";
 
-/* ----------------------------------------------------
-   DEVICE-ID
----------------------------------------------------- */
 let DEVICE = localStorage.getItem("device_id");
 if (!DEVICE) {
   DEVICE = "dev_" + crypto.randomUUID().slice(0,12);
   localStorage.setItem("device_id", DEVICE);
 }
 
-/* ----------------------------------------------------
-   API
----------------------------------------------------- */
 const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 const api = (p, o={}) => fetch(BASE+p, { ...o, mode:"cors" }).then(r => r.json());
 
-/* ----------------------------------------------------
-   REGISTER DEVICE
----------------------------------------------------- */
 async function registerDevice(){
   await api("/api/register", {
     method:"POST",
@@ -75,9 +63,6 @@ async function registerDevice(){
   });
 }
 
-/* ----------------------------------------------------
-   AKTIVITETER
----------------------------------------------------- */
 const acts = [
   { t: "Lægløft", i: "images/laegloeft.png" },
   { t: "Squats", i: "images/squats.png" },
@@ -86,7 +71,7 @@ const acts = [
 
 function $(id){ return document.getElementById(id) }
 
-const title = $("title");
+const titleEl = $("title");
 const img = $("img");
 const start = $("start");
 const count = $("count");
@@ -98,7 +83,7 @@ let timer;
 
 function showAct(){
   const a = acts[Math.random()*acts.length | 0];
-  title.textContent = a.t;
+  titleEl.textContent = a.t;
   img.src = a.i;
   img.classList.remove("hidden");
   energy.classList.add("hidden");
@@ -131,7 +116,7 @@ async function complete(v){
       team_id: TEAM,
       display_name: NAME,
       device_id: DEVICE,
-      activity: title.textContent,
+      activity: titleEl.textContent,
       energy: v,
       timestamp: now
     })
@@ -143,9 +128,6 @@ async function complete(v){
   loadFeed();
 }
 
-/* ----------------------------------------------------
-   TEAM FEED (20 seneste)
----------------------------------------------------- */
 async function loadFeed(){
   const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
   feed.innerHTML = rows.map(r =>
@@ -155,9 +137,6 @@ async function loadFeed(){
   ).join("<br>");
 }
 
-/* ----------------------------------------------------
-   INIT
----------------------------------------------------- */
 start.onclick = () => { clearInterval(timer); startTimer() };
 energy.onclick = e => {
   const b = e.target.closest("button[data-v]");
