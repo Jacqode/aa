@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v148</title>
+<title>Flow Focus v149</title>
 
 <style>
 body{font-family:system-ui;padding:16px}
@@ -16,6 +16,26 @@ body{font-family:system-ui;padding:16px}
 }
 #nameBox{
   background:white;padding:20px;border-radius:8px;max-width:300px;width:90%;
+}
+#adminPanel{
+  margin-top:30px;
+  padding:16px;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+#adminPanel table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.9rem;
+}
+#adminPanel th,#adminPanel td{
+  border-bottom:1px solid #ddd;
+  padding:6px;
+  text-align:left;
+}
+#adminPanel button{
+  padding:4px 8px;
+  font-size:.8rem;
 }
 </style>
 </head>
@@ -47,6 +67,24 @@ body{font-family:system-ui;padding:16px}
 
 <h3>Team feed</h3>
 <div id="feed">Indlæser…</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="adminPanel" class="hidden">
+  <h3>Team admin</h3>
+  <p>Her kan du se og administrere teamets brugere.</p>
+  <table id="adminTable">
+    <thead>
+      <tr>
+        <th>Navn</th>
+        <th>Device</th>
+        <th>Sidst aktiv</th>
+        <th>Aktiv</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
 <script>
 /* ----------------------------------------------------
@@ -108,7 +146,7 @@ async function registerDevice(){
 }
 
 /* ----------------------------------------------------
-   5) AKTIVITETS-LOGIK (DIN EKSISTERENDE)
+   5) AKTIVITETS-LOGIK
 ---------------------------------------------------- */
 const acts = [
   { t: "Lægløft", i: "images/laegloeft.png" },
@@ -190,7 +228,40 @@ async function loadFeed(){
 }
 
 /* ----------------------------------------------------
-   7) INIT
+   7) ADMIN DASHBOARD
+---------------------------------------------------- */
+const adminPanel = $("adminPanel");
+const adminTable = $("adminTable").querySelector("tbody");
+
+async function loadAdmin(){
+  if (!p.get("admin")) return;
+
+  adminPanel.classList.remove("hidden");
+
+  const rows = await api(`/api/devices?team_id=${TEAM}`);
+
+  adminTable.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.display_name}</td>
+      <td>${r.device_id}</td>
+      <td>${new Date(r.last_seen).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})}</td>
+      <td>${r.active ? "Ja" : "Nej"}</td>
+      <td><button data-del="${r.device_id}">Slet</button></td>
+    </tr>
+  `).join("");
+}
+
+adminTable.onclick = async e => {
+  const btn = e.target.closest("button[data-del]");
+  if (!btn) return;
+
+  const id = btn.dataset.del;
+  await api(`/api/device?device_id=${id}`, { method:"DELETE" });
+  loadAdmin();
+};
+
+/* ----------------------------------------------------
+   8) INIT
 ---------------------------------------------------- */
 start.onclick = () => { clearInterval(timer); startTimer() };
 energy.onclick = e => {
@@ -203,6 +274,7 @@ window.onload = () => {
   if (NAME) registerDevice();
   showAct();
   loadFeed();
+  loadAdmin();
 };
 </script>
 
