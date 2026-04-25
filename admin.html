@@ -3,88 +3,74 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus Admin v147</title>
+<title>Flow Focus Admin v152</title>
+<style>
+body{font-family:system-ui;padding:16px}
+table{border-collapse:collapse;width:100%;margin-top:20px}
+td,th{border:1px solid #ccc;padding:6px;font-size:.9rem}
+.active{color:green;font-weight:bold}
+.inactive{color:#999}
+</style>
 </head>
 
 <body>
 
-<h2>Admin – Invite generator</h2>
+<h2>Admin – Devices</h2>
+<div id="devices">Indlæser…</div>
 
-<p>Navn</p>
-<input id="name" placeholder="Indtast navn">
-
-<p>Team ID</p>
-<input id="team" placeholder="TEAM123" value="TEAM123">
-
-<br><br>
-<button id="gen">Generér invite-link</button>
-
-<div id="out"></div>
-
-<hr>
-
-<h2>Eksisterende invites</h2>
-<div id="invites">Indlæser…</div>
-
-<br>
-<button id="csv">Download CSV</button>
+<h2>Seneste aktiviteter</h2>
+<div id="events">Indlæser…</div>
 
 <script>
+const p = new URLSearchParams(location.search);
+const TEAM = p.get("team") || "demo";
+
 const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
+const api = (p,o={}) => fetch(BASE+p,{...o,mode:"cors"}).then(r=>r.json());
 
-// Opret invite
-document.getElementById("gen").onclick = async () => {
-  const name = document.getElementById("name").value.trim();
-  const team = document.getElementById("team").value.trim();
+function $(id){return document.getElementById(id)}
 
-  if (!name || !team) {
-    document.getElementById("out").textContent = "Udfyld begge felter.";
-    return;
-  }
-
-  const r = await fetch(BASE + "/api/invite", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({ team_id: team, display_name: name })
-  });
-
-  const d = await r.json();
-  document.getElementById("out").innerHTML =
-    `<p>Invite link:</p><a href="${d.link}" target="_blank">${d.link}</a>`;
-
-  loadInvites();
-};
-
-// Hent alle invites
-async function loadInvites() {
-  const r = await fetch(BASE + "/api/all_invites");
-  const rows = await r.json();
-
-  document.getElementById("invites").innerHTML = rows.map(inv =>
-    `<div>
-       <strong>${inv.display_name}</strong> (${inv.team_id})<br>
-       ID: ${inv.invite_id}<br>
-       Aktiv: ${inv.active}<br>
-       <button onclick="delInvite('${inv.invite_id}')">Slet</button>
-       <br><br>
-     </div>`
-  ).join("");
+async function loadDevices(){
+  const rows = await api(`/api/devices?team_id=${TEAM}`);
+  $("devices").innerHTML = `
+    <table>
+      <tr><th>Navn</th><th>Device</th><th>Sidst aktiv</th><th>Status</th><th></th></tr>
+      ${rows.map(r => `
+        <tr>
+          <td>${r.display_name}</td>
+          <td>${r.device_id}</td>
+          <td>${new Date(r.last_seen).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})}</td>
+          <td class="${r.active ? "active" : "inactive"}">${r.active ? "Aktiv" : "Inaktiv"}</td>
+          <td>
+            <button onclick="deactivate('${r.device_id}')">Deaktiver</button>
+          </td>
+        </tr>
+      `).join("")}
+    </table>
+  `;
 }
 
-// Slet invite
-async function delInvite(id) {
-  await fetch(BASE + "/api/invite?invite_id=" + id, { method:"DELETE" });
-  loadInvites();
+async function deactivate(id){
+  await api(`/api/device?device_id=${id}`, { method:"DELETE" });
+  loadDevices();
 }
 
-// CSV download
-document.getElementById("csv").onclick = () => {
-  window.location = BASE + "/api/invites_csv";
-};
+async function loadEvents(){
+  const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=50`);
+  $("events").innerHTML = rows.map(r =>
+    `${r.display_name}: ${r.activity} kl. ${
+      new Date(r.timestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
+    }`
+  ).join("<br>");
+}
 
-loadInvites();
+window.onload = () => {
+  loadDevices();
+  loadEvents();
+};
 </script>
 
 </body>
 </html>
+
 
