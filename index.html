@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v147</title>
+<title>Flow Focus v152</title>
+
 <style>
 body{font-family:system-ui;padding:16px}
 .hidden{display:none}
@@ -32,16 +33,10 @@ body{font-family:system-ui;padding:16px}
 <div id="feed">Indlæser…</div>
 
 <script>
+/* ----------------------------------------------------
+   AUTOJOIN (team + name fra URL)
+---------------------------------------------------- */
 const p = new URLSearchParams(location.search);
-
-if (p.get("invite")) {
-  fetch("https://workerff092.jakobhelkjaer.workers.dev/api/invite?invite_id=" + p.get("invite"))
-    .then(r => r.json())
-    .then(d => {
-      if (d.team_id) localStorage.setItem("team", d.team_id);
-      if (d.display_name) localStorage.setItem("name", d.display_name);
-    });
-}
 
 if (p.get("team")) localStorage.setItem("team", p.get("team"));
 if (p.get("name")) localStorage.setItem("name", p.get("name"));
@@ -49,6 +44,40 @@ if (p.get("name")) localStorage.setItem("name", p.get("name"));
 const TEAM = localStorage.getItem("team") || "demo";
 const NAME = localStorage.getItem("name") || "Ukendt";
 
+/* ----------------------------------------------------
+   DEVICE-ID
+---------------------------------------------------- */
+let DEVICE = localStorage.getItem("device_id");
+if (!DEVICE) {
+  DEVICE = "dev_" + crypto.randomUUID().slice(0,12);
+  localStorage.setItem("device_id", DEVICE);
+}
+
+/* ----------------------------------------------------
+   API
+---------------------------------------------------- */
+const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
+const api = (p, o={}) => fetch(BASE+p, { ...o, mode:"cors" }).then(r => r.json());
+
+/* ----------------------------------------------------
+   REGISTER DEVICE
+---------------------------------------------------- */
+async function registerDevice(){
+  await api("/api/register", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      device_id: DEVICE,
+      team_id: TEAM,
+      display_name: NAME,
+      last_seen: new Date().toISOString()
+    })
+  });
+}
+
+/* ----------------------------------------------------
+   AKTIVITETER
+---------------------------------------------------- */
 const acts = [
   { t: "Lægløft", i: "images/laegloeft.png" },
   { t: "Squats", i: "images/squats.png" },
@@ -66,9 +95,6 @@ const micro = $("micro");
 const feed = $("feed");
 
 let timer;
-
-const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
-const api = (p, o={}) => fetch(BASE+p, { ...o, mode:"cors" }).then(r => r.json());
 
 function showAct(){
   const a = acts[Math.random()*acts.length | 0];
@@ -104,6 +130,7 @@ async function complete(v){
     body:JSON.stringify({
       team_id: TEAM,
       display_name: NAME,
+      device_id: DEVICE,
       activity: title.textContent,
       energy: v,
       timestamp: now
@@ -111,30 +138,37 @@ async function complete(v){
   });
 
   micro.classList.remove("hidden");
-  micro.textContent = "Tak for pausen. Godt gået!";
+  micro.textContent = "Tak for pausen!";
   energy.classList.add("hidden");
   loadFeed();
 }
 
+/* ----------------------------------------------------
+   TEAM FEED (20 seneste)
+---------------------------------------------------- */
 async function loadFeed(){
   const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
   feed.innerHTML = rows.map(r =>
     `${r.display_name}: ${r.activity} kl. ${
-      new Date(r.timestamp).toLocaleTimeString("da-DK", {
-        hour:"2-digit",
-        minute:"2-digit"
-      })
+      new Date(r.timestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
     }`
   ).join("<br>");
 }
 
+/* ----------------------------------------------------
+   INIT
+---------------------------------------------------- */
 start.onclick = () => { clearInterval(timer); startTimer() };
 energy.onclick = e => {
   const b = e.target.closest("button[data-v]");
   if (b) complete(b.dataset.v);
 };
 
-window.onload = () => { showAct(); loadFeed() };
+window.onload = () => {
+  registerDevice();
+  showAct();
+  loadFeed();
+};
 </script>
 
 </body>
