@@ -3,22 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v155</title>
+<title>Flow Focus v156</title>
 
 <style>
 body{font-family:system-ui;padding:16px}
 .hidden{display:none}
 #img{max-width:200px;margin-top:10px}
 #feed{margin-top:20px;font-size:.9rem;color:#444}
+#micro{margin-top:12px;color:green}
+#controls{margin-top:12px}
+button{margin-right:8px}
 </style>
 </head>
 
 <body>
 
 <h2 id="title"></h2>
-<img id="img" class="hidden">
-<button id="start">Start 2 min</button>
-<div id="count" class="hidden">2:00</div>
+<img id="img" class="hidden" alt="">
+<div id="controls">
+  <button id="start">Start 2 min</button>
+  <div id="count" class="hidden">2:00</div>
+</div>
 
 <div id="energy">
   <p>Hvordan er din energi efter aktiviteten?</p>
@@ -33,45 +38,71 @@ body{font-family:system-ui;padding:16px}
 <div id="feed">Indlæser…</div>
 
 <script>
+/* ---------- AUTOJOIN (team + name fra URL) ---------- */
 const p = new URLSearchParams(location.search);
-
 if (p.get("team")) localStorage.setItem("team", p.get("team"));
 if (p.get("name")) localStorage.setItem("name", p.get("name"));
 
 const TEAM = localStorage.getItem("team") || "demo";
 const NAME = localStorage.getItem("name") || "Ukendt";
 
+/* ---------- DEVICE-ID ---------- */
 let DEVICE = localStorage.getItem("device_id");
 if (!DEVICE) {
   DEVICE = "dev_" + crypto.randomUUID().slice(0,12);
   localStorage.setItem("device_id", DEVICE);
 }
 
+/* ---------- API WRAPPER (robust) ---------- */
 const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
-const api = (p, o={}) => fetch(BASE+p, { ...o, mode:"cors" }).then(r => r.json());
-
-async function registerDevice(){
-  await api("/api/register", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      device_id: DEVICE,
-      team_id: TEAM,
-      display_name: NAME,
-      last_seen: new Date().toISOString()
-    })
-  });
+async function api(path, opts = {}) {
+  try {
+    const res = await fetch(BASE + path, { ...opts, mode: "cors" });
+    if (!res.ok) {
+      console.error("API error", res.status, res.statusText, path);
+      let txt = "";
+      try { txt = await res.text(); } catch(e){}
+      console.error("API body:", txt);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("Network/API fetch failed:", err, path);
+    return null;
+  }
 }
 
-const acts = [
-  { t: "Lægløft", i: "images/laegloeft.png" },
-  { t: "Squats", i: "images/squats.png" },
-  { t: "Armcirkler", i: "images/armcirkel.png" }
-];
+/* ---------- REGISTER DEVICE (non-blocking) ---------- */
+async function registerDevice(){
+  try {
+    await api("/api/register", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        device_id: DEVICE,
+        team_id: TEAM,
+        display_name: NAME,
+        last_seen: new Date().toISOString()
+      })
+    });
+  } catch (e) {
+    console.error("registerDevice failed", e);
+  }
+}
 
+/* ---------- UI helpers ---------- */
 function $(id){ return document.getElementById(id) }
+function escapeHtml(s){
+  return String(s||"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
 
-const titleEl = $("title");
+/* ---------- ELEMENTS ---------- */
+const titleEl = document.getElementById("title");
 const img = $("img");
 const start = $("start");
 const count = $("count");
@@ -81,19 +112,30 @@ const feed = $("feed");
 
 let timer;
 
+/* ---------- ACTIVITIES ---------- */
+const acts = [
+  { t: "Lægløft", i: "images/laegloeft.png" },
+  { t: "Squats", i: "images/squats.png" },
+  { t: "Armcirkler", i: "images/armcirkel.png" }
+];
+
 function showAct(){
   const a = acts[Math.random()*acts.length | 0];
   titleEl.textContent = a.t;
   img.src = a.i;
+  img.alt = a.t;
   img.classList.remove("hidden");
 
   count.classList.add("hidden");
   micro.classList.add("hidden");
 
+  // Vis energispørgsmålet med det samme
   energy.classList.remove("hidden");
 }
 
 function startTimer(){
+  // disable start while running
+  start.disabled = true;
   let s = 120;
   count.classList.remove("hidden");
   const upd = () => count.textContent = `${(s/60|0)}:${String(s%60).padStart(2,"0")}`;
@@ -103,51 +145,80 @@ function startTimer(){
     upd();
     if (s <= 0) {
       clearInterval(timer);
+      start.disabled = false;
     }
   }, 1000);
 }
 
+/* ---------- SEND EVENT ---------- */
 async function complete(v){
   const now = new Date().toISOString();
 
-  await api("/api/event", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      team_id: TEAM,
-      display_name: NAME,
-      device_id: DEVICE,
-      activity: titleEl.textContent,
-      energy: v,
-      timestamp: now
-    })
-  });
+  try {
+    await api("/api/event", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        team_id: TEAM,
+        display_name: NAME,
+        device_id: DEVICE,
+        activity: titleEl.textContent || "Ukendt",
+        energy: v,
+        timestamp: now
+      })
+    });
+  } catch (e) {
+    console.error("complete() failed", e);
+  }
 
   micro.classList.remove("hidden");
   micro.textContent = "Tak for pausen!";
-  loadFeed();
+  await loadFeed();
 }
 
+/* ---------- TEAM FEED ---------- */
 async function loadFeed(){
-  const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
-  feed.innerHTML = rows.map(r =>
-    `${r.display_name}: ${r.activity} kl. ${
-      new Date(r.timestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
-    }`
-  ).join("<br>");
+  feed.textContent = "Indlæser…";
+  try {
+    const rows = await api(`/api/team_feed?team_id=${encodeURIComponent(TEAM)}&limit=20`);
+    if (!rows || !Array.isArray(rows) || rows.length === 0) {
+      feed.textContent = "Ingen aktiviteter endnu.";
+      return;
+    }
+
+    feed.innerHTML = rows.map(r => {
+      const name = r.display_name || "Ukendt";
+      const act = r.activity || "Aktivitet";
+      const ts = r.timestamp ? new Date(r.timestamp) : null;
+      const time = ts ? ts.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"}) : "–";
+      return `${escapeHtml(name)}: ${escapeHtml(act)} kl. ${time}`;
+    }).join("<br>");
+  } catch (err) {
+    console.error("loadFeed error", err);
+    feed.textContent = "Kunne ikke hente feed. Prøv igen senere.";
+  }
 }
 
-start.onclick = () => { clearInterval(timer); startTimer() };
-energy.onclick = e => {
+/* ---------- EVENTS ---------- */
+start.addEventListener("click", () => {
+  clearInterval(timer);
+  startTimer();
+});
+
+energy.addEventListener("click", e => {
   const b = e.target.closest("button[data-v]");
   if (b) complete(b.dataset.v);
-};
+});
 
-window.onload = () => {
+/* ---------- INIT ---------- */
+window.addEventListener("load", () => {
   registerDevice();
   showAct();
   loadFeed();
-};
+
+  // refresh feed periodically
+  setInterval(loadFeed, 15000);
+});
 </script>
 
 </body>
