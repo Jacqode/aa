@@ -3,33 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v150</title>
+<title>Flow Focus v151 Minimal</title>
 
 <style>
 body{font-family:system-ui;padding:16px}
 .hidden{display:none}
 #img{max-width:200px;margin-top:10px}
 #feed{margin-top:20px;font-size:.9rem;color:#444}
-#adminPanel{
-  margin-top:30px;
-  padding:16px;
-  border:1px solid #ccc;
-  border-radius:8px;
-}
-#adminPanel table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:.9rem;
-}
-#adminPanel th,#adminPanel td{
-  border-bottom:1px solid #ddd;
-  padding:6px;
-  text-align:left;
-}
-#adminPanel button{
-  padding:4px 8px;
-  font-size:.8rem;
-}
 </style>
 </head>
 
@@ -52,22 +32,6 @@ body{font-family:system-ui;padding:16px}
 <h3>Team feed</h3>
 <div id="feed">Indlæser…</div>
 
-<div id="adminPanel" class="hidden">
-  <h3>Team admin</h3>
-  <table id="adminTable">
-    <thead>
-      <tr>
-        <th>Navn</th>
-        <th>Device</th>
-        <th>Sidst aktiv</th>
-        <th>Aktiv</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-
 <script>
 /* ----------------------------------------------------
    AUTOJOIN (team + name fra URL)
@@ -81,7 +45,7 @@ const TEAM = localStorage.getItem("team") || "demo";
 const NAME = localStorage.getItem("name") || "Ukendt";
 
 /* ----------------------------------------------------
-   DEVICE-ID
+   DEVICE-ID (kun til backend-identifikation)
 ---------------------------------------------------- */
 let DEVICE = localStorage.getItem("device_id");
 if (!DEVICE) {
@@ -90,22 +54,10 @@ if (!DEVICE) {
 }
 
 /* ----------------------------------------------------
-   REGISTER DEVICE
+   API
 ---------------------------------------------------- */
 const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 const api = (p, o={}) => fetch(BASE+p, { ...o, mode:"cors" }).then(r => r.json());
-
-async function registerDevice(){
-  await api("/api/register", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      device_id: DEVICE,
-      team_id: TEAM,
-      display_name: NAME
-    })
-  });
-}
 
 /* ----------------------------------------------------
    AKTIVITETER
@@ -167,51 +119,22 @@ async function complete(v){
     })
   });
   micro.classList.remove("hidden");
-  micro.textContent = "Tak for pausen. Godt gået!";
+  micro.textContent = "Tak for pausen!";
   energy.classList.add("hidden");
   loadFeed();
 }
 
 /* ----------------------------------------------------
-   TEAM FEED
+   TEAM FEED (kun 5 seneste)
 ---------------------------------------------------- */
 async function loadFeed(){
-  const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=20`);
+  const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=5`);
   feed.innerHTML = rows.map(r =>
     `${r.display_name}: ${r.activity} kl. ${
       new Date(r.timestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
     }`
   ).join("<br>");
 }
-
-/* ----------------------------------------------------
-   ADMIN DASHBOARD
----------------------------------------------------- */
-const adminPanel = $("adminPanel");
-const adminTable = $("adminTable").querySelector("tbody");
-
-async function loadAdmin(){
-  if (!p.get("admin")) return;
-  adminPanel.classList.remove("hidden");
-  const rows = await api(`/api/devices?team_id=${TEAM}`);
-  adminTable.innerHTML = rows.map(r => `
-    <tr>
-      <td>${r.display_name}</td>
-      <td>${r.device_id}</td>
-      <td>${new Date(r.last_seen).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})}</td>
-      <td>${r.active ? "Ja" : "Nej"}</td>
-      <td><button data-del="${r.device_id}">Slet</button></td>
-    </tr>
-  `).join("");
-}
-
-adminTable.onclick = async e => {
-  const btn = e.target.closest("button[data-del]");
-  if (!btn) return;
-  const id = btn.dataset.del;
-  await api(`/api/device?device_id=${id}`, { method:"DELETE" });
-  loadAdmin();
-};
 
 /* ----------------------------------------------------
    INIT
@@ -223,10 +146,8 @@ energy.onclick = e => {
 };
 
 window.onload = () => {
-  registerDevice();
   showAct();
   loadFeed();
-  loadAdmin();
 };
 </script>
 
