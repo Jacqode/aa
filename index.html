@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v154</title>
+<title>Flow Focus v155</title>
 
 <style>
 body{font-family:system-ui;padding:16px}
@@ -20,8 +20,8 @@ body{font-family:system-ui;padding:16px}
 <button id="start">Start 2 min</button>
 <div id="count" class="hidden">2:00</div>
 
-<div id="energy" class="hidden">
-  <p>Gav aktiviteten dig mere energi?</p>
+<div id="energy">
+  <p>Hvordan er din energi efter aktiviteten?</p>
   <button data-v="ja">Ja</button>
   <button data-v="nej">Nej</button>
   <button data-v="ved_ikke">Ved ikke</button>
@@ -71,9 +71,7 @@ const acts = [
 
 function $(id){ return document.getElementById(id) }
 
-/* ⭐ KORREKT FIX ⭐ */
-const titleEl = document.getElementById("title");
-
+const titleEl = $("title");
 const img = $("img");
 const start = $("start");
 const count = $("count");
@@ -88,9 +86,11 @@ function showAct(){
   titleEl.textContent = a.t;
   img.src = a.i;
   img.classList.remove("hidden");
-  energy.classList.add("hidden");
-  micro.classList.add("hidden");
+
   count.classList.add("hidden");
+  micro.classList.add("hidden");
+
+  energy.classList.remove("hidden");
 }
 
 function startTimer(){
@@ -103,7 +103,6 @@ function startTimer(){
     upd();
     if (s <= 0) {
       clearInterval(timer);
-      energy.classList.remove("hidden");
     }
   }, 1000);
 }
@@ -126,7 +125,6 @@ async function complete(v){
 
   micro.classList.remove("hidden");
   micro.textContent = "Tak for pausen!";
-  energy.classList.add("hidden");
   loadFeed();
 }
 
