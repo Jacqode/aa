@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v163</title>
+<title>Flow Focus v164</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -21,9 +21,20 @@ button{cursor:pointer}
 <body>
 
 <h1>Flow Focus</h1>
+
 <p id="intro">
   Korte 2‑minutters mikro‑pauser, der giver dig mere energi i løbet af dagen.
 </p>
+
+<!-- ⭐ NYT I V164 – punkt 1 + timer-knap lige her -->
+<div id="step1">
+  <p><strong>1.</strong> Start timeren, så du ved, hvornår tiden er gået.</p>
+</div>
+
+<div id="controls">
+  <button id="start">Start 2 min</button>
+  <div id="count" class="hidden">2:00</div>
+</div>
 
 <h2 id="title"></h2>
 
@@ -33,16 +44,10 @@ button{cursor:pointer}
 
 <img id="img" class="hidden" alt="">
 
-<!-- ⭐ NYT I V163 – de tre punkter -->
+<!-- ⭐ Punkt 2 og 3 flyttes herned -->
 <div id="steps">
-  <p><strong>1.</strong> Start timeren, så du ved, hvornår tiden er gået.</p>
   <p><strong>2.</strong> Lav øvelsen så mange gange som muligt i dit eget tempo.</p>
   <p><strong>3.</strong> Når du er færdig, vælg hvordan din energi føles.</p>
-</div>
-
-<div id="controls">
-  <button id="start">Start 2 min</button>
-  <div id="count" class="hidden">2:00</div>
 </div>
 
 <div id="energy" class="hidden" aria-live="polite">
