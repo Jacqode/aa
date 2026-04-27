@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dur - Flow Focus v178</title>
+<title>Flow Focus v179</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -20,10 +20,12 @@ hr{opacity:.25;margin:18px 0}
 
 <body>
 
-<!-- ⭐ Hej xx – team yy -->
-<h2 id="greeting">Hej <span id="nameLabel"></span> – team <span id="teamLabel"></span>. Klar til en pause?</h2>
+<!-- ⭐ Hilsen -->
+<h2 id="greeting">Hej <span id="nameLabel"></span> – team <span id="teamLabel"></span>. Klar til en energipause?</h2>
 
-<!-- ⭐ HR før punkt 1 -->
+<p class="small">En kort pause hjælper dig med at holde fokus længere.</p>
+<p class="small">Forskning peger på, at en kort energipause ca. hver 30. minut kan støtte fokus og velvære.</p>
+
 <hr>
 
 <!-- ⭐ Punkt 1 + knap i samme linje -->
@@ -33,7 +35,6 @@ hr{opacity:.25;margin:18px 0}
   <div id="count" class="hidden">2:00</div>
 </div>
 
-<!-- ⭐ HR før punkt 2 -->
 <hr>
 
 <!-- Punkt 2 -->
@@ -43,15 +44,13 @@ hr{opacity:.25;margin:18px 0}
 
 <img id="img" class="hidden" alt="">
 
-<!-- ⭐ HR før punkt 3 -->
 <hr>
 
-<!-- Punkt 3 – ikke fed tekst -->
+<!-- Punkt 3 -->
 <div id="steps">
   <p><strong>3.</strong> Hvordan føles din energi efter pausen?</p>
 </div>
 
-<!-- Energi-knapper -->
 <div id="energy" class="hidden" aria-live="polite">
   <button data-v="større">Større</button>
   <button data-v="samme">Samme</button>
@@ -59,22 +58,19 @@ hr{opacity:.25;margin:18px 0}
   <button data-v="ved_ikke">Ved ikke</button>
 </div>
 
-<!-- ⭐ HR før “Godt gået” -->
 <hr>
 
 <div id="micro" class="hidden" role="status"></div>
 
-<!-- ⭐ HR før feed -->
 <hr>
 
-<h3>Teamets seneste pauser</h3>
+<h3>Kollegers seneste energipauser:</h3>
 <div id="feed">Indlæser…</div>
 
 <p class="small">
   Feedet opdateres automatisk hvert 15. sekund.
 </p>
 
-<!-- ⭐ Nederste afsnit -->
 <hr>
 <p class="small">
   Flow Focus – Korte pauser med aktivitet til at støtte din energi.
@@ -191,10 +187,7 @@ async function complete(v){
     display_name: NAME,
     team_id: TEAM,
     org_id: ORG,
-
-    /* ⭐ Kun selve øvelsesnavnet i feedet */
     activity: activityNameEl.textContent,
-
     energy: v,
     timestamp: now
   };
@@ -212,14 +205,14 @@ async function complete(v){
   }
 
   micro.classList.remove("hidden");
-  micro.textContent = `Godt gået, ${NAME}! Du tog en vigtig pause.`;
+  micro.textContent = "Godt gået – du støtter din energi og dit fokus.";
   await loadFeed();
 }
 
-/* ---------- TEAM FEED ---------- */
+/* ---------- TEAM FEED (max 1 pause pr. person) ---------- */
 async function loadFeed(){
   feed.textContent = "Indlæser…";
-  const r = await api(`/api/team_feed?team_id=${encodeURIComponent(TEAM)}&limit=20`);
+  const r = await api(`/api/team_feed?team_id=${encodeURIComponent(TEAM)}&limit=50`);
   if (!r.ok) {
     feed.textContent = "Kunne ikke hente feed.";
     return;
@@ -227,19 +220,21 @@ async function loadFeed(){
 
   const rows = r.body;
   if (!Array.isArray(rows) || rows.length === 0) {
-    feed.textContent = "Ingen aktiviteter endnu.";
+    feed.textContent = "Ingen energipauser endnu.";
     return;
   }
 
-  rows.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const latest = {};
 
-  feed.innerHTML = rows.map(rw => {
+  rows.forEach(rw => {
     const name = escapeHtml(rw.display_name || "Ukendt");
     const act = escapeHtml(rw.activity || "Aktivitet");
-    const ts = rw.timestamp ? new Date(rw.timestamp) : null;
-    const time = ts ? ts.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"}) : "–";
-    return `${name} tog ${act} kl. ${time}`;
-  }).join("<br>");
+    if (!latest[name]) latest[name] = act;
+  });
+
+  feed.innerHTML = Object.entries(latest)
+    .map(([name, act]) => `${name}: ${act}`)
+    .join("<br>");
 }
 
 /* ---------- EVENT LISTENERS ---------- */
