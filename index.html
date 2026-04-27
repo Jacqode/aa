@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Virker - Flow Focus v161</title>
+<title>Flow Focus v162</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -14,30 +14,45 @@ body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
 #controls{margin-top:12px;display:flex;align-items:center;gap:12px}
 button{cursor:pointer}
 #meta{font-size:.85rem;color:#666;margin-top:8px}
+.small{font-size:.85rem;color:#666}
 </style>
 </head>
 
 <body>
 
+<h1>Flow Focus</h1>
+<p id="intro">
+  Korte 2‑minutters mikro‑pauser, der giver dig mere energi i løbet af dagen.
+</p>
+
 <h2 id="title"></h2>
+
+<div id="meta" class="hidden">
+  Team: <span id="teamLabel"></span> · Navn: <span id="nameLabel"></span>
+</div>
+
 <img id="img" class="hidden" alt="">
+
 <div id="controls">
   <button id="start">Start 2 min</button>
   <div id="count" class="hidden">2:00</div>
-  <div id="meta" class="hidden"></div>
 </div>
 
 <div id="energy" class="hidden" aria-live="polite">
-  <p><strong>Hvordan er din energi efter aktiviteten?</strong></p>
-  <button data-v="ja">Ja</button>
-  <button data-v="nej">Nej</button>
-  <button data-v="ved_ikke">Ved ikke</button>
+  <p><strong>Hvordan føles din energi efter pausen?</strong></p>
+  <button data-v="god">God</button>
+  <button data-v="neutral">Neutral</button>
+  <button data-v="lav">Lav</button>
 </div>
 
 <div id="micro" class="hidden" role="status"></div>
 
-<h3>Team feed</h3>
+<h3>Teamets seneste pauser</h3>
 <div id="feed">Indlæser…</div>
+
+<p id="feedNote" class="small">
+  Feedet opdateres automatisk hvert 15. sekund.
+</p>
 
 <script>
 /* ---------- AUTOJOIN (team + name + org fra URL) ---------- */
@@ -121,7 +136,8 @@ function showAct(){
   count.classList.add("hidden");
   micro.classList.add("hidden");
 
-  meta.textContent = `Team: ${TEAM} · Navn: ${NAME}`;
+  $("teamLabel").textContent = TEAM;
+  $("nameLabel").textContent = NAME;
   meta.classList.remove("hidden");
 
   energy.classList.remove("hidden");
@@ -140,6 +156,7 @@ function startTimer(){
     if (s <= 0) {
       clearInterval(timer);
       start.disabled = false;
+      new Audio("done.mp3").play();
     }
   }, 1000);
 }
@@ -166,12 +183,12 @@ async function complete(v){
 
   if (!r.ok) {
     micro.classList.remove("hidden");
-    micro.textContent = "Kunne ikke sende. Prøv igen.";
+    micro.textContent = "Der skete en fejl – prøv igen om lidt.";
     return;
   }
 
   micro.classList.remove("hidden");
-  micro.textContent = "Tak for pausen!";
+  micro.textContent = `Godt gået, ${NAME}! Du tog en vigtig pause.`;
   await loadFeed();
 }
 
@@ -197,7 +214,7 @@ async function loadFeed(){
     const act = escapeHtml(rw.activity || "Aktivitet");
     const ts = rw.timestamp ? new Date(rw.timestamp) : null;
     const time = ts ? ts.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"}) : "–";
-    return `${name}: ${act} kl. ${time}`;
+    return `${name} tog ${act} kl. ${time}`;
   }).join("<br>");
 }
 
