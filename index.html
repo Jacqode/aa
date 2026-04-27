@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>dur - Flow Focus v174</title>
+<title>Flow Focus v176</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -13,7 +13,6 @@ body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
 #micro{margin-top:12px;color:green}
 #controls{margin-top:12px;display:flex;align-items:center;gap:12px}
 button{cursor:pointer}
-#meta{font-size:.85rem;color:#666;margin-top:8px}
 .small{font-size:.85rem;color:#666}
 </style>
 </head>
@@ -25,11 +24,6 @@ button{cursor:pointer}
 <p id="intro">
   Korte pauser til at støtte din energi.
 </p>
-
-<!-- Team + navn -->
-<div id="meta">
-  Du er i team <span id="teamLabel"></span> som <span id="nameLabel"></span>.
-</div>
 
 <!-- ⭐ Punkt 1 – kun tallet -->
 <div id="step1">
@@ -67,7 +61,7 @@ button{cursor:pointer}
 <h3>Teamets seneste pauser</h3>
 <div id="feed">Indlæser…</div>
 
-<p id="feedNote" class="small">
+<p class="small">
   Feedet opdateres automatisk hvert 15. sekund.
 </p>
 
@@ -152,9 +146,6 @@ function showAct(){
   count.classList.add("hidden");
   micro.classList.add("hidden");
 
-  $("teamLabel").textContent = TEAM;
-  $("nameLabel").textContent = NAME;
-
   energy.classList.remove("hidden");
 }
 
@@ -185,7 +176,10 @@ async function complete(v){
     display_name: NAME,
     team_id: TEAM,
     org_id: ORG,
-    activity: document.getElementById("title").textContent,
+
+    /* ⭐ Kun selve øvelsesnavnet i feedet */
+    activity: activityNameEl.textContent,
+
     energy: v,
     timestamp: now
   };
