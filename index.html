@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v165</title>
+<title>Flow Focus v166</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -26,17 +26,21 @@ button{cursor:pointer}
   Korte 2‑minutters mikro‑pauser, der giver dig mere energi i løbet af dagen.
 </p>
 
-<!-- Punkt 1 + timer -->
+<!-- Punkt 1 -->
 <div id="step1">
   <p><strong>1.</strong> Start timeren, så du ved, hvornår tiden er gået.</p>
 </div>
 
+<!-- Timer -->
 <div id="controls">
   <button id="start">Start 2 min</button>
   <div id="count" class="hidden">2:00</div>
 </div>
 
-<h2 id="title"></h2>
+<!-- Punkt 2 – NYT i v166 -->
+<p id="title">
+  <strong>2.</strong> Aktivitet: <span id="activityName"></span>. Lav så mange som muligt i dit eget tempo, indtil tiden er gået.
+</p>
 
 <div id="meta" class="hidden">
   Team: <span id="teamLabel"></span> · Navn: <span id="nameLabel"></span>
@@ -44,13 +48,12 @@ button{cursor:pointer}
 
 <img id="img" class="hidden" alt="">
 
-<!-- Kun punkt 3 tilbage -->
+<!-- Punkt 3 – opdateret -->
 <div id="steps">
-  <p><strong>3.</strong> Når du er færdig, vælg hvordan din energi føles.</p>
+  <p><strong>3. Hvordan føles din energi efter pausen?</strong></p>
 </div>
 
 <div id="energy" class="hidden" aria-live="polite">
-  <p><strong>Hvordan føles din energi efter pausen?</strong></p>
   <button data-v="god">God</button>
   <button data-v="neutral">Neutral</button>
   <button data-v="lav">Lav</button>
@@ -120,6 +123,7 @@ function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,
 
 /* ---------- ELEMENTS ---------- */
 const titleEl = document.getElementById("title");
+const activityNameEl = document.getElementById("activityName");
 const img = $("img");
 const start = $("start");
 const count = $("count");
@@ -140,9 +144,8 @@ const acts = [
 function showAct(){
   const a = acts[Math.random()*acts.length | 0];
 
-  // ⭐ NYT I V165 – aktivitetstekst
-  titleEl.textContent =
-    `2. Aktivitet: ${a.t}. Lav så mange som muligt i dit eget tempo, indtil tiden er gået.`;
+  // NYT i v166 – sæt kun navnet ind
+  activityNameEl.textContent = a.t;
 
   img.src = a.i;
   img.alt = a.t;
@@ -240,7 +243,7 @@ start.addEventListener("click", () => {
 });
 
 document.querySelectorAll("#energy button").forEach(btn => {
-  btn.addEventListener("click", async (e) => {
+  btn.addEventListener("click", async () => {
     const v = btn.getAttribute("data-v");
     document.querySelectorAll("#energy button").forEach(b => b.disabled = true);
     await complete(v);
