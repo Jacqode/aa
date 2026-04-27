@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v176</title>
+<title>Flow Focus v177</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -14,6 +14,7 @@ body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
 #controls{margin-top:12px;display:flex;align-items:center;gap:12px}
 button{cursor:pointer}
 .small{font-size:.85rem;color:#666}
+hr{opacity:.25;margin:18px 0}
 </style>
 </head>
 
@@ -25,7 +26,10 @@ button{cursor:pointer}
   Korte pauser til at støtte din energi.
 </p>
 
-<!-- ⭐ Punkt 1 – kun tallet -->
+<!-- ⭐ HR før punkt 1 -->
+<hr>
+
+<!-- Punkt 1 – kun tallet -->
 <div id="step1">
   <p><strong>1.</strong></p>
 </div>
@@ -36,16 +40,22 @@ button{cursor:pointer}
   <div id="count" class="hidden">2:00</div>
 </div>
 
-<!-- ⭐ Punkt 2 – tallet er fed, teksten er ikke -->
+<!-- ⭐ HR før punkt 2 -->
+<hr>
+
+<!-- Punkt 2 – kun tallet er fed -->
 <p id="title">
-  <strong>2.</strong> Aktivitet: <span id="activityName"></span>. Lav så mange som muligt i dit eget tempo, indtil tiden er gået.
+  <strong>2.</strong> <span id="activityName"></span>. Lav så mange som muligt i dit eget tempo, indtil tiden er gået.
 </p>
 
 <img id="img" class="hidden" alt="">
 
-<!-- Punkt 3 -->
+<!-- ⭐ HR før punkt 3 -->
+<hr>
+
+<!-- Punkt 3 – tallet fed, tekst ikke -->
 <div id="steps">
-  <p><strong>3. Hvordan føles din energi efter pausen?</strong></p>
+  <p><strong>3.</strong> Hvordan føles din energi efter pausen?</p>
 </div>
 
 <!-- Energi-knapper -->
@@ -56,7 +66,13 @@ button{cursor:pointer}
   <button data-v="ved_ikke">Ved ikke</button>
 </div>
 
+<!-- ⭐ HR før “Godt gået” -->
+<hr>
+
 <div id="micro" class="hidden" role="status"></div>
+
+<!-- ⭐ HR før feed -->
+<hr>
 
 <h3>Teamets seneste pauser</h3>
 <div id="feed">Indlæser…</div>
