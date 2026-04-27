@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v173</title>
+<title>Flow Focus v174</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -20,26 +20,29 @@ button{cursor:pointer}
 
 <body>
 
-<!-- 🔝 NY TOPLINJE -->
-<h2>Hej Jakob – team psy</h2>
+<h1>Flow Focus</h1>
+
+<p id="intro">
+  Korte pauser til at støtte din energi.
+</p>
 
 <!-- Team + navn -->
 <div id="meta">
   Du er i team <span id="teamLabel"></span> som <span id="nameLabel"></span>.
 </div>
 
-<!-- Punkt 1 -->
+<!-- ⭐ Punkt 1 – kun tallet -->
 <div id="step1">
-  <p><strong>1.</strong> Start timeren, så du ved, hvornår tiden er gået.</p>
+  <p><strong>1.</strong></p>
 </div>
 
 <!-- Timer -->
 <div id="controls">
-  <button id="start">Start 2 min</button>
+  <button id="start">Start 2 min timer</button>
   <div id="count" class="hidden">2:00</div>
 </div>
 
-<!-- Punkt 2 -->
+<!-- ⭐ Punkt 2 – tallet er fed, teksten er ikke -->
 <p id="title">
   <strong>2.</strong> Aktivitet: <span id="activityName"></span>. Lav så mange som muligt i dit eget tempo, indtil tiden er gået.
 </p>
@@ -67,10 +70,6 @@ button{cursor:pointer}
 <p id="feedNote" class="small">
   Feedet opdateres automatisk hvert 15. sekund.
 </p>
-
-<!-- 🔻 FLYTTET HERTIL: Flow Focus branding -->
-<h1 style="margin-top:40px;">Flow Focus</h1>
-<p class="small">Korte pauser til at støtte din energi.</p>
 
 <script>
 /* ---------- AUTOJOIN ---------- */
