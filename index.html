@@ -140,6 +140,8 @@ function startTimer(){
     if (s <= 0) {
       clearInterval(timer);
       start.disabled = false;
+      // optionally hide energy after finish
+      // energy.classList.add("hidden");
     }
   }, 1000);
 }
@@ -148,7 +150,7 @@ function startTimer(){
 async function complete(v){
   const now = new Date().toISOString();
   const payload = {
-    id: crypto.randomUUID(),
+    id: (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(36).slice(2,10))),
     device_id: DEVICE,
     display_name: NAME,
     team_id: TEAM,
@@ -201,6 +203,27 @@ async function loadFeed(){
   }).join("<br>");
 }
 
+/* ---------- EVENT LISTENERS (ADDED) ---------- */
+/* Start button: show activity + start timer */
+start.addEventListener("click", () => {
+  showAct();
+  startTimer();
+});
+
+/* Energy buttons: delegate to complete() */
+document.querySelectorAll("#energy button").forEach(btn => {
+  btn.addEventListener("click", async (e) => {
+    const v = btn.getAttribute("data-v");
+    // disable buttons briefly to avoid double submits
+    document.querySelectorAll("#energy button").forEach(b => b.disabled = true);
+    await complete(v);
+    // re-enable after short delay
+    setTimeout(() => {
+      document.querySelectorAll("#energy button").forEach(b => b.disabled = false);
+    }, 800);
+  });
+});
+
 /* ---------- INIT ---------- */
 window.addEventListener("load", async () => {
   showAct();
@@ -212,4 +235,3 @@ window.addEventListener("load", async () => {
 
 </body>
 </html>
-
