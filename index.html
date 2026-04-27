@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v157</title>
+<title>Flow Focus v158</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -44,18 +44,20 @@ button{cursor:pointer}
 const p = new URLSearchParams(location.search);
 if (p.get("team")) localStorage.setItem("team", p.get("team"));
 if (p.get("name")) localStorage.setItem("name", p.get("name"));
+if (p.get("org"))  localStorage.setItem("org",  p.get("org"));
 
 const TEAM = (localStorage.getItem("team") || "demo").trim();
 const NAME = (localStorage.getItem("name") || "Ukendt").trim();
+const ORG  = (localStorage.getItem("org")  || "default_org").trim();
 
 /* ---------- DEVICE-ID ---------- */
 let DEVICE = localStorage.getItem("device_id");
 if (!DEVICE) {
-  DEVICE = "dev_" + (crypto && crypto.randomUUID ? crypto.randomUUID().slice(0,12) : Math.random().toString(36).slice(2,14));
+  DEVICE = "dev_" + (crypto.randomUUID ? crypto.randomUUID().slice(0,12) : Math.random().toString(36).slice(2,14));
   localStorage.setItem("device_id", DEVICE);
 }
 
-/* ---------- API WRAPPER (robust) ---------- */
+/* ---------- API WRAPPER ---------- */
 const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
 async function api(path, opts = {}) {
   try {
@@ -63,39 +65,35 @@ async function api(path, opts = {}) {
     const text = await res.text();
     let json;
     try { json = JSON.parse(text); } catch(e) { json = text; }
-    if (!res.ok) {
-      console.error("API error", path, res.status, res.statusText, json);
-      return { ok:false, status: res.status, body: json };
-    }
-    return { ok:true, status: res.status, body: json };
+    if (!res.ok) return { ok:false, status:res.status, body:json };
+    return { ok:true, status:res.status, body:json };
   } catch (err) {
-    console.error("Network/API fetch failed:", err, path);
-    return { ok:false, status: 0, body: null, error: err };
+    return { ok:false, status:0, body:null, error:err };
   }
 }
 
-/* ---------- REGISTER DEVICE (non-blocking) ---------- */
+/* ---------- REGISTER DEVICE ---------- */
 async function registerDevice(){
   const payload = {
     device_id: DEVICE,
-    team_id: TEAM,
     display_name: NAME,
+    team_id: TEAM,
+    org_id: ORG,
     last_seen: new Date().toISOString()
   };
-  const r = await api("/api/register", {
+  await api("/api/register", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify(payload)
   });
-  if (!r.ok) console.warn("registerDevice failed", r);
 }
 
-/* ---------- UI helpers ---------- */
+/* ---------- UI HELPERS ---------- */
 function $(id){ return document.getElementById(id) }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 
 /* ---------- ELEMENTS ---------- */
-const titleEl = document.getElementById("title");
+const titleEl = $("title");
 const img = $("img");
 const start = $("start");
 const count = $("count");
@@ -123,11 +121,9 @@ function showAct(){
   count.classList.add("hidden");
   micro.classList.add("hidden");
 
-  // Vis team + navn metadata
   meta.textContent = `Team: ${TEAM} · Navn: ${NAME}`;
   meta.classList.remove("hidden");
 
-  // Vis energispørgsmålet med det samme
   energy.classList.remove("hidden");
 }
 
@@ -152,9 +148,11 @@ function startTimer(){
 async function complete(v){
   const now = new Date().toISOString();
   const payload = {
-    team_id: TEAM,
-    display_name: NAME,
+    id: crypto.randomUUID(),
     device_id: DEVICE,
+    display_name: NAME,
+    team_id: TEAM,
+    org_id: ORG,
     activity: titleEl.textContent || "Ukendt",
     energy: v,
     timestamp: now
@@ -169,7 +167,6 @@ async function complete(v){
   if (!r.ok) {
     micro.classList.remove("hidden");
     micro.textContent = "Kunne ikke sende. Prøv igen.";
-    console.error("event failed", r);
     return;
   }
 
@@ -181,11 +178,9 @@ async function complete(v){
 /* ---------- TEAM FEED ---------- */
 async function loadFeed(){
   feed.textContent = "Indlæser…";
-  const path = `/api/team_feed?team_id=${encodeURIComponent(TEAM)}&limit=20`;
-  const r = await api(path);
+  const r = await api(`/api/team_feed?team_id=${encodeURIComponent(TEAM)}&limit=20`);
   if (!r.ok) {
     feed.textContent = "Kunne ikke hente feed.";
-    console.error("loadFeed failed", r);
     return;
   }
 
@@ -195,12 +190,7 @@ async function loadFeed(){
     return;
   }
 
-  // Sort by timestamp descending if possible
-  rows.sort((a,b) => {
-    const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-    const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-    return tb - ta;
-  });
+  rows.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
 
   feed.innerHTML = rows.map(rw => {
     const name = escapeHtml(rw.display_name || "Ukendt");
@@ -211,29 +201,11 @@ async function loadFeed(){
   }).join("<br>");
 }
 
-/* ---------- EVENTS ---------- */
-start.addEventListener("click", () => {
-  clearInterval(timer);
-  startTimer();
-});
-
-energy.addEventListener("click", e => {
-  const b = e.target.closest("button[data-v]");
-  if (b) complete(b.dataset.v);
-});
-
 /* ---------- INIT ---------- */
 window.addEventListener("load", async () => {
-  // show UI immediately
   showAct();
-
-  // register device (non-blocking)
   registerDevice();
-
-  // initial feed load
   await loadFeed();
-
-  // refresh feed periodically
   setInterval(loadFeed, 15000);
 });
 </script>
