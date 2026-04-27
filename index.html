@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v159</title>
+<title>Flow Focus v160</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -58,7 +58,7 @@ if (!DEVICE) {
 }
 
 /* ---------- API WRAPPER ---------- */
-const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
+const BASE = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 async function api(path, opts = {}) {
   try {
     const res = await fetch(BASE + path, { ...opts, mode: "cors" });
@@ -93,7 +93,7 @@ function $(id){ return document.getElementById(id) }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 
 /* ---------- ELEMENTS ---------- */
-const titleEl = document.getElementById("title");   // FIXED
+const titleEl = document.getElementById("title");
 const img = $("img");
 const start = $("start");
 const count = $("count");
@@ -212,3 +212,4 @@ window.addEventListener("load", async () => {
 
 </body>
 </html>
+
