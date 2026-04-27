@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v160</title>
+<title>Flow Focus v161</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -140,8 +140,6 @@ function startTimer(){
     if (s <= 0) {
       clearInterval(timer);
       start.disabled = false;
-      // optionally hide energy after finish
-      // energy.classList.add("hidden");
     }
   }, 1000);
 }
@@ -203,21 +201,17 @@ async function loadFeed(){
   }).join("<br>");
 }
 
-/* ---------- EVENT LISTENERS (ADDED) ---------- */
-/* Start button: show activity + start timer */
+/* ---------- EVENT LISTENERS ---------- */
 start.addEventListener("click", () => {
   showAct();
   startTimer();
 });
 
-/* Energy buttons: delegate to complete() */
 document.querySelectorAll("#energy button").forEach(btn => {
   btn.addEventListener("click", async (e) => {
     const v = btn.getAttribute("data-v");
-    // disable buttons briefly to avoid double submits
     document.querySelectorAll("#energy button").forEach(b => b.disabled = true);
     await complete(v);
-    // re-enable after short delay
     setTimeout(() => {
       document.querySelectorAll("#energy button").forEach(b => b.disabled = false);
     }, 800);
