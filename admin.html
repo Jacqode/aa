@@ -3,89 +3,93 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus Admin v152</title>
-
+<title>Flow Focus Admin v161 – Overblik</title>
 <style>
-body{font-family:system-ui;padding:16px}
-table{border-collapse:collapse;width:100%;margin-top:20px}
-td,th{border:1px solid #ccc;padding:6px;font-size:.9rem}
-.active{color:green;font-weight:bold}
-.inactive{color:#999}
+body{font-family:system-ui;padding:16px;max-width:900px;margin:auto}
+input,button{padding:8px;margin:6px 0}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{border:1px solid #ddd;padding:8px;text-align:left}
+pre{background:#f6f6f6;padding:8px;overflow:auto}
+.small{font-size:.9rem;color:#666}
 </style>
 </head>
-
 <body>
 
-<h2>Admin – Devices</h2>
-<div id="devices">Indlæser…</div>
+<h2>Flow Focus Admin v161 – Overblik</h2>
 
-<h2>Seneste aktiviteter</h2>
-<div id="events">Indlæser…</div>
+<label>Team ID</label><br>
+<input id="team" placeholder="fx psy" style="width:200px">
+
+<button id="btnFeed">Hent team feed</button>
+<button id="btnDevices">Hent devices</button>
+
+<h3>Link til nye brugere</h3>
+<div id="inviteLink" class="small">Indtast team for at generere link…</div>
+
+<h3>Feed</h3>
+<table id="feedTable">
+<thead><tr><th>Navn</th><th>Aktivitet</th><th>Energi</th><th>Tid</th></tr></thead>
+<tbody></tbody>
+</table>
+
+<h3>Devices</h3>
+<table id="devicesTable">
+<thead><tr><th>Device</th><th>Navn</th><th>Team</th><th>Org</th><th>Last seen</th></tr></thead>
+<tbody></tbody>
+</table>
 
 <script>
-const p = new URLSearchParams(location.search);
-const TEAM = p.get("team") || "demo";
+const BASE = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 
-const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
-const api = (p,o={}) => fetch(BASE+p,{...o,mode:"cors"}).then(r=>r.json());
+function $(id){ return document.getElementById(id); }
 
-function $(id){return document.getElementById(id)}
-
-function isActive(lastSeen){
-  const diff = Date.now() - new Date(lastSeen).getTime();
-  return diff < 5 * 60 * 1000;
+async function fetchJson(url){
+  const res = await fetch(url);
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return text; }
 }
 
-async function loadDevices(){
-  const rows = await api(`/api/devices?team_id=${TEAM}`);
+$("team").addEventListener("input", () => {
+  const t = $("team").value.trim();
+  if (!t) return $("inviteLink").textContent = "Indtast team for at generere link…";
+  $("inviteLink").textContent = `https://jacqode.github.io/aa/?team=${encodeURIComponent(t)}`;
+});
 
-  $("devices").innerHTML = `
-    <table>
-      <tr>
-        <th>Navn</th>
-        <th>Device</th>
-        <th>Sidst aktiv</th>
-        <th>Status</th>
-        <th></th>
-      </tr>
-      ${rows.map(r => `
-        <tr>
-          <td>${r.display_name}</td>
-          <td>${r.device_id}</td>
-          <td>${new Date(r.last_seen).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})}</td>
-          <td class="${isActive(r.last_seen) ? "active" : "inactive"}">
-            ${isActive(r.last_seen) ? "Aktiv nu" : "Offline"}
-          </td>
-          <td>
-            <button onclick="deactivate('${r.device_id}')">Deaktiver</button>
-          </td>
-        </tr>
-      `).join("")}
-    </table>
-  `;
-}
+$("btnFeed").addEventListener("click", async () => {
+  const team = $("team").value.trim();
+  if (!team) return alert("Indtast team");
+  const rows = await fetchJson(`${BASE}/api/team_feed?team_id=${team}&limit=200`);
+  const tbody = document.querySelector("#feedTable tbody");
+  tbody.innerHTML = "";
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${r.display_name||""}</td><td>${r.activity||""}</td><td>${r.energy||""}</td><td>${r.timestamp||""}</td>`;
+    tbody.appendChild(tr);
+  });
+});
 
-async function deactivate(id){
-  await api(`/api/device?device_id=${id}`, { method:"DELETE" });
-  loadDevices();
-}
-
-async function loadEvents(){
-  const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=50`);
-
-  $("events").innerHTML = rows.map(r =>
-    `${r.display_name}: ${r.activity} kl. ${
-      new Date(r.timestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
-    }`
-  ).join("<br>");
-}
-
-window.onload = () => {
-  loadDevices();
-  loadEvents();
-  setInterval(loadDevices, 15000);
-  setInterval(loadEvents, 15000);
-};
+$("btnDevices").addEventListener("click", async () => {
+  const team = $("team").value.trim();
+  if (!team) return alert("Indtast team");
+  const rows = await fetchJson(`${BASE}/api/team_feed?team_id=${team}&limit=500`);
+  const devices = {};
+  rows.forEach(r => {
+    devices[r.device_id] = {
+      device_id: r.device_id,
+      display_name: r.display_name,
+      team_id: r.team_id,
+      org_id: r.org_id,
+      last_seen: r.timestamp
+    };
+  });
+  const tbody = document.querySelector("#devicesTable tbody");
+  tbody.innerHTML = "";
+  Object.values(devices).forEach(d => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${d.device_id}</td><td>${d.display_name||""}</td><td>${d.team_id||""}</td><td>${d.org_id||""}</td><td>${d.last_seen||""}</td>`;
+    tbody.appendChild(tr);
+  });
+});
 </script>
 
 </body>
