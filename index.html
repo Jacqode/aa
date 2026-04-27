@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v167</title>
+<title>Flow Focus v168</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -26,6 +26,11 @@ button{cursor:pointer}
   Korte 2‑minutters mikro‑pauser, der giver dig mere energi i løbet af dagen.
 </p>
 
+<!-- ⭐ NY PLACERING I V168 -->
+<div id="meta">
+  Du er i team <span id="teamLabel"></span> som <span id="nameLabel"></span>.
+</div>
+
 <!-- Punkt 1 -->
 <div id="step1">
   <p><strong>1.</strong> Start timeren, så du ved, hvornår tiden er gået.</p>
@@ -42,10 +47,6 @@ button{cursor:pointer}
   <strong>2.</strong> Aktivitet: <span id="activityName"></span>. Lav så mange som muligt i dit eget tempo, indtil tiden er gået.
 </p>
 
-<div id="meta" class="hidden">
-  Team: <span id="teamLabel"></span> · Navn: <span id="nameLabel"></span>
-</div>
-
 <img id="img" class="hidden" alt="">
 
 <!-- Punkt 3 -->
@@ -53,7 +54,7 @@ button{cursor:pointer}
   <p><strong>3. Hvordan føles din energi efter pausen?</strong></p>
 </div>
 
-<!-- ⭐ NYE KNAPPER I V167 -->
+<!-- Energi-knapper v167 -->
 <div id="energy" class="hidden" aria-live="polite">
   <button data-v="større">Større</button>
   <button data-v="samme">Samme</button>
@@ -128,12 +129,9 @@ const activityNameEl = document.getElementById("activityName");
 const img = $("img");
 const start = $("start");
 const count = $("count");
-const meta = $("meta");
 const energy = $("energy");
 const micro = $("micro");
 const feed = $("feed");
-
-let timer;
 
 /* ---------- ACTIVITIES ---------- */
 const acts = [
@@ -156,7 +154,6 @@ function showAct(){
 
   $("teamLabel").textContent = TEAM;
   $("nameLabel").textContent = NAME;
-  meta.classList.remove("hidden");
 
   energy.classList.remove("hidden");
 }
@@ -183,7 +180,7 @@ function startTimer(){
 async function complete(v){
   const now = new Date().toISOString();
   const payload = {
-    id: (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(36).slice(2,10))),
+    id: crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(36).slice(2,10)),
     device_id: DEVICE,
     display_name: NAME,
     team_id: TEAM,
