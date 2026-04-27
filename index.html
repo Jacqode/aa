@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dur - Flow Focus v177</title>
+<title>Flow Focus v178</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -11,31 +11,24 @@ body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
 #img{max-width:200px;margin-top:10px;display:block}
 #feed{margin-top:20px;font-size:.95rem;color:#444}
 #micro{margin-top:12px;color:green}
-#controls{margin-top:12px;display:flex;align-items:center;gap:12px}
 button{cursor:pointer}
 .small{font-size:.85rem;color:#666}
 hr{opacity:.25;margin:18px 0}
+#step1-line{display:flex;align-items:center;gap:12px}
 </style>
 </head>
 
 <body>
 
-<h1>Flow Focus</h1>
-
-<p id="intro">
-  Korte pauser til at støtte din energi.
-</p>
+<!-- ⭐ Hej xx – team yy -->
+<h2 id="greeting">Hej <span id="nameLabel"></span> – team <span id="teamLabel"></span>. Klar til en pause?</h2>
 
 <!-- ⭐ HR før punkt 1 -->
 <hr>
 
-<!-- Punkt 1 – kun tallet -->
-<div id="step1">
+<!-- ⭐ Punkt 1 + knap i samme linje -->
+<div id="step1-line">
   <p><strong>1.</strong></p>
-</div>
-
-<!-- Timer -->
-<div id="controls">
   <button id="start">Start 2 min timer</button>
   <div id="count" class="hidden">2:00</div>
 </div>
@@ -43,7 +36,7 @@ hr{opacity:.25;margin:18px 0}
 <!-- ⭐ HR før punkt 2 -->
 <hr>
 
-<!-- Punkt 2 – kun tallet er fed -->
+<!-- Punkt 2 -->
 <p id="title">
   <strong>2.</strong> <span id="activityName"></span>. Lav så mange som muligt i dit eget tempo, indtil tiden er gået.
 </p>
@@ -53,7 +46,7 @@ hr{opacity:.25;margin:18px 0}
 <!-- ⭐ HR før punkt 3 -->
 <hr>
 
-<!-- Punkt 3 – tallet fed, tekst ikke -->
+<!-- Punkt 3 – ikke fed tekst -->
 <div id="steps">
   <p><strong>3.</strong> Hvordan føles din energi efter pausen?</p>
 </div>
@@ -79,6 +72,12 @@ hr{opacity:.25;margin:18px 0}
 
 <p class="small">
   Feedet opdateres automatisk hvert 15. sekund.
+</p>
+
+<!-- ⭐ Nederste afsnit -->
+<hr>
+<p class="small">
+  Flow Focus – Korte pauser med aktivitet til at støtte din energi.
 </p>
 
 <script>
@@ -262,6 +261,9 @@ document.querySelectorAll("#energy button").forEach(btn => {
 
 /* ---------- INIT ---------- */
 window.addEventListener("load", async () => {
+  document.getElementById("nameLabel").textContent = NAME;
+  document.getElementById("teamLabel").textContent = TEAM;
+
   showAct();
   await registerDevice();
   await loadFeed();
