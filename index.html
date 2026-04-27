@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v180</title>
+<title>Flow Focus v181</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -15,7 +15,13 @@ button{cursor:pointer}
 .small{font-size:.85rem;color:#666}
 hr{opacity:.25;margin:18px 0}
 #step1-line{display:flex;align-items:center;gap:12px}
-.footer-big{font-size:1rem;font-weight:500;margin-top:20px}
+
+/* ⭐ Større footer-tekst */
+.footer-big{
+  font-size:1rem;
+  font-weight:500;
+  margin-top:20px;
+}
 </style>
 </head>
 
@@ -24,9 +30,11 @@ hr{opacity:.25;margin:18px 0}
 <!-- ⭐ Hilsen -->
 <h2 id="greeting">Klar til en energipause, <span id="nameLabel"></span>?</h2>
 
+<!-- ⭐ De to intro-linjer er fjernet -->
+
 <hr>
 
-<!-- ⭐ Punkt 1 -->
+<!-- ⭐ Punkt 1 + knap i samme linje -->
 <div id="step1-line">
   <p><strong>1.</strong></p>
   <button id="start">Start 2 min timer</button>
@@ -35,7 +43,7 @@ hr{opacity:.25;margin:18px 0}
 
 <hr>
 
-<!-- ⭐ Punkt 2 -->
+<!-- Punkt 2 -->
 <p id="title">
   <strong>2.</strong> <span id="activityName"></span>. Lav så mange som muligt i dit eget tempo, indtil tiden er gået.
 </p>
@@ -44,7 +52,7 @@ hr{opacity:.25;margin:18px 0}
 
 <hr>
 
-<!-- ⭐ Punkt 3 -->
+<!-- Punkt 3 -->
 <div id="steps">
   <p><strong>3.</strong> Hvordan føles din energi efter pausen?</p>
 </div>
@@ -71,6 +79,7 @@ hr{opacity:.25;margin:18px 0}
 
 <hr>
 
+<!-- ⭐ Opdateret og større footer-tekst -->
 <p class="footer-big">
   Flow Focus – Korte energipauser til at støtte dit fokus og velvære.
 </p>
@@ -129,7 +138,7 @@ function $(id){ return document.getElementById(id) }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 
 /* ---------- ELEMENTS ---------- */
-const activityNameEl = $("activityName");
+const activityNameEl = document.getElementById("activityName");
 const img = $("img");
 const start = $("start");
 const count = $("count");
@@ -251,8 +260,8 @@ document.querySelectorAll("#energy button").forEach(btn => {
 
 /* ---------- INIT ---------- */
 window.addEventListener("load", async () => {
-  $("nameLabel").textContent = NAME;
-  $("teamLabel").textContent = TEAM;
+  document.getElementById("nameLabel").textContent = NAME;
+  document.getElementById("teamLabel").textContent = TEAM;
 
   showAct();
   await registerDevice();
