@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v158</title>
+<title>Flow Focus v159</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -40,7 +40,7 @@ button{cursor:pointer}
 <div id="feed">Indlæser…</div>
 
 <script>
-/* ---------- AUTOJOIN (team + name fra URL) ---------- */
+/* ---------- AUTOJOIN (team + name + org fra URL) ---------- */
 const p = new URLSearchParams(location.search);
 if (p.get("team")) localStorage.setItem("team", p.get("team"));
 if (p.get("name")) localStorage.setItem("name", p.get("name"));
@@ -93,7 +93,7 @@ function $(id){ return document.getElementById(id) }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 
 /* ---------- ELEMENTS ---------- */
-const titleEl = $("title");
+const titleEl = document.getElementById("title");   // FIXED
 const img = $("img");
 const start = $("start");
 const count = $("count");
@@ -204,7 +204,7 @@ async function loadFeed(){
 /* ---------- INIT ---------- */
 window.addEventListener("load", async () => {
   showAct();
-  registerDevice();
+  await registerDevice();
   await loadFeed();
   setInterval(loadFeed, 15000);
 });
