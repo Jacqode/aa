@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v196 – Zen</title>
+<title>Flow Focus v198 – Zen</title>
 
 <style>
   body {
@@ -98,6 +98,13 @@
     padding: 6px;
     font-size: 1rem;
   }
+
+  /* Subtle feedback */
+  #feedback {
+    margin-top: 12px;
+    color: #333;
+    opacity: 0.95;
+  }
 </style>
 </head>
 
@@ -147,15 +154,15 @@
   </p>
 
   <!-- Inline interval editor -->
-  <div id="inlineInterval" class="hidden">
-    <label>Minutter mellem pauser:</label>
-    <input id="inlineInput" type="number" min="1" step="1">
+  <div id="inlineInterval" class="hidden" aria-hidden="true">
+    <label for="inlineInput">Minutter mellem pauser:</label>
+    <input id="inlineInput" type="number" min="1" step="1" inputmode="numeric" pattern="[0-9]*" />
   </div>
 
 </div>
 
 <!-- Settings modal -->
-<div id="settingsModal" class="modal hidden">
+<div id="settingsModal" class="modal hidden" aria-hidden="true">
   <div class="modal-content">
     <h3>Indstillinger</h3>
 
@@ -168,7 +175,7 @@
 </div>
 
 <!-- Feed modal -->
-<div id="feedModal" class="modal hidden">
+<div id="feedModal" class="modal hidden" aria-hidden="true">
   <div class="modal-content">
     <h3>Seneste pauser</h3>
     <div id="feed">Indlæser…</div>
@@ -217,6 +224,33 @@ const acts = [
   { t: "Armcirkler", i: "images/armcirkel.png" }
 ];
 
+/* ---------- AUDIO (pre-authorize + done sound) ---------- */
+/* done.mp3 skal ligge i samme mappe eller være en gyldig sti */
+const doneAudio = new Audio("done.mp3");
+doneAudio.preload = "auto";
+doneAudio.volume = 1;
+
+/* Helper: for-browser autoplay permission unlock
+   Play muted briefly on first user gesture so later plays are allowed. */
+function unlockAudio() {
+  // Try to play muted once; ignore errors.
+  try {
+    const p = doneAudio.play();
+    if (p && typeof p.then === "function") {
+      // If browser requires a user gesture, this call is already inside a click handler.
+      // Pause immediately so user doesn't hear it.
+      p.then(() => {
+        doneAudio.pause();
+        doneAudio.currentTime = 0;
+      }).catch(() => {
+        // ignore
+      });
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
 /* ---------- REMINDER ---------- */
 let REMINDER_INTERVAL = (localStorage.getItem("reminderInterval") || 25) * 60000;
 let reminderTimer = null;
@@ -237,8 +271,13 @@ function updateNextPause() {
   nextTime.textContent = t.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
 }
 
-/* ---------- FLOW ---------- */
+/* ---------- FLOW (timer + audio on finish) ---------- */
+let activityTimerInterval = null;
+
 startBtn.addEventListener("click", () => {
+  // Unlock audio permission on first user gesture
+  unlockAudio();
+
   const a = acts[Math.random()*acts.length | 0];
   activityNameEl.textContent = a.t;
   activityImg.src = a.i;
@@ -246,23 +285,43 @@ startBtn.addEventListener("click", () => {
   stepStart.classList.add("hidden");
   stepActivity.classList.remove("hidden");
 
+  // 2 minutes countdown (120s)
   let s = 120;
   const tick = () => {
     timerText.textContent = `${(s/60|0)}:${String(s%60).padStart(2,"0")}`;
     if (s-- <= 0) {
+      // stop interval
+      clearInterval(activityTimerInterval);
+      activityTimerInterval = null;
+
+      // play done sound (best-effort, catch errors)
+      try {
+        // Reset to start in case it's been used
+        doneAudio.currentTime = 0;
+        const playPromise = doneAudio.play();
+        if (playPromise && typeof playPromise.then === "function") {
+          playPromise.catch(() => {
+            // If play fails, ignore silently (browser policy or other)
+          });
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // transition to energy step
       stepActivity.classList.add("hidden");
       stepEnergy.classList.remove("hidden");
-      clearInterval(t);
     }
   };
   tick();
-  const t = setInterval(tick, 1000);
+  activityTimerInterval = setInterval(tick, 1000);
 });
 
+/* Energy buttons: record choice, show next pause and schedule reminder */
 document.querySelectorAll("#step-energy button").forEach(btn => {
   btn.addEventListener("click", () => {
     stepEnergy.classList.add("hidden");
-    feedback.textContent = "Tak!";
+    feedback.textContent = "Tak! Næste pause planlagt.";
     feedback.classList.remove("hidden");
 
     updateNextPause();
@@ -274,28 +333,44 @@ document.querySelectorAll("#step-energy button").forEach(btn => {
 
 /* ---------- INLINE INTERVAL EDIT ---------- */
 changeInterval.onclick = () => {
-  inlineInput.value = REMINDER_INTERVAL / 60000;
+  // show inline editor with whole minutes only
+  inlineInput.value = Math.max(1, Math.round(REMINDER_INTERVAL / 60000));
   inlineInterval.classList.remove("hidden");
+  inlineInterval.setAttribute("aria-hidden", "false");
   inlineInput.focus();
+  inlineInput.select();
 };
 
-inlineInput.onblur = () => {
+// Save on blur or Enter key; only whole minutes allowed (step=1)
+inlineInput.addEventListener("blur", saveInlineInterval);
+inlineInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    inlineInput.blur();
+  } else if (e.key === "Escape") {
+    inlineInterval.classList.add("hidden");
+    inlineInterval.setAttribute("aria-hidden", "true");
+  }
+});
+
+function saveInlineInterval() {
   const m = Number(inlineInput.value);
-  if (m >= 1) {
-    REMINDER_INTERVAL = m * 60000;
-    localStorage.setItem("reminderInterval", m);
+  if (Number.isFinite(m) && m >= 1) {
+    const minutes = Math.round(m);
+    REMINDER_INTERVAL = minutes * 60000;
+    localStorage.setItem("reminderInterval", minutes);
     updateNextPause();
     scheduleReminder();
   }
   inlineInterval.classList.add("hidden");
-};
+  inlineInterval.setAttribute("aria-hidden", "true");
+}
 
 /* ---------- SETTINGS ---------- */
 settingsBtn.onclick = () => settingsModal.classList.remove("hidden");
 closeSettings.onclick = () => {
-  localStorage.setItem("name", nameInput.value);
+  localStorage.setItem("name", nameInput.value || "Bruger");
   settingsModal.classList.add("hidden");
-  document.getElementById("username").textContent = nameInput.value;
+  document.getElementById("username").textContent = nameInput.value || "Bruger";
 };
 
 /* ---------- FEED ---------- */
@@ -321,6 +396,7 @@ feedBtn.onclick = async () => {
 closeFeed.onclick = () => feedModal.classList.add("hidden");
 
 /* ---------- INIT ---------- */
+updateNextPause();
 scheduleReminder();
 </script>
 
