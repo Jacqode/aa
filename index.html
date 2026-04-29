@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v184</title>
+<title>Flow Focus v185</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -41,11 +41,7 @@ hr{opacity:.25;margin:18px 0}
 
 <hr>
 
-<!--  
-===========================================
-⭐ PUNKT 3 ER KOMMENTERET UD I V184
-===========================================
-
+<!-- ⭐ PUNKT 3 ER TILBAGE I V185 -->
 <div id="steps">
   <p><strong>3.</strong> Hvordan føles din energi efter pausen?</p>
 </div>
@@ -62,7 +58,6 @@ hr{opacity:.25;margin:18px 0}
 <div id="micro" class="hidden" role="status"></div>
 
 <hr>
--->
 
 <h3>Dit teams seneste energipauser:</h3>
 <div id="feed">Indlæser…</div>
@@ -131,6 +126,8 @@ const activityNameEl = document.getElementById("activityName");
 const img = $("img");
 const start = $("start");
 const count = $("count");
+const energy = $("energy");
+const micro = $("micro");
 const feed = $("feed");
 
 /* ---------- ACTIVITIES ---------- */
@@ -147,6 +144,8 @@ function showAct(){
   img.alt = a.t;
   img.classList.remove("hidden");
   count.classList.add("hidden");
+  micro.classList.add("hidden");
+  energy.classList.remove("hidden");
 }
 
 /* ---------- TIMER ---------- */
@@ -165,6 +164,37 @@ function startTimer(){
       new Audio("done.mp3").play();
     }
   }, 1000);
+}
+
+/* ---------- SEND EVENT ---------- */
+async function complete(v){
+  const now = new Date().toISOString();
+  const payload = {
+    id: crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(36).slice(2,10)),
+    device_id: DEVICE,
+    display_name: NAME,
+    team_id: TEAM,
+    org_id: ORG,
+    activity: activityNameEl.textContent,
+    energy: v,
+    timestamp: now
+  };
+
+  const r = await api("/api/event", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload)
+  });
+
+  if (!r.ok) {
+    micro.classList.remove("hidden");
+    micro.textContent = "Der skete en fejl – prøv igen om lidt.";
+    return;
+  }
+
+  micro.classList.remove("hidden");
+  micro.textContent = "Godt gået – du støtter din energi og dit fokus.";
+  await loadFeed();
 }
 
 /* ---------- TEAM FEED (max 1 pause pr. person) ---------- */
@@ -199,6 +229,17 @@ async function loadFeed(){
 start.addEventListener("click", () => {
   showAct();
   startTimer();
+});
+
+document.querySelectorAll("#energy button").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const v = btn.getAttribute("data-v");
+    document.querySelectorAll("#energy button").forEach(b => b.disabled = true);
+    await complete(v);
+    setTimeout(() => {
+      document.querySelectorAll("#energy button").forEach(b => b.disabled = false);
+    }, 800);
+  });
 });
 
 /* ---------- INIT ---------- */
