@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v185</title>
+<title>Flow Focus v186</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -41,7 +41,7 @@ hr{opacity:.25;margin:18px 0}
 
 <hr>
 
-<!-- ⭐ PUNKT 3 ER TILBAGE I V185 -->
+<!-- ⭐ Punkt 3 – energimåling -->
 <div id="steps">
   <p><strong>3.</strong> Hvordan føles din energi efter pausen?</p>
 </div>
@@ -61,6 +61,14 @@ hr{opacity:.25;margin:18px 0}
 
 <h3>Dit teams seneste energipauser:</h3>
 <div id="feed">Indlæser…</div>
+
+<hr>
+
+<!-- ⭐ Indstillinger -->
+<h3>Indstillinger</h3>
+<label for="reminderInput">Påmindelsesinterval (minutter):</label>
+<input id="reminderInput" type="number" min="5" max="180" value="25" style="width:80px;">
+<button id="saveReminder">Gem</button>
 
 <hr>
 
@@ -120,6 +128,38 @@ async function registerDevice(){
 /* ---------- HELPERS ---------- */
 function $(id){ return document.getElementById(id) }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+
+/* ---------- REMINDER FUNKTIONER ---------- */
+function getReminderInterval() {
+  const v = localStorage.getItem("reminderInterval");
+  return v ? parseInt(v, 10) : 25;
+}
+
+function nextPauseTime() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() + getReminderInterval());
+  return d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+}
+
+function sendOSNotification(time) {
+  if (Notification.permission === "granted") {
+    new Notification("Flow Focus", {
+      body: `Tid til en ny energipause (${time})`,
+      icon: "icon.png"
+    });
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(p => {
+      if (p === "granted") sendOSNotification(time);
+    });
+  }
+}
+
+function scheduleReminder() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() + getReminderInterval());
+  const ms = d.getTime() - Date.now();
+  setTimeout(() => sendOSNotification(nextPauseTime()), ms);
+}
 
 /* ---------- ELEMENTS ---------- */
 const activityNameEl = document.getElementById("activityName");
@@ -192,12 +232,15 @@ async function complete(v){
     return;
   }
 
+  const nextTime = nextPauseTime();
   micro.classList.remove("hidden");
-  micro.textContent = "Godt gået – du støtter din energi og dit fokus.";
+  micro.textContent = `Energipause registreret. Du får en reminder om næste pause kl. ${nextTime}.`;
+
+  scheduleReminder();
   await loadFeed();
 }
 
-/* ---------- TEAM FEED (max 1 pause pr. person) ---------- */
+/* ---------- TEAM FEED ---------- */
 async function loadFeed(){
   feed.textContent = "Indlæser…";
   const r = await api(`/api/team_feed?team_id=${encodeURIComponent(TEAM)}&limit=50`);
@@ -242,10 +285,20 @@ document.querySelectorAll("#energy button").forEach(btn => {
   });
 });
 
+document.getElementById("saveReminder").addEventListener("click", () => {
+  const v = parseInt(document.getElementById("reminderInput").value, 10);
+  if (v >= 5 && v <= 180) {
+    localStorage.setItem("reminderInterval", v);
+    alert("Påmindelsesinterval gemt.");
+  }
+});
+
 /* ---------- INIT ---------- */
 window.addEventListener("load", async () => {
   document.getElementById("nameLabel").textContent = NAME;
   document.getElementById("teamLabel").textContent = TEAM;
+
+  document.getElementById("reminderInput").value = getReminderInterval();
 
   showAct();
   await registerDevice();
