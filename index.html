@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v193 – Zen</title>
+<title>Flow Focus v194 – Zen</title>
 
 <style>
   body {
@@ -107,9 +107,11 @@
   <!-- Energi -->
   <div id="step-energy" class="hidden">
     <p>Hvordan føles din energi?</p>
-    <button data-v="større">Større</button>
-    <button data-v="samme">Samme</button>
+
+    <!-- v194: rækkefølge optimeret til validitet/reliabilitet -->
     <button data-v="mindre">Mindre</button>
+    <button data-v="samme">Samme</button>
+    <button data-v="større">Større</button>
     <button data-v="ved_ikke">Ved ikke</button>
   </div>
 
@@ -238,10 +240,19 @@ feedBtn.onclick = async () => {
   feedModal.classList.remove("hidden");
   feed.textContent = "Indlæser…";
 
-  const r = await fetch("https://flowfocus-aa-2704.jakobhelkjaer.workers.dev/api/team_feed?team_id=demo&limit=20");
-  const rows = await r.json();
-
-  feed.innerHTML = rows.map(r => `${r.display_name}: ${r.activity}`).join("<br>");
+  try {
+    const r = await fetch("https://flowfocus-aa-2704.jakobhelkjaer.workers.dev/api/team_feed?team_id=demo&limit=20");
+    const rows = await r.json();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      feed.textContent = "Ingen pauser endnu.";
+      return;
+    }
+    feed.innerHTML = rows
+      .map(r => `${r.display_name || "Ukendt"}: ${r.activity || "Aktivitet"}`)
+      .join("<br>");
+  } catch (e) {
+    feed.textContent = "Kunne ikke hente feed.";
+  }
 };
 
 closeFeed.onclick = () => feedModal.classList.add("hidden");
