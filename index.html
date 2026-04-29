@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v189</title>
+<title>Flow Focus v190</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -96,21 +96,6 @@ if (!DEVICE) {
   localStorage.setItem("device_id", DEVICE);
 }
 
-/* ---------- API WRAPPER ---------- */
-const BASE = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
-async function api(path, opts = {}) {
-  try {
-    const res = await fetch(BASE + path, { ...opts, mode: "cors" });
-    const text = await res.text();
-    let json;
-    try { json = JSON.parse(text); } catch(e) { json = text; }
-    if (!res.ok) return { ok:false, status:res.status, body:json };
-    return { ok:true, status:res.status, body:json };
-  } catch (err) {
-    return { ok:false, status:0, body:null, error:err };
-  }
-}
-
 /* ---------- HELPERS ---------- */
 function $(id){ return document.getElementById(id) }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
@@ -123,6 +108,8 @@ let reminderInterval = localStorage.getItem("reminderInterval")
 let lastPauseTime = localStorage.getItem("lastPauseTime")
   ? new Date(localStorage.getItem("lastPauseTime"))
   : null;
+
+let reminderTimeoutId = null;
 
 /* ---------- FUNCTIONS ---------- */
 function getReminderInterval() {
@@ -157,10 +144,18 @@ function sendOSNotification(time) {
 
 function scheduleReminder() {
   if (!lastPauseTime) return;
+
+  if (reminderTimeoutId) {
+    clearTimeout(reminderTimeoutId);
+  }
+
   const d = new Date(lastPauseTime);
   d.setMinutes(d.getMinutes() + getReminderInterval());
   const ms = d.getTime() - Date.now();
-  setTimeout(() => sendOSNotification(nextPauseTime()), ms);
+
+  reminderTimeoutId = setTimeout(() => {
+    sendOSNotification(nextPauseTime());
+  }, ms);
 }
 
 /* ---------- ELEMENTS ---------- */
@@ -303,6 +298,7 @@ document.getElementById("saveReminder").addEventListener("click", () => {
     if (lastPauseTime) {
       const t = nextPauseTime();
       micro.textContent = `Energipause registreret. Du får en reminder om næste pause kl. ${t}.`;
+      scheduleReminder();
     }
 
     alert(`Påmindelsesinterval gemt: ${v} min`);
