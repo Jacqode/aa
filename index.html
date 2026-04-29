@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v187</title>
+<title>Flow Focus v188</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -69,6 +69,8 @@ hr{opacity:.25;margin:18px 0}
 <label for="reminderInput">Påmindelsesinterval (minutter):</label>
 <input id="reminderInput" type="number" min="5" max="180" value="25" style="width:80px;">
 <button id="saveReminder">Gem</button>
+
+<p id="nextPauseDisplay" style="margin-top:10px;font-weight:500;"></p>
 
 <hr>
 
@@ -142,6 +144,11 @@ function nextPauseTime() {
   const d = new Date();
   d.setMinutes(d.getMinutes() + getReminderInterval());
   return d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+}
+
+function updateNextPauseDisplay() {
+  document.getElementById("nextPauseDisplay").textContent =
+    `Næste pause kl. ${nextPauseTime()}`;
 }
 
 function sendOSNotification(time) {
@@ -239,6 +246,7 @@ async function complete(v){
   micro.classList.remove("hidden");
   micro.textContent = `Energipause registreret. Du får en reminder om næste pause kl. ${nextTime}.`;
 
+  updateNextPauseDisplay();
   scheduleReminder();
   await loadFeed();
 }
@@ -292,7 +300,8 @@ document.getElementById("saveReminder").addEventListener("click", () => {
   const v = parseInt(document.getElementById("reminderInput").value, 10);
   if (v >= 5 && v <= 180) {
     localStorage.setItem("reminderInterval", v);
-    reminderInterval = v; // ⭐ FIX: opdater aktiv værdi
+    reminderInterval = v;
+    updateNextPauseDisplay();
     alert(`Påmindelsesinterval gemt: ${v} min`);
   }
 });
@@ -300,9 +309,9 @@ document.getElementById("saveReminder").addEventListener("click", () => {
 /* ---------- INIT ---------- */
 window.addEventListener("load", async () => {
   document.getElementById("nameLabel").textContent = NAME;
-  document.getElementById("teamLabel").textContent = TEAM;
 
   document.getElementById("reminderInput").value = getReminderInterval();
+  updateNextPauseDisplay();
 
   showAct();
   await registerDevice();
