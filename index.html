@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v189</title>
+<title>Flow Focus v191</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -140,6 +140,8 @@ let lastPauseTime = localStorage.getItem("lastPauseTime")
   ? new Date(localStorage.getItem("lastPauseTime"))
   : null;
 
+let reminderTimer = null;
+
 /* ---------- FUNCTIONS ---------- */
 function getReminderInterval() {
   return reminderInterval;
@@ -172,11 +174,16 @@ function sendOSNotification(time) {
 }
 
 function scheduleReminder() {
+  if (reminderTimer) clearTimeout(reminderTimer);
   if (!lastPauseTime) return;
+
   const d = new Date(lastPauseTime);
   d.setMinutes(d.getMinutes() + getReminderInterval());
   const ms = d.getTime() - Date.now();
-  setTimeout(() => sendOSNotification(nextPauseTime()), ms);
+
+  reminderTimer = setTimeout(() => {
+    sendOSNotification(nextPauseTime());
+  }, ms);
 }
 
 /* ---------- ELEMENTS ---------- */
@@ -319,6 +326,7 @@ document.getElementById("saveReminder").addEventListener("click", () => {
     if (lastPauseTime) {
       const t = nextPauseTime();
       micro.textContent = `Energipause registreret. Du får en reminder om næste pause kl. ${t}.`;
+      scheduleReminder();
     }
 
     alert(`Påmindelsesinterval gemt: ${v} min`);
