@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v186</title>
+<title>Flow Focus v187</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -130,9 +130,12 @@ function $(id){ return document.getElementById(id) }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 
 /* ---------- REMINDER FUNKTIONER ---------- */
+let reminderInterval = localStorage.getItem("reminderInterval")
+  ? parseInt(localStorage.getItem("reminderInterval"), 10)
+  : 25;
+
 function getReminderInterval() {
-  const v = localStorage.getItem("reminderInterval");
-  return v ? parseInt(v, 10) : 25;
+  return reminderInterval;
 }
 
 function nextPauseTime() {
@@ -289,7 +292,8 @@ document.getElementById("saveReminder").addEventListener("click", () => {
   const v = parseInt(document.getElementById("reminderInput").value, 10);
   if (v >= 5 && v <= 180) {
     localStorage.setItem("reminderInterval", v);
-    alert("Påmindelsesinterval gemt.");
+    reminderInterval = v; // ⭐ FIX: opdater aktiv værdi
+    alert(`Påmindelsesinterval gemt: ${v} min`);
   }
 });
 
