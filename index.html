@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v188</title>
+<title>Flow Focus v189</title>
 
 <style>
 body{font-family:system-ui;padding:16px;max-width:720px;margin:auto}
@@ -111,44 +111,35 @@ async function api(path, opts = {}) {
   }
 }
 
-/* ---------- REGISTER DEVICE ---------- */
-async function registerDevice(){
-  const payload = {
-    device_id: DEVICE,
-    display_name: NAME,
-    team_id: TEAM,
-    org_id: ORG,
-    last_seen: new Date().toISOString()
-  };
-  await api("/api/register", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(payload)
-  });
-}
-
 /* ---------- HELPERS ---------- */
 function $(id){ return document.getElementById(id) }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 
-/* ---------- REMINDER FUNKTIONER ---------- */
+/* ---------- REMINDER STATE ---------- */
 let reminderInterval = localStorage.getItem("reminderInterval")
   ? parseInt(localStorage.getItem("reminderInterval"), 10)
   : 25;
 
+let lastPauseTime = localStorage.getItem("lastPauseTime")
+  ? new Date(localStorage.getItem("lastPauseTime"))
+  : null;
+
+/* ---------- FUNCTIONS ---------- */
 function getReminderInterval() {
   return reminderInterval;
 }
 
 function nextPauseTime() {
-  const d = new Date();
+  if (!lastPauseTime) return "";
+  const d = new Date(lastPauseTime);
   d.setMinutes(d.getMinutes() + getReminderInterval());
   return d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
 }
 
 function updateNextPauseDisplay() {
+  const t = nextPauseTime();
   document.getElementById("nextPauseDisplay").textContent =
-    `Næste pause kl. ${nextPauseTime()}`;
+    t ? `Næste pause kl. ${t}` : "";
 }
 
 function sendOSNotification(time) {
@@ -165,7 +156,8 @@ function sendOSNotification(time) {
 }
 
 function scheduleReminder() {
-  const d = new Date();
+  if (!lastPauseTime) return;
+  const d = new Date(lastPauseTime);
   d.setMinutes(d.getMinutes() + getReminderInterval());
   const ms = d.getTime() - Date.now();
   setTimeout(() => sendOSNotification(nextPauseTime()), ms);
@@ -218,7 +210,11 @@ function startTimer(){
 
 /* ---------- SEND EVENT ---------- */
 async function complete(v){
-  const now = new Date().toISOString();
+  lastPauseTime = new Date();
+  localStorage.setItem("lastPauseTime", lastPauseTime.toISOString());
+
+  const now = lastPauseTime.toISOString();
+
   const payload = {
     id: crypto.randomUUID ? crypto.randomUUID() : ("id_"+Math.random().toString(36).slice(2,10)),
     device_id: DEVICE,
@@ -301,7 +297,14 @@ document.getElementById("saveReminder").addEventListener("click", () => {
   if (v >= 5 && v <= 180) {
     localStorage.setItem("reminderInterval", v);
     reminderInterval = v;
+
     updateNextPauseDisplay();
+
+    if (lastPauseTime) {
+      const t = nextPauseTime();
+      micro.textContent = `Energipause registreret. Du får en reminder om næste pause kl. ${t}.`;
+    }
+
     alert(`Påmindelsesinterval gemt: ${v} min`);
   }
 });
