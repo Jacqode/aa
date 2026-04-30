@@ -3,29 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v199 – Zen (kort)</title>
+<title>Flow Focus v200 – One‑Page Zen</title>
+
 <style>
   body{font-family:system-ui;margin:0;padding:24px;background:#fff;color:#111}
   #topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;opacity:.7}
-  button{padding:12px 20px;font-size:1.05rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:6px 0}
-  .hidden{display:none}
+  button{padding:12px 20px;font-size:1rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:6px 0}
+  .row{margin:20px 0}
+  img{max-width:160px;display:block;margin:10px auto}
   #inlineInterval input{width:80px;padding:6px;font-size:1rem}
-  img{max-width:180px;display:block;margin:20px auto}
 </style>
 </head>
+
 <body>
-<div id="topbar"><span id="username"></span><div><button id="feedBtn">☰</button><button id="settingsBtn">⚙</button></div></div>
 
+<div id="topbar">
+  <span id="username"></span>
+  <div>
+    <button id="feedBtn">☰</button>
+    <button id="settingsBtn">⚙</button>
+  </div>
+</div>
+
+<!-- ONE PAGE LAYOUT -->
 <div id="flow">
-  <div id="step-start"><button id="startBtn">Start pause</button></div>
 
-  <div id="step-activity" class="hidden">
+  <!-- Start -->
+  <div class="row">
+    <button id="startBtn">Start pause</button>
+  </div>
+
+  <!-- Aktivitet -->
+  <div class="row">
     <img id="activityImg" alt="">
     <p id="activityName"></p>
     <p id="timerText">2:00</p>
   </div>
 
-  <div id="step-energy" class="hidden">
+  <!-- Energi -->
+  <div class="row">
     <p>Hvordan føles din energi?</p>
     <div id="energyBtns">
       <button data-v="mindre">Mindre</button>
@@ -35,120 +51,169 @@
     </div>
   </div>
 
-  <p id="nextPause" class="hidden">Næste pause kl. <span id="nextTime"></span> <span id="changeInterval" style="font-size:.85rem;color:#777;cursor:pointer">Ændr</span></p>
+  <!-- Næste pause -->
+  <div class="row">
+    <p>
+      Næste pause kl. <span id="nextTime"></span>
+      <span id="changeInterval" style="font-size:.85rem;color:#777;cursor:pointer">Ændr</span>
+    </p>
 
-  <div id="inlineInterval" class="hidden" aria-hidden="true">
-    <label for="inlineInput">Minutter mellem pauser:</label>
-    <input id="inlineInput" type="number" min="1" step="1" inputmode="numeric" pattern="[0-9]*">
+    <div id="inlineInterval" style="display:none">
+      <label>Minutter mellem pauser:</label>
+      <input id="inlineInput" type="number" min="1" step="1">
+    </div>
   </div>
+
 </div>
 
-<div id="settingsModal" class="hidden"><label>Navn:</label><input id="nameInput"><button id="closeSettings">Luk</button></div>
-<div id="feedModal" class="hidden"><div id="feed">Indlæser…</div><button id="closeFeed">Luk</button></div>
+<!-- Settings -->
+<div id="settingsModal" style="display:none">
+  <label>Navn:</label>
+  <input id="nameInput">
+  <button id="closeSettings">Luk</button>
+</div>
+
+<!-- Feed -->
+<div id="feedModal" style="display:none">
+  <div id="feed">Indlæser…</div>
+  <button id="closeFeed">Luk</button>
+</div>
 
 <script>
 /* Helpers */
 const $ = s => document.querySelector(s);
-const show = el => el && el.classList.remove('hidden');
-const hide = el => el && el.classList.add('hidden');
-const on = (el, ev, sel, fn) => el.addEventListener(ev, e => { if(!sel) return fn(e); const t = e.target.closest(sel); if(t) fn(e,t); });
+const show = el => el.style.display = "block";
+const hide = el => el.style.display = "none";
 
 /* Elements */
 const els = {
-  username: $('#username'), startBtn: $('#startBtn'), stepStart: $('#step-start'),
-  stepActivity: $('#step-activity'), stepEnergy: $('#step-energy'), timerText: $('#timerText'),
-  activityName: $('#activityName'), activityImg: $('#activityImg'),
-  nextPause: $('#nextPause'), nextTime: $('#nextTime'), changeInterval: $('#changeInterval'),
-  inlineInterval: $('#inlineInterval'), inlineInput: $('#inlineInput'),
-  settingsBtn: $('#settingsBtn'), settingsModal: $('#settingsModal'), nameInput: $('#nameInput'), closeSettings: $('#closeSettings'),
-  feedBtn: $('#feedBtn'), feedModal: $('#feedModal'), feed: $('#feed'), closeFeed: $('#closeFeed'),
-  energyContainer: $('#step-energy')
+  username: $('#username'),
+  startBtn: $('#startBtn'),
+  activityImg: $('#activityImg'),
+  activityName: $('#activityName'),
+  timerText: $('#timerText'),
+  energyBtns: $('#energyBtns'),
+  nextTime: $('#nextTime'),
+  changeInterval: $('#changeInterval'),
+  inlineInterval: $('#inlineInterval'),
+  inlineInput: $('#inlineInput'),
+  settingsBtn: $('#settingsBtn'),
+  settingsModal: $('#settingsModal'),
+  nameInput: $('#nameInput'),
+  closeSettings: $('#closeSettings'),
+  feedBtn: $('#feedBtn'),
+  feedModal: $('#feedModal'),
+  feed: $('#feed'),
+  closeFeed: $('#closeFeed')
 };
 
 /* State */
-const acts = [{t:'Lægløft',i:'images/laegloeft.png'},{t:'Squats',i:'images/squats.png'},{t:'Armcirkler',i:'images/armcirkel.png'}];
-const doneAudio = new Audio('done.mp3'); doneAudio.preload='auto'; doneAudio.volume=1;
-let state = { reminderMs: (parseInt(localStorage.getItem('reminderInterval'))||25)*60000, timerId:null, reminderTimer:null };
+const acts = [
+  {t:'Lægløft',i:'images/laegloeft.png'},
+  {t:'Squats',i:'images/squats.png'},
+  {t:'Armcirkler',i:'images/armcirkel.png'}
+];
 
-/* Storage helpers */
-const getIntervalMinutes = () => Math.max(1, Math.round(state.reminderMs/60000));
-const setIntervalMinutes = m => { state.reminderMs = m*60000; localStorage.setItem('reminderInterval', m); };
+const doneAudio = new Audio('done.mp3');
+doneAudio.preload='auto';
+doneAudio.volume=1;
 
-/* Audio: unlock on user gesture and play on done */
-const unlockAudio = () => {
-  // muted play to grant permission
-  doneAudio.muted = true;
-  doneAudio.play().then(()=>{ doneAudio.pause(); doneAudio.currentTime=0; doneAudio.muted=false; }).catch(()=>{ doneAudio.muted=false; });
+let state = {
+  reminderMs: (parseInt(localStorage.getItem('reminderInterval'))||25)*60000,
+  timerId:null,
+  reminderTimer:null
 };
-const playDone = () => { doneAudio.currentTime=0; doneAudio.play().catch(()=>{}); };
 
-/* Timer util */
-function startTimer(seconds, onTick, onDone){
-  stopTimer();
-  let s = seconds;
-  onTick(s);
-  state.timerId = setInterval(()=>{ s--; onTick(s); if(s<=0){ stopTimer(); onDone(); } },1000);
-}
-function stopTimer(){ if(state.timerId){ clearInterval(state.timerId); state.timerId=null; } }
+/* Functions */
+const pickActivity = () => {
+  const a = acts[Math.floor(Math.random()*acts.length)];
+  els.activityName.textContent = a.t;
+  els.activityImg.src = a.i;
+};
 
-/* UI helpers */
-function updateNextPause(){ const t = new Date(Date.now()+state.reminderMs); els.nextTime.textContent = t.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}); }
-function pickActivity(){ const a = acts[Math.floor(Math.random()*acts.length)]; els.activityName.textContent = a.t; els.activityImg.src = a.i; }
+const updateNextPause = () => {
+  const t = new Date(Date.now()+state.reminderMs);
+  els.nextTime.textContent = t.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'});
+};
 
-/* Flow */
-els.startBtn.addEventListener('click', () => {
-  unlockAudio();
+const startTimer = () => {
+  let s = 120;
+  els.timerText.textContent = "2:00";
+
+  state.timerId = setInterval(()=>{
+    s--;
+    els.timerText.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+    if(s<=0){
+      clearInterval(state.timerId);
+      doneAudio.currentTime=0;
+      doneAudio.play().catch(()=>{});
+    }
+  },1000);
+};
+
+const scheduleReminder = () => {
+  if(state.reminderTimer) clearTimeout(state.reminderTimer);
+  state.reminderTimer = setTimeout(()=>{}, state.reminderMs);
+};
+
+/* Start pause */
+els.startBtn.onclick = () => {
   pickActivity();
-  hide(els.stepStart); show(els.stepActivity);
-  startTimer(120,
-    s => els.timerText.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`,
-    () => { playDone(); hide(els.stepActivity); show(els.stepEnergy); }
-  );
-});
+  startTimer();
+};
 
-/* Energy buttons via delegation — no "Næste pause planlagt" message */
-on(els.energyContainer, 'click', 'button', (e, btn) => {
-  hide(els.stepEnergy);
-  updateNextPause(); show(els.nextPause);
-  scheduleReminder();
-});
-
-/* Inline interval editor */
-els.changeInterval.addEventListener('click', () => {
-  els.inlineInput.value = getIntervalMinutes();
-  show(els.inlineInterval); els.inlineInput.focus(); els.inlineInput.select();
-});
-function saveInline(){
-  const m = Math.max(1, Math.round(Number(els.inlineInput.value)||1));
-  setIntervalMinutes(m); updateNextPause(); scheduleReminder();
-  hide(els.inlineInterval);
-}
-els.inlineInput.addEventListener('blur', saveInline);
-els.inlineInput.addEventListener('keydown', e => { if(e.key==='Enter') els.inlineInput.blur(); if(e.key==='Escape') hide(els.inlineInterval); });
-
-/* Reminder scheduling */
-function scheduleReminder(){ if(state.reminderTimer) clearTimeout(state.reminderTimer); state.reminderTimer = setTimeout(()=>{ show(els.stepStart); hide(els.nextPause); }, state.reminderMs); }
-
-/* Settings & feed (minimal) */
-els.settingsBtn.addEventListener('click', ()=> show(els.settingsModal));
-els.closeSettings && els.closeSettings.addEventListener('click', ()=>{ localStorage.setItem('name', els.nameInput.value||'Bruger'); hide(els.settingsModal); els.username.textContent = els.nameInput.value||'Bruger'; });
-els.feedBtn && els.feedBtn.addEventListener('click', loadFeed);
-els.closeFeed && els.closeFeed.addEventListener('click', ()=> hide(els.feedModal));
-
-function loadFeed(){
-  show(els.feedModal); els.feed.textContent='Indlæser…';
-  fetch('https://flowfocus-aa-2704.jakobhelkjaer.workers.dev/api/team_feed?team_id=demo&limit=20')
-    .then(r=>r.json()).then(rows=>{ if(!rows||!rows.length) els.feed.textContent='Ingen pauser endnu.'; else els.feed.innerHTML = rows.map(r=>`${r.display_name||'Ukendt'}: ${r.activity||'Aktivitet'}`).join('<br>'); })
-    .catch(()=> els.feed.textContent='Kunne ikke hente feed.');
-}
-
-/* Init */
-(function init(){
-  els.username.textContent = localStorage.getItem('name') || 'Bruger';
-  els.nameInput.value = els.username.textContent;
+/* Energi */
+els.energyBtns.onclick = e => {
+  if(!e.target.dataset.v) return;
   updateNextPause();
   scheduleReminder();
-})();
+};
+
+/* Ændr interval */
+els.changeInterval.onclick = () => {
+  els.inlineInput.value = Math.round(state.reminderMs/60000);
+  show(els.inlineInterval);
+  els.inlineInput.focus();
+};
+
+els.inlineInput.onblur = () => {
+  const m = Math.max(1, Math.round(Number(els.inlineInput.value)||1));
+  state.reminderMs = m*60000;
+  localStorage.setItem('reminderInterval', m);
+  updateNextPause();
+  scheduleReminder();
+  hide(els.inlineInterval);
+};
+
+/* Settings */
+els.settingsBtn.onclick = () => show(els.settingsModal);
+els.closeSettings.onclick = () => {
+  localStorage.setItem('name', els.nameInput.value||'Bruger');
+  els.username.textContent = els.nameInput.value||'Bruger';
+  hide(els.settingsModal);
+};
+
+/* Feed */
+els.feedBtn.onclick = async () => {
+  show(els.feedModal);
+  els.feed.textContent = "Indlæser…";
+  try{
+    const r = await fetch("https://flowfocus-aa-2704.jakobhelkjaer.workers.dev/api/team_feed?team_id=demo&limit=20");
+    const rows = await r.json();
+    els.feed.innerHTML = rows.length
+      ? rows.map(r=>`${r.display_name||'Ukendt'}: ${r.activity||'Aktivitet'}`).join("<br>")
+      : "Ingen pauser endnu.";
+  }catch{
+    els.feed.textContent = "Kunne ikke hente feed.";
+  }
+};
+els.closeFeed.onclick = () => hide(els.feedModal);
+
+/* Init */
+els.username.textContent = localStorage.getItem('name') || 'Bruger';
+els.nameInput.value = els.username.textContent;
+updateNextPause();
+scheduleReminder();
 </script>
 </body>
 </html>
