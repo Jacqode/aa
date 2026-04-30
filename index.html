@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v206 – One‑Page Zen</title>
+<title>Flow Focus v207 – One‑Page Zen</title>
 
 <style>
   body{
@@ -26,7 +26,6 @@
     padding-bottom:20px;
     border-bottom:1px solid #ddd;
   }
-
   .row:last-of-type{
     border-bottom:none;
   }
@@ -47,6 +46,13 @@
     background:#fafafa;
     cursor:pointer;
     margin:6px 0;
+  }
+
+  /* Øvelsesnavn over billedet */
+  #activityName{
+    font-size:16px;
+    font-weight:600;
+    margin-bottom:8px;
   }
 
   img{
@@ -102,8 +108,8 @@
 
   <!-- Aktivitet -->
   <div class="row">
+    <p id="activityName"></p>       <!-- flyttet op -->
     <img id="activityImg" alt="">
-    <p id="activityName"></p>
     <p id="timerText">2:00</p>
   </div>
 
@@ -213,7 +219,6 @@ const updateNextPause = () => {
 /* --- FIXET TIMER (ingen loop, ingen dobbelt-lyd) --- */
 const startTimer = () => {
 
-  // Stop evt. tidligere timer
   if (state.timerId) {
     clearInterval(state.timerId);
     state.timerId = null;
@@ -229,7 +234,7 @@ const startTimer = () => {
 
     if (s <= 0) {
       clearInterval(state.timerId);
-      state.timerId = null; // vigtigt
+      state.timerId = null;
       doneAudio.currentTime = 0;
       doneAudio.play().catch(()=>{});
       return;
