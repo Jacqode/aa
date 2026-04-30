@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v208 – Optimeret</title>
+<title>Flow Focus v209 – One‑Page Zen</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:24px;background:#fff;color:#111;text-align:center}
@@ -78,8 +78,16 @@
 </div>
 
 <script>
+// --- Service worker + notifikationstilladelse ---
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+Notification.requestPermission();
+
+// --- Helpers ---
 const $ = s => document.querySelector(s);
 
+// --- Elements ---
 const els = {
   name: $('#username'),
   start: $('#startBtn'),
@@ -101,6 +109,7 @@ const els = {
   closeFeed: $('#closeFeed')
 };
 
+// --- Data ---
 const acts = [
   {t:'Lægløft',i:'images/laegloeft.png'},
   {t:'Squats',i:'images/squats.png'},
@@ -116,6 +125,7 @@ let state = {
   reminder:null
 };
 
+// --- Functions ---
 const pick = () => {
   const a = acts[Math.random()*acts.length|0];
   els.nameTxt.textContent = a.t;
@@ -127,20 +137,35 @@ const updateNext = () => {
     .toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'});
 };
 
+// --- Timer med OS-notifikation ---
 const startTimer = () => {
   if(state.timer) clearInterval(state.timer);
+
   let s = 120;
   els.timer.textContent = "2:00";
 
-  state.timer = setInterval(()=>{
+  state.timer = setInterval(() => {
     els.timer.textContent = `${s/60|0}:${String(s%60).padStart(2,'0')}`;
-    if(s-- <= 0){
+
+    if (s-- <= 0) {
       clearInterval(state.timer);
       state.timer = null;
+
+      // OS-notifikation via service worker
+      navigator.serviceWorker.ready.then(reg => {
+        if (reg.active) {
+          reg.active.postMessage({
+            type: "SHOW_NOTIFICATION",
+            url: location.href
+          });
+        }
+      });
+
+      // Lyd
       done.currentTime = 0;
       done.play().catch(()=>{});
     }
-  },1000);
+  }, 1000);
 };
 
 const remind = () => {
@@ -148,6 +173,7 @@ const remind = () => {
   state.reminder = setTimeout(()=>{}, state.interval);
 };
 
+// --- Events ---
 els.start.onclick = () => { pick(); startTimer(); };
 
 els.energy.onclick = e => {
@@ -183,7 +209,7 @@ els.feedBtn.onclick = async () => {
   els.feedModal.style.display="flex";
   els.feed.textContent = "Indlæser…";
   try{
-    const r = await fetch("https://flowfocus-aa-2704.jakobhelkjaer.workers.dev/api/team_feed?team_id=demo&limit=20");
+    const r = await fetch("https://flowfocus-aa-2704.jakobhelkjaer.workers.dev/api/team_feed?team_id=psy&limit=20");
     const rows = await r.json();
     els.feed.innerHTML = rows.length
       ? rows.map(r=>`${r.display_name||'Ukendt'}: ${r.activity||''}`).join("<br>")
@@ -194,6 +220,7 @@ els.feedBtn.onclick = async () => {
 };
 els.closeFeed.onclick = () => els.feedModal.style.display="none";
 
+// --- Init ---
 els.name.textContent = localStorage.getItem('name') || 'Bruger';
 els.nameInput.value = els.name.textContent;
 updateNext();
