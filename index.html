@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v205 – One‑Page Zen</title>
+<title>Flow Focus v206 – One‑Page Zen</title>
 
 <style>
   body{
@@ -27,7 +27,6 @@
     border-bottom:1px solid #ddd;
   }
 
-  /* ingen linje under sidste step */
   .row:last-of-type{
     border-bottom:none;
   }
@@ -211,22 +210,33 @@ const updateNextPause = () => {
   els.nextTime.textContent = t.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'});
 };
 
+/* --- FIXET TIMER (ingen loop, ingen dobbelt-lyd) --- */
 const startTimer = () => {
+
+  // Stop evt. tidligere timer
+  if (state.timerId) {
+    clearInterval(state.timerId);
+    state.timerId = null;
+  }
+
   let s = 120;
   els.timerText.textContent = "2:00";
 
-  state.timerId = setInterval(()=>{
-    els.timerText.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  state.timerId = setInterval(() => {
 
-    if(s <= 0){
+    els.timerText.textContent =
+      `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+
+    if (s <= 0) {
       clearInterval(state.timerId);
+      state.timerId = null; // vigtigt
       doneAudio.currentTime = 0;
       doneAudio.play().catch(()=>{});
       return;
     }
 
     s--;
-  },1000);
+  }, 1000);
 };
 
 const scheduleReminder = () => {
