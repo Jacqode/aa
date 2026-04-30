@@ -7,8 +7,10 @@
 
 <style>
   body{font-family:system-ui;margin:0;padding:40px;text-align:center;background:#fff;color:#111}
+  h2{margin-bottom:20px}
+  #timer{font-size:48px;margin:30px 0;font-weight:600}
+  input{padding:10px;font-size:1.1rem;width:80px;text-align:center;margin-bottom:20px}
   button{padding:14px 24px;font-size:1.1rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer}
-  #timer{font-size:48px;margin:40px 0;font-weight:600}
 </style>
 </head>
 
@@ -16,9 +18,12 @@
 
 <h2>Flow Focus – Reminder</h2>
 
-<div id="timer">2:00</div>
+<label>Interval (minutter):</label><br>
+<input id="intervalInput" type="number" min="1" value="25"><br>
 
-<button id="startBtn">Start 2‑minutters pause</button>
+<div id="timer">–</div>
+
+<button id="startBtn">Start</button>
 
 <script>
 // --- Registrer service worker ---
@@ -37,15 +42,18 @@ const ensurePermission = async () => {
 // --- Elements ---
 const timerEl = document.getElementById("timer");
 const startBtn = document.getElementById("startBtn");
+const intervalInput = document.getElementById("intervalInput");
 
 let timerId = null;
 
-// --- Start 2-minutters timer ---
+// --- Start timer ---
 const startTimer = () => {
   if (timerId) clearInterval(timerId);
 
-  let s = 120;
-  timerEl.textContent = "2:00";
+  const minutes = Math.max(1, parseInt(intervalInput.value) || 1);
+  let s = minutes * 60;
+
+  timerEl.textContent = `${minutes}:00`;
 
   timerId = setInterval(() => {
     timerEl.textContent = `${s/60|0}:${String(s%60).padStart(2,'0')}`;
