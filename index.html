@@ -3,79 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v210 – One‑Page Zen</title>
+<title>Flow Focus – Reminder Only</title>
 
 <style>
-  body{font-family:system-ui;margin:0;padding:24px;background:#fff;color:#111;text-align:center}
-  #flow{max-width:420px;margin:0 auto}
-  .row{margin:24px 0;padding-bottom:20px;border-bottom:1px solid #ddd}
-  .row:last-of-type{border-bottom:none}
-  #topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;opacity:.7}
-  button{padding:12px 20px;font-size:1rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:6px 0}
-  #activityName{font-size:16px;font-weight:600;margin-bottom:8px}
-  img{max-width:160px;display:block;margin:10px auto}
-  #inlineInterval input{width:80px;padding:6px;font-size:1rem}
-  .modal{position:fixed;inset:0;background:#0003;display:flex;justify-content:center;align-items:center}
-  .modal-content{background:#fff;padding:24px;border-radius:12px;width:90%;max-width:360px;text-align:center}
+  body{font-family:system-ui;margin:0;padding:40px;text-align:center;background:#fff;color:#111}
+  button{padding:14px 24px;font-size:1.1rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer}
+  #timer{font-size:48px;margin:40px 0;font-weight:600}
 </style>
 </head>
 
 <body>
 
-<div id="topbar">
-  <span id="username"></span>
-  <div><button id="feedBtn">☰</button><button id="settingsBtn">⚙</button></div>
-</div>
+<h2>Flow Focus – Reminder</h2>
 
-<div id="flow">
+<div id="timer">2:00</div>
 
-  <div class="row">
-    <button id="startBtn">Start pause</button>
-  </div>
-
-  <div class="row">
-    <p id="activityName"></p>
-    <img id="activityImg" alt="">
-    <p id="timerText">2:00</p>
-  </div>
-
-  <div class="row">
-    <p>Hvordan føles din energi nu?</p>
-    <div id="energyBtns">
-      <button data-v="mindre">Mindre</button>
-      <button data-v="samme">Samme</button>
-      <button data-v="større">Større</button>
-      <button data-v="ved_ikke">Ved ikke</button>
-    </div>
-  </div>
-
-  <div class="row">
-    <p>Næste pause kl. <span id="nextTime"></span>
-    <span id="changeInterval" style="font-size:.85rem;color:#777;cursor:pointer">Ændr</span></p>
-
-    <div id="inlineInterval" style="display:none">
-      <label>Minutter mellem pauser:</label>
-      <input id="inlineInput" type="number" min="1">
-    </div>
-  </div>
-
-</div>
-
-<div id="settingsModal" class="modal" style="display:none">
-  <div class="modal-content">
-    <label>Navn:</label>
-    <input id="nameInput"><br><br>
-    <button id="closeSettings">Luk</button>
-  </div>
-</div>
-
-<div id="feedModal" class="modal" style="display:none">
-  <div class="modal-content">
-    <h3>Seneste pauser</h3>
-    <div id="feed">Indlæser…</div><br>
-    <button id="closeFeed">Luk</button>
-  </div>
-</div>
+<button id="startBtn">Start 2‑minutters pause</button>
 
 <script>
 // --- Registrer service worker ---
@@ -83,7 +26,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
 
-// --- Bed om notifikationstilladelse ved bruger-klik ---
+// --- Bed om notifikationstilladelse ved brugerklik ---
 const ensurePermission = async () => {
   if (!("Notification" in window)) return;
   if (Notification.permission === "default") {
@@ -91,72 +34,25 @@ const ensurePermission = async () => {
   }
 };
 
-// --- Helpers ---
-const $ = s => document.querySelector(s);
-
 // --- Elements ---
-const els = {
-  name: $('#username'),
-  start: $('#startBtn'),
-  img: $('#activityImg'),
-  nameTxt: $('#activityName'),
-  timer: $('#timerText'),
-  energy: $('#energyBtns'),
-  next: $('#nextTime'),
-  change: $('#changeInterval'),
-  inline: $('#inlineInterval'),
-  inlineInput: $('#inlineInput'),
-  settings: $('#settingsBtn'),
-  settingsModal: $('#settingsModal'),
-  nameInput: $('#nameInput'),
-  closeSettings: $('#closeSettings'),
-  feedBtn: $('#feedBtn'),
-  feedModal: $('#feedModal'),
-  feed: $('#feed'),
-  closeFeed: $('#closeFeed')
-};
+const timerEl = document.getElementById("timer");
+const startBtn = document.getElementById("startBtn");
 
-// --- Data ---
-const acts = [
-  {t:'Lægløft',i:'images/laegloeft.png'},
-  {t:'Squats',i:'images/squats.png'},
-  {t:'Armcirkler',i:'images/armcirkel.png'}
-];
+let timerId = null;
 
-const done = new Audio('done.mp3');
-done.preload='auto';
-
-let state = {
-  interval: (localStorage.getItem('reminderInterval')||25)*60000,
-  timer:null,
-  reminder:null
-};
-
-// --- Functions ---
-const pick = () => {
-  const a = acts[Math.random()*acts.length|0];
-  els.nameTxt.textContent = a.t;
-  els.img.src = a.i;
-};
-
-const updateNext = () => {
-  els.next.textContent = new Date(Date.now()+state.interval)
-    .toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'});
-};
-
-// --- Timer med OS-notifikation ---
+// --- Start 2-minutters timer ---
 const startTimer = () => {
-  if(state.timer) clearInterval(state.timer);
+  if (timerId) clearInterval(timerId);
 
   let s = 120;
-  els.timer.textContent = "2:00";
+  timerEl.textContent = "2:00";
 
-  state.timer = setInterval(() => {
-    els.timer.textContent = `${s/60|0}:${String(s%60).padStart(2,'0')}`;
+  timerId = setInterval(() => {
+    timerEl.textContent = `${s/60|0}:${String(s%60).padStart(2,'0')}`;
 
     if (s-- <= 0) {
-      clearInterval(state.timer);
-      state.timer = null;
+      clearInterval(timerId);
+      timerId = null;
 
       // OS-notifikation direkte via SW
       navigator.serviceWorker.ready.then(reg => {
@@ -169,75 +65,16 @@ const startTimer = () => {
           });
         }
       });
-
-      // Lyd
-      done.currentTime = 0;
-      done.play().catch(()=>{});
     }
   }, 1000);
 };
 
-const remind = () => {
-  if(state.reminder) clearTimeout(state.reminder);
-  state.reminder = setTimeout(()=>{}, state.interval);
-};
-
-// --- Events ---
-els.start.onclick = async () => {
+// --- Klik på start ---
+startBtn.onclick = async () => {
   await ensurePermission();
-  pick();
   startTimer();
 };
-
-els.energy.onclick = e => {
-  if(!e.target.dataset.v) return;
-  updateNext();
-  remind();
-};
-
-els.change.onclick = () => {
-  els.inlineInput.value = state.interval/60000;
-  els.inline.style.display = "block";
-  els.inlineInput.focus();
-};
-
-els.inlineInput.onblur = () => {
-  const m = Math.max(1, els.inlineInput.value|0);
-  state.interval = m*60000;
-  localStorage.setItem('reminderInterval', m);
-  updateNext();
-  remind();
-  els.inline.style.display = "none";
-};
-
-els.settings.onclick = () => els.settingsModal.style.display="flex";
-els.closeSettings.onclick = () => {
-  const n = els.nameInput.value || "Bruger";
-  els.name.textContent = n;
-  localStorage.setItem('name', n);
-  els.settingsModal.style.display="none";
-};
-
-els.feedBtn.onclick = async () => {
-  els.feedModal.style.display="flex";
-  els.feed.textContent = "Indlæser…";
-  try{
-    const r = await fetch("https://flowfocus-aa-2704.jakobhelkjaer.workers.dev/api/team_feed?team_id=psy&limit=20");
-    const rows = await r.json();
-    els.feed.innerHTML = rows.length
-      ? rows.map(r=>`${r.display_name||'Ukendt'}: ${r.activity||''}`).join("<br>")
-      : "Ingen pauser endnu.";
-  }catch{
-    els.feed.textContent = "Kunne ikke hente feed.";
-  }
-};
-els.closeFeed.onclick = () => els.feedModal.style.display="none";
-
-// --- Init ---
-els.name.textContent = localStorage.getItem('name') || 'Bruger';
-els.nameInput.value = els.name.textContent;
-updateNext();
-remind();
 </script>
+
 </body>
 </html>
