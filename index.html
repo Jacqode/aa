@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow Focus v203 – One‑Page Zen</title>
+
+<style>
+  body{font-family:system-ui;margin:0;padding:24px;background:#fff;color:#111}
+  #topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;opacity:.7}
+  button{padding:12px 20px;font-size:1rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:6px 0}
+  .row{margin:24px 0}
+  img{max-width:160px;display:block;margin:10px auto}
+  #inlineInterval input{width:80px;padding:6px;font-size:1rem}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.25);display:flex;justify-content:center;align-items:center}
+  .modal-content{background:white;padding:24px;border-radius:12px;width:90%;max-width:360px}
+</style>
+</head>
+
+<body>
+
+<!-- Topbar -->
+<div id="topbar">
+  <span id="username"></span>
+  <div>
+    <button id="feedBtn">☰</button>
+    <button id="settingsBtn">⚙</button>
+  </div>
+</div>
+
+<!-- ONE PAGE FLOW -->
+<div id="flow">
+
+  <!-- Start -->
+  <div class="row">
+    <button id="startBtn">Start pause</button>
+  </div>
+
+  <!-- Aktivitet -->
+  <div class="row">
+    <img id="activityImg" alt="">
+    <p id="activityName"></p>
+    <p id="timerText">2:00</p>
+  </div>
+
+  <!-- Energi -->
+  <div class="row">
+    <p>Hvordan føles din energi nu?</p>
+    <div id="energyBtns">
+      <button data-v="mindre">Mindre</button>
+      <button data-v="samme">Samme</button>
+      <button data-v="større">Større</button>
+      <button data-v="ved_ikke">Ved ikke</button>
+    </div>
+  </div>
+
+  <!-- Næste pause -->
+  <div class="row">
+    <p>
+      Næste pause kl. <span id="nextTime"></span>
+      <span id="changeInterval" style="font-size:.85rem;color:#777;cursor:pointer">Ændr</span>
+    </p>
+
+    <div id="inlineInterval" style="display:none">
+      <label>Minutter mellem pauser:</label>
+      <input id="inlineInput" type="number" min="1" step="1">
+    </div>
+  </div>
+
+</div>
+
+<!-- Settings modal -->
+<div id="settingsModal" class="modal" style="display:none">
+  <div class="modal-content">
+    <label>Navn:</label>
+    <input id="nameInput">
+    <br><br>
+    <button id="closeSettings">Luk</button>
+  </div>
+</div>
+
+<!-- Feed modal -->
+<div id="feedModal" class="modal" style="display:none">
+  <div class="modal-content">
+    <h3>Seneste pauser</h3>
+    <div id="feed">Indlæser…</div>
+    <br>
+    <button id="closeFeed">Luk</button>
+  </div>
+</div>
+
+<script>
+/* Helpers */
+const $ = s => document.querySelector(s);
+const show = el => el.style.display = "block";
+const hide = el => el.style.display = "none";
+
+/* Elements */
+const els = {
+  username: $('#username'),
+  startBtn: $('#startBtn'),
+  activityImg: $('#activityImg'),
+  activityName: $('#activityName'),
+  timerText: $('#timerText'),
+  energyBtns: $('#energyBtns'),
+  nextTime: $('#nextTime'),
+  changeInterval: $('#changeInterval'),
+  inlineInterval: $('#inlineInterval'),
+  inlineInput: $('#inlineInput'),
+  settingsBtn: $('#settingsBtn'),
+  settingsModal: $('#settingsModal'),
+  nameInput: $('#nameInput'),
+  closeSettings: $('#closeSettings'),
+  feedBtn: $('#feedBtn'),
+  feedModal: $('#feedModal'),
+  feed: $('#feed'),
+  closeFeed: $('#closeFeed')
+};
+
+/* State */
+const acts = [
+  {t:'Lægløft',i:'images/laegloeft.png'},
+  {t:'Squats',i:'images/squats.png'},
+  {t:'Armcirkler',i:'images/armcirkel.png'}
+];
+
+const doneAudio = new Audio('done.mp3');
+doneAudio.preload='auto';
+doneAudio.volume=1;
+
+let state = {
+  reminderMs: (parseInt(localStorage.getItem('reminderInterval'))||25)*60000,
+  timerId:null,
+  reminderTimer:null
+};
+
+/* Functions */
+const pickActivity = () => {
+  const a = acts[Math.floor(Math.random()*acts.length)];
+  els.activityName.textContent = a.t;
+  els.activityImg.src = a.i;
+};
+
+const updateNextPause = () => {
+  const t = new Date(Date.now()+state.reminderMs);
+  els.nextTime.textContent = t.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'});
+};
+
+const startTimer = () => {
+  let s = 120;
+  els.timerText.textContent = "2:00";
+
+  state.timerId = setInterval(()=>{
+    els.timerText.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+
+    if(s <= 0){
+      clearInterval(state.timerId);
+      doneAudio.currentTime = 0;
+      doneAudio.play().catch(()=>{});
+      return;
+    }
+
+    s--;
+  },1000);
+};
+
+const scheduleReminder = () => {
+  if(state.reminderTimer) clearTimeout(state.reminderTimer);
+  state.reminderTimer = setTimeout(()=>{}, state.reminderMs);
+};
+
+/* Start pause */
+els.startBtn.onclick = () => {
+  pickActivity();
+  startTimer();
+};
+
+/* Energi */
+els.energyBtns.onclick = e => {
+  if(!e.target.dataset.v) return;
+  updateNextPause();
+  scheduleReminder();
+};
+
+/* Ændr interval */
+els.changeInterval.onclick = () => {
+  els.inlineInput.value = Math.round(state.reminderMs/60000);
+  show(els.inlineInterval);
+  els.inlineInput.focus();
+};
+
+els.inlineInput.onblur = () => {
+  const m = Math.max(1, Math.round(Number(els.inlineInput.value)||1));
+  state.reminderMs = m*60000;
+  localStorage.setItem('reminderInterval', m);
+  updateNextPause();
+  scheduleReminder();
+  hide(els.inlineInterval);
+};
+
+/* Settings */
+els.settingsBtn.onclick = () => show(els.settingsModal);
+els.closeSettings.onclick = () => {
+  localStorage.setItem('name', els.nameInput.value||'Bruger');
+  els.username.textContent = els.nameInput.value||'Bruger';
+  hide(els.settingsModal);
+};
+
+/* Feed */
+els.feedBtn.onclick = async () => {
+  show(els.feedModal);
+  els.feed.textContent = "Indlæser…";
+  try{
+    const r = await fetch("https://flowfocus-aa-2704.jakobhelkjaer.workers.dev/api/team_feed?team_id=demo&limit=20");
+    const rows = await r.json();
+    els.feed.innerHTML = rows.length
+      ? rows.map(r=>`${r.display_name||'Ukendt'}: ${r.activity||'Aktivitet'}`).join("<br>")
+      : "Ingen pauser endnu.";
+  }catch{
+    els.feed.textContent = "Kunne ikke hente feed.";
+  }
+};
+els.closeFeed.onclick = () => hide(els.feedModal);
+
+/* Init */
+els.username.textContent = localStorage.getItem('name') || 'Bruger';
+els.nameInput.value = els.username.textContent;
+updateNextPause();
+scheduleReminder();
+</script>
+</body>
+</html>
