@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v209 – One‑Page Zen</title>
+<title>Flow Focus v210 – One‑Page Zen</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:24px;background:#fff;color:#111;text-align:center}
@@ -78,11 +78,18 @@
 </div>
 
 <script>
-// --- Service worker + notifikationstilladelse ---
+// --- Registrer service worker ---
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
-Notification.requestPermission();
+
+// --- Bed om notifikationstilladelse ved bruger-klik ---
+const ensurePermission = async () => {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "default") {
+    try { await Notification.requestPermission(); } catch(e){}
+  }
+};
 
 // --- Helpers ---
 const $ = s => document.querySelector(s);
@@ -151,12 +158,14 @@ const startTimer = () => {
       clearInterval(state.timer);
       state.timer = null;
 
-      // OS-notifikation via service worker
+      // OS-notifikation direkte via SW
       navigator.serviceWorker.ready.then(reg => {
-        if (reg.active) {
-          reg.active.postMessage({
-            type: "SHOW_NOTIFICATION",
-            url: location.href
+        if (Notification.permission === "granted") {
+          reg.showNotification("Tid til en pause", {
+            body: "",
+            icon: "icon-192.png",
+            badge: "icon-192.png",
+            data: { url: location.href }
           });
         }
       });
@@ -174,7 +183,11 @@ const remind = () => {
 };
 
 // --- Events ---
-els.start.onclick = () => { pick(); startTimer(); };
+els.start.onclick = async () => {
+  await ensurePermission();
+  pick();
+  startTimer();
+};
 
 els.energy.onclick = e => {
   if(!e.target.dataset.v) return;
