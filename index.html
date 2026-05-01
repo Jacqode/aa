@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Alt dur - Flow Focus – v219</title>
+<title>Flow Focus – v220</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   h2{margin-bottom:10px}
@@ -17,7 +17,7 @@
 </head>
 <body>
 
-<h2>Flow Focus – v219</h2>
+<h2>Flow Focus – v220</h2>
 
 <div class="section">
   <strong>Dit navn:</strong><br>
@@ -76,14 +76,9 @@
 </div>
 
 <script>
-// Sæt denne til din faktiske Worker public URL (uden trailing slash)
-const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
-
-// Helper: fjern trailing slash og join paths korrekt
-const api = (path) => {
-  const base = WORKER_URL.replace(/\/+$/, '');
-  return path.startsWith('/') ? base + path : base + '/' + path;
-};
+// Worker URL
+const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev".replace(/\/+$/, "");
+const api = (path) => WORKER_URL + path;
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js").catch(()=>{});
@@ -148,8 +143,7 @@ fetch(api('/team'))
       opt.textContent = name;
       withSelect.appendChild(opt);
     });
-  })
-  .catch(()=>{});
+  });
 
 // Notification permission
 const ensurePermission = async () => {
@@ -224,9 +218,7 @@ function scheduleNextNotification() {
     navigator.serviceWorker.ready.then(reg => {
       if (Notification.permission === "granted") {
         reg.showNotification("Tid til en pause", {
-          body: "",
-          icon: "icon-192.png",
-          badge: "icon-192.png",
+          body: "⏱️ Klar til næste øvelse",
           data: { url: location.href }
         });
       }
@@ -239,7 +231,7 @@ function postToFeed(name, exercise, energy, partner) {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({ name, exercise, energy, with: partner })
-  }).then(() => setTimeout(loadFeed, 300)).catch(()=>{});
+  }).then(() => setTimeout(loadFeed, 300));
 }
 
 function loadFeed() {
@@ -255,8 +247,7 @@ function loadFeed() {
         div.textContent = txt;
         feedEl.appendChild(div);
       });
-    })
-    .catch(()=>{});
+    });
 }
 
 loadFeed();
