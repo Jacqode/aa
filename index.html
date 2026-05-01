@@ -3,85 +3,249 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus – Reminder Only</title>
+<title>Flow Focus – v212</title>
 
 <style>
-  body{font-family:system-ui;margin:0;padding:40px;text-align:center;background:#fff;color:#111}
-  h2{margin-bottom:20px}
-  #timer{font-size:48px;margin:30px 0;font-weight:600}
-  input{padding:10px;font-size:1.1rem;width:80px;text-align:center;margin-bottom:20px}
-  button{padding:14px 24px;font-size:1.1rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer}
+  body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
+  h2{margin-bottom:10px}
+  .section{margin:20px 0}
+  button{padding:12px 20px;font-size:1rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:5px}
+  .active{background:#111;color:#fff}
+  #timer{font-size:48px;margin:20px 0;font-weight:600}
+  #feed div{padding:6px 0;border-bottom:1px solid #eee}
 </style>
 </head>
 
 <body>
 
-<h2>Flow Focus – Reminder</h2>
+<h2>Flow Focus – v212</h2>
 
-<label>Interval (minutter):</label><br>
-<input id="intervalInput" type="number" min="1" value="25"><br>
+<!-- ØVELSE -->
+<div class="section">
+  <strong>Øvelse:</strong><br>
+  <button class="exerciseBtn" data-ex="random">Tilfældig</button>
+  <button class="exerciseBtn" data-ex="Armstræk">Armstræk</button>
+  <button class="exerciseBtn" data-ex="Squats">Squats</button>
+  <button class="exerciseBtn" data-ex="Stræk">Stræk</button>
+</div>
 
+<!-- TID -->
+<div class="section">
+  <strong>Varighed:</strong><br>
+  <button class="timeBtn" data-time="30">30 sek</button>
+  <button class="timeBtn" data-time="60">1 min</button>
+  <button class="timeBtn" data-time="120">2 min</button>
+</div>
+
+<!-- SAMMEN MED -->
+<div class="section">
+  <strong>Sammen med:</strong><br>
+  <select id="withSelect">
+    <option value="">Alene</option>
+  </select>
+</div>
+
+<!-- START -->
+<div class="section">
+  <button id="startBtn">Start</button>
+</div>
+
+<!-- TIMER -->
 <div id="timer">–</div>
 
-<button id="startBtn">Start</button>
+<!-- ENERGI -->
+<div id="energySection" style="display:none">
+  <strong>Hvordan er din energi nu?</strong><br><br>
+  <button class="energyBtn" data-energy="mindre">Mindre</button>
+  <button class="energyBtn" data-energy="samme">Samme</button>
+  <button class="energyBtn" data-energy="større">Større</button>
+  <button class="energyBtn" data-energy="ved ikke">Ved ikke</button>
+</div>
+
+<div id="thanks" style="display:none;margin-top:20px;font-weight:600"></div>
+
+<!-- FEED -->
+<div class="section">
+  <h3>Team feed</h3>
+  <div id="feed"></div>
+</div>
 
 <script>
-// --- Registrer service worker ---
+// --- Service worker ---
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
 
-// --- Bed om notifikationstilladelse ved brugerklik ---
+// --- Elements ---
+const exerciseBtns = document.querySelectorAll(".exerciseBtn");
+const timeBtns = document.querySelectorAll(".timeBtn");
+const withSelect = document.getElementById("withSelect");
+const startBtn = document.getElementById("startBtn");
+const timerEl = document.getElementById("timer");
+const energySection = document.getElementById("energySection");
+const thanks = document.getElementById("thanks");
+const feedEl = document.getElementById("feed");
+
+let chosenExercise = localStorage.getItem("exercise") || "random";
+let chosenTime = localStorage.getItem("time") || 60;
+let timerId = null;
+
+// --- UI restore ---
+exerciseBtns.forEach(btn => {
+  if (btn.dataset.ex === chosenExercise) btn.classList.add("active");
+});
+timeBtns.forEach(btn => {
+  if (btn.dataset.time === chosenTime) btn.classList.add("active");
+});
+
+// --- Select exercise ---
+exerciseBtns.forEach(btn => {
+  btn.onclick = () => {
+    exerciseBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    chosenExercise = btn.dataset.ex;
+    localStorage.setItem("exercise", chosenExercise);
+  };
+});
+
+// --- Select time ---
+timeBtns.forEach(btn => {
+  btn.onclick = () => {
+    timeBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    chosenTime = btn.dataset.time;
+    localStorage.setItem("time", chosenTime);
+  };
+});
+
+// --- Load team list ---
+fetch("https://your-cloudflare-worker/team")
+  .then(r => r.json())
+  .then(list => {
+    list.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      withSelect.appendChild(opt);
+    });
+  });
+
+// --- Permission ---
 const ensurePermission = async () => {
-  if (!("Notification" in window)) return;
   if (Notification.permission === "default") {
-    try { await Notification.requestPermission(); } catch(e){}
+    await Notification.requestPermission();
   }
 };
 
-// --- Elements ---
-const timerEl = document.getElementById("timer");
-const startBtn = document.getElementById("startBtn");
-const intervalInput = document.getElementById("intervalInput");
-
-let timerId = null;
-
 // --- Start timer ---
-const startTimer = () => {
-  if (timerId) clearInterval(timerId);
-
-  const minutes = Math.max(1, parseInt(intervalInput.value) || 1);
-  let s = minutes * 60;
-
-  timerEl.textContent = `${minutes}:00`;
-
-  timerId = setInterval(() => {
-    timerEl.textContent = `${s/60|0}:${String(s%60).padStart(2,'0')}`;
-
-    if (s-- <= 0) {
-      clearInterval(timerId);
-      timerId = null;
-
-      // OS-notifikation direkte via SW
-      navigator.serviceWorker.ready.then(reg => {
-        if (Notification.permission === "granted") {
-          reg.showNotification("Tid til en pause", {
-            body: "",
-            icon: "icon-192.png",
-            badge: "icon-192.png",
-            data: { url: location.href }
-          });
-        }
-      });
-    }
-  }, 1000);
-};
-
-// --- Klik på start ---
 startBtn.onclick = async () => {
   await ensurePermission();
   startTimer();
 };
+
+function startTimer() {
+  energySection.style.display = "none";
+  thanks.style.display = "none";
+
+  let s = Number(chosenTime);
+  timerEl.textContent = format(s);
+
+  if (timerId) clearInterval(timerId);
+
+  timerId = setInterval(() => {
+    timerEl.textContent = format(s);
+    if (s-- <= 0) {
+      clearInterval(timerId);
+      timerId = null;
+      showNotification();
+      showEnergyQuestion();
+    }
+  }, 1000);
+}
+
+function format(sec) {
+  return `${sec/60|0}:${String(sec%60).padStart(2,'0')}`;
+}
+
+// --- Notification ---
+function showNotification() {
+  navigator.serviceWorker.ready.then(reg => {
+    if (Notification.permission === "granted") {
+      reg.showNotification("Tid til en pause", {
+        body: "",
+        icon: "icon-192.png",
+        badge: "icon-192.png",
+        data: { url: location.href }
+      });
+    }
+  });
+}
+
+// --- Energi ---
+function showEnergyQuestion() {
+  energySection.style.display = "block";
+}
+
+document.querySelectorAll(".energyBtn").forEach(btn => {
+  btn.onclick = () => {
+    const energy = btn.dataset.energy;
+    const exercise = chosenExercise === "random" ? randomExercise() : chosenExercise;
+    const partner = withSelect.value;
+
+    postToFeed(exercise, energy, partner);
+
+    const next = nextPauseTime();
+    thanks.textContent = `Tak for dit svar. Næste pause er kl. ${next}`;
+    thanks.style.display = "block";
+    energySection.style.display = "none";
+  };
+});
+
+// --- Random exercise ---
+function randomExercise() {
+  const list = ["Armstræk","Squats","Stræk"];
+  return list[Math.floor(Math.random()*list.length)];
+}
+
+// --- Next pause time ---
+function nextPauseTime() {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() + 25);
+  return now.toTimeString().slice(0,5);
+}
+
+// --- Feed post ---
+function postToFeed(exercise, energy, partner) {
+  fetch("https://your-cloudflare-worker/feed", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      name:"Jakob",
+      exercise,
+      energy,
+      with: partner || null
+    })
+  }).then(loadFeed);
+}
+
+// --- Load feed ---
+function loadFeed() {
+  fetch("https://your-cloudflare-worker/feed")
+    .then(r => r.json())
+    .then(items => {
+      feedEl.innerHTML = "";
+      items.forEach(i => {
+        const div = document.createElement("div");
+        div.textContent =
+          i.with ?
+          `${i.name} og ${i.with} lavede ${i.exercise} – energi: ${i.energy}` :
+          `${i.name} lavede ${i.exercise} – energi: ${i.energy}`;
+        feedEl.appendChild(div);
+      });
+    });
+}
+
+loadFeed();
 </script>
 
 </body>
