@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus – v213</title>
+<title>Flow Focus – v214</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -19,7 +19,7 @@
 
 <body>
 
-<h2>Flow Focus – v213</h2>
+<h2>Flow Focus – v214</h2>
 
 <!-- NAVN -->
 <div class="section">
@@ -55,6 +55,7 @@
 <!-- REMINDER INTERVAL -->
 <div class="section">
   <strong>Næste pause om:</strong><br>
+  <button class="reminderBtn" data-min="0.5">30 sek (test)</button>
   <button class="reminderBtn" data-min="15">15 min</button>
   <button class="reminderBtn" data-min="25">25 min</button>
   <button class="reminderBtn" data-min="40">40 min</button>
@@ -86,14 +87,13 @@
 </div>
 
 <script>
+// TODO: Sæt denne til din faktiske workers.dev URL
 const WORKER_URL = "https://flowfocus-aa-2704.<din-subdomain>.workers.dev";
 
-// Service worker
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
 
-// Elements
 const nameInput = document.getElementById("nameInput");
 const exerciseBtns = document.querySelectorAll(".exerciseBtn");
 const timeBtns = document.querySelectorAll(".timeBtn");
@@ -110,11 +110,11 @@ let chosenTime = Number(localStorage.getItem("time") || 60);
 let reminderMinutes = Number(localStorage.getItem("reminder") || 25);
 let timerId = null;
 
-// Restore name
+// Navn
 nameInput.value = localStorage.getItem("name") || "";
 nameInput.oninput = () => localStorage.setItem("name", nameInput.value);
 
-// Restore exercise
+// Øvelse
 exerciseBtns.forEach(btn => {
   if (btn.dataset.ex === chosenExercise) btn.classList.add("active");
   btn.onclick = () => {
@@ -125,7 +125,7 @@ exerciseBtns.forEach(btn => {
   };
 });
 
-// Restore time
+// Tid
 timeBtns.forEach(btn => {
   if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
   btn.onclick = () => {
@@ -136,7 +136,7 @@ timeBtns.forEach(btn => {
   };
 });
 
-// Restore reminder
+// Reminder (nu med 30 sek)
 reminderBtns.forEach(btn => {
   if (Number(btn.dataset.min) === reminderMinutes) btn.classList.add("active");
   btn.onclick = () => {
@@ -147,9 +147,9 @@ reminderBtns.forEach(btn => {
   };
 });
 
-// Load team list
+// Team‑liste
 fetch(WORKER_URL + "/team")
-  .then(r => r.json())
+  .then(r => r.ok ? r.json() : [])
   .then(list => {
     list.forEach(name => {
       const opt = document.createElement("option");
@@ -157,14 +157,12 @@ fetch(WORKER_URL + "/team")
       opt.textContent = name;
       withSelect.appendChild(opt);
     });
-  })
-  .catch(() => {});
+  });
 
-// Permission
+// Notifikationstilladelse
 const ensurePermission = async () => {
-  if (!("Notification" in window)) return;
   if (Notification.permission === "default") {
-    try { await Notification.requestPermission(); } catch(e){}
+    await Notification.requestPermission();
   }
 };
 
@@ -198,7 +196,6 @@ function formatTime(sec) {
   return `${sec/60|0}:${String(sec%60).padStart(2,'0')}`;
 }
 
-// Energi
 function showEnergyQuestion() {
   energySection.style.display = "block";
 }
@@ -221,20 +218,17 @@ document.querySelectorAll(".energyBtn").forEach(btn => {
   };
 });
 
-// Random øvelse
 function randomExercise() {
   const list = ["Armstræk","Squats","Stræk"];
   return list[Math.floor(Math.random()*list.length)];
 }
 
-// Næste pause kl.
 function nextPauseTime() {
   const now = new Date();
-  now.setMinutes(now.getMinutes() + reminderMinutes);
+  now.setSeconds(now.getSeconds() + reminderMinutes * 60);
   return now.toTimeString().slice(0,5);
 }
 
-// Planlæg OS‑notifikation til næste pause
 function scheduleNextNotification() {
   const ms = reminderMinutes * 60 * 1000;
   setTimeout(() => {
@@ -251,24 +245,17 @@ function scheduleNextNotification() {
   }, ms);
 }
 
-// Feed POST
 function postToFeed(name, exercise, energy, partner) {
   fetch(WORKER_URL + "/feed", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      name,
-      exercise,
-      energy,
-      with: partner
-    })
-  }).then(loadFeed).catch(() => {});
+    body: JSON.stringify({ name, exercise, energy, with: partner })
+  }).then(loadFeed);
 }
 
-// Feed GET
 function loadFeed() {
   fetch(WORKER_URL + "/feed")
-    .then(r => r.json())
+    .then(r => r.ok ? r.json() : [])
     .then(items => {
       feedEl.innerHTML = "";
       items.forEach(i => {
@@ -279,8 +266,7 @@ function loadFeed() {
         div.textContent = txt;
         feedEl.appendChild(div);
       });
-    })
-    .catch(() => {});
+    });
 }
 
 loadFeed();
@@ -288,4 +274,3 @@ loadFeed();
 
 </body>
 </html>
-
