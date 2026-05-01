@@ -9,10 +9,11 @@
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   h2{margin-bottom:10px}
   .section{margin:20px 0}
-  button{padding:12px 20px;font-size:1rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:5px}
+  button{padding:10px 16px;font-size:0.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
   .active{background:#111;color:#fff}
-  #timer{font-size:48px;margin:20px 0;font-weight:600}
+  #timer{font-size:40px;margin:20px 0;font-weight:600}
   #feed div{padding:6px 0;border-bottom:1px solid #eee}
+  input,select{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
 </style>
 </head>
 
@@ -20,7 +21,11 @@
 
 <h2>Flow Focus – v212</h2>
 
-<!-- ØVELSE -->
+<div class="section">
+  <strong>Dit navn:</strong><br>
+  <input id="nameInput" type="text" placeholder="Skriv dit navn">
+</div>
+
 <div class="section">
   <strong>Øvelse:</strong><br>
   <button class="exerciseBtn" data-ex="random">Tilfældig</button>
@@ -29,15 +34,13 @@
   <button class="exerciseBtn" data-ex="Stræk">Stræk</button>
 </div>
 
-<!-- TID -->
 <div class="section">
-  <strong>Varighed:</strong><br>
+  <strong>Varighed (øvelse):</strong><br>
   <button class="timeBtn" data-time="30">30 sek</button>
   <button class="timeBtn" data-time="60">1 min</button>
   <button class="timeBtn" data-time="120">2 min</button>
 </div>
 
-<!-- SAMMEN MED -->
 <div class="section">
   <strong>Sammen med:</strong><br>
   <select id="withSelect">
@@ -45,15 +48,19 @@
   </select>
 </div>
 
-<!-- START -->
 <div class="section">
-  <button id="startBtn">Start</button>
+  <strong>Næste pause om:</strong><br>
+  <button class="reminderBtn" data-min="15">15 min</button>
+  <button class="reminderBtn" data-min="25">25 min</button>
+  <button class="reminderBtn" data-min="40">40 min</button>
 </div>
 
-<!-- TIMER -->
+<div class="section">
+  <button id="startBtn">Start øvelse</button>
+</div>
+
 <div id="timer">–</div>
 
-<!-- ENERGI -->
 <div id="energySection" style="display:none">
   <strong>Hvordan er din energi nu?</strong><br><br>
   <button class="energyBtn" data-energy="mindre">Mindre</button>
@@ -64,21 +71,24 @@
 
 <div id="thanks" style="display:none;margin-top:20px;font-weight:600"></div>
 
-<!-- FEED -->
 <div class="section">
   <h3>Team feed</h3>
   <div id="feed"></div>
 </div>
 
 <script>
-// --- Service worker ---
+const WORKER_URL = "https://YOUR_WORKER_URL"; // <-- RET HER
+
+// Service worker
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
 
-// --- Elements ---
+// Elements
+const nameInput = document.getElementById("nameInput");
 const exerciseBtns = document.querySelectorAll(".exerciseBtn");
 const timeBtns = document.querySelectorAll(".timeBtn");
+const reminderBtns = document.querySelectorAll(".reminderBtn");
 const withSelect = document.getElementById("withSelect");
 const startBtn = document.getElementById("startBtn");
 const timerEl = document.getElementById("timer");
@@ -87,19 +97,17 @@ const thanks = document.getElementById("thanks");
 const feedEl = document.getElementById("feed");
 
 let chosenExercise = localStorage.getItem("exercise") || "random";
-let chosenTime = localStorage.getItem("time") || 60;
+let chosenTime = Number(localStorage.getItem("time") || 60);
+let reminderMinutes = Number(localStorage.getItem("reminder") || 25);
 let timerId = null;
 
-// --- UI restore ---
+// Restore name
+nameInput.value = localStorage.getItem("name") || "";
+nameInput.oninput = () => localStorage.setItem("name", nameInput.value);
+
+// Restore exercise
 exerciseBtns.forEach(btn => {
   if (btn.dataset.ex === chosenExercise) btn.classList.add("active");
-});
-timeBtns.forEach(btn => {
-  if (btn.dataset.time === chosenTime) btn.classList.add("active");
-});
-
-// --- Select exercise ---
-exerciseBtns.forEach(btn => {
   btn.onclick = () => {
     exerciseBtns.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
@@ -108,18 +116,30 @@ exerciseBtns.forEach(btn => {
   };
 });
 
-// --- Select time ---
+// Restore time
 timeBtns.forEach(btn => {
+  if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
   btn.onclick = () => {
     timeBtns.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    chosenTime = btn.dataset.time;
+    chosenTime = Number(btn.dataset.time);
     localStorage.setItem("time", chosenTime);
   };
 });
 
-// --- Load team list ---
-fetch("https://your-cloudflare-worker/team")
+// Restore reminder
+reminderBtns.forEach(btn => {
+  if (Number(btn.dataset.min) === reminderMinutes) btn.classList.add("active");
+  btn.onclick = () => {
+    reminderBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    reminderMinutes = Number(btn.dataset.min);
+    localStorage.setItem("reminder", reminderMinutes);
+  };
+});
+
+// Load team list
+fetch(WORKER_URL + "/team")
   .then(r => r.json())
   .then(list => {
     list.forEach(name => {
@@ -128,60 +148,48 @@ fetch("https://your-cloudflare-worker/team")
       opt.textContent = name;
       withSelect.appendChild(opt);
     });
-  });
+  })
+  .catch(() => {});
 
-// --- Permission ---
+// Permission
 const ensurePermission = async () => {
+  if (!("Notification" in window)) return;
   if (Notification.permission === "default") {
-    await Notification.requestPermission();
+    try { await Notification.requestPermission(); } catch(e){}
   }
 };
 
-// --- Start timer ---
+// Start øvelse
 startBtn.onclick = async () => {
   await ensurePermission();
-  startTimer();
+  startExerciseTimer();
 };
 
-function startTimer() {
+function startExerciseTimer() {
   energySection.style.display = "none";
   thanks.style.display = "none";
 
-  let s = Number(chosenTime);
-  timerEl.textContent = format(s);
+  let s = chosenTime;
+  timerEl.textContent = formatTime(s);
 
   if (timerId) clearInterval(timerId);
 
   timerId = setInterval(() => {
-    timerEl.textContent = format(s);
+    timerEl.textContent = formatTime(s);
     if (s-- <= 0) {
       clearInterval(timerId);
       timerId = null;
-      showNotification();
+      timerEl.textContent = "Færdig";
       showEnergyQuestion();
     }
   }, 1000);
 }
 
-function format(sec) {
+function formatTime(sec) {
   return `${sec/60|0}:${String(sec%60).padStart(2,'0')}`;
 }
 
-// --- Notification ---
-function showNotification() {
-  navigator.serviceWorker.ready.then(reg => {
-    if (Notification.permission === "granted") {
-      reg.showNotification("Tid til en pause", {
-        body: "",
-        icon: "icon-192.png",
-        badge: "icon-192.png",
-        data: { url: location.href }
-      });
-    }
-  });
-}
-
-// --- Energi ---
+// Energi
 function showEnergyQuestion() {
   energySection.style.display = "block";
 }
@@ -190,59 +198,80 @@ document.querySelectorAll(".energyBtn").forEach(btn => {
   btn.onclick = () => {
     const energy = btn.dataset.energy;
     const exercise = chosenExercise === "random" ? randomExercise() : chosenExercise;
-    const partner = withSelect.value;
+    const partner = withSelect.value || null;
+    const name = nameInput.value || "Ukendt";
 
-    postToFeed(exercise, energy, partner);
+    postToFeed(name, exercise, energy, partner);
 
     const next = nextPauseTime();
     thanks.textContent = `Tak for dit svar. Næste pause er kl. ${next}`;
     thanks.style.display = "block";
     energySection.style.display = "none";
+
+    scheduleNextNotification();
   };
 });
 
-// --- Random exercise ---
+// Random øvelse
 function randomExercise() {
   const list = ["Armstræk","Squats","Stræk"];
   return list[Math.floor(Math.random()*list.length)];
 }
 
-// --- Next pause time ---
+// Næste pause kl.
 function nextPauseTime() {
   const now = new Date();
-  now.setMinutes(now.getMinutes() + 25);
+  now.setMinutes(now.getMinutes() + reminderMinutes);
   return now.toTimeString().slice(0,5);
 }
 
-// --- Feed post ---
-function postToFeed(exercise, energy, partner) {
-  fetch("https://your-cloudflare-worker/feed", {
+// Planlæg OS‑notifikation til næste pause
+function scheduleNextNotification() {
+  const ms = reminderMinutes * 60 * 1000;
+  setTimeout(() => {
+    navigator.serviceWorker.ready.then(reg => {
+      if (Notification.permission === "granted") {
+        reg.showNotification("Tid til en pause", {
+          body: "",
+          icon: "icon-192.png",
+          badge: "icon-192.png",
+          data: { url: location.href }
+        });
+      }
+    });
+  }, ms);
+}
+
+// Feed POST
+function postToFeed(name, exercise, energy, partner) {
+  fetch(WORKER_URL + "/feed", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({
-      name:"Jakob",
+      name,
       exercise,
       energy,
-      with: partner || null
+      with: partner
     })
-  }).then(loadFeed);
+  }).then(loadFeed).catch(() => {});
 }
 
-// --- Load feed ---
+// Feed GET
 function loadFeed() {
-  fetch("https://your-cloudflare-worker/feed")
+  fetch(WORKER_URL + "/feed")
     .then(r => r.json())
     .then(items => {
       feedEl.innerHTML = "";
       items.forEach(i => {
         const div = document.createElement("div");
-        div.textContent =
-          i.with ?
-          `${i.name} og ${i.with} lavede ${i.exercise} – energi: ${i.energy}` :
-          `${i.name} lavede ${i.exercise} – energi: ${i.energy}`;
+        const txt = i.with
+          ? `${i.name} og ${i.with} lavede ${i.exercise} – energi: ${i.energy}`
+          : `${i.name} lavede ${i.exercise} – energi: ${i.energy}`;
+        div.textContent = txt;
         feedEl.appendChild(div);
       });
-    });
+    })
+    .catch(() => {});
 }
 
 loadFeed();
