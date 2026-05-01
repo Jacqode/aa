@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus – v217</title>
+<title>Flow Focus – v218</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -19,7 +19,7 @@
 
 <body>
 
-<h2>Flow Focus</h2>
+<h2>Flow Focus – v218</h2>
 
 <!-- NAVN -->
 <div class="section">
@@ -87,7 +87,7 @@
 </div>
 
 <script>
-// TODO: Sæt denne til din faktiske workers.dev URL
+// KORREKT URL — UDEN SLASH
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 
 if ("serviceWorker" in navigator) {
@@ -136,7 +136,7 @@ timeBtns.forEach(btn => {
   };
 });
 
-// Reminder (nu med 30 sek)
+// Reminder
 reminderBtns.forEach(btn => {
   if (Number(btn.dataset.min) === reminderMinutes) btn.classList.add("active");
   btn.onclick = () => {
