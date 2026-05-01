@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus – v218</title>
-
+<title>Flow Focus – v219</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   h2{margin-bottom:10px}
@@ -16,18 +15,15 @@
   input,select{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
 </style>
 </head>
-
 <body>
 
-<h2>Flow Focus – v218</h2>
+<h2>Flow Focus – v219</h2>
 
-<!-- NAVN -->
 <div class="section">
   <strong>Dit navn:</strong><br>
   <input id="nameInput" type="text" placeholder="Skriv dit navn">
 </div>
 
-<!-- ØVELSE -->
 <div class="section">
   <strong>Øvelse:</strong><br>
   <button class="exerciseBtn" data-ex="random">Tilfældig</button>
@@ -36,7 +32,6 @@
   <button class="exerciseBtn" data-ex="Stræk">Stræk</button>
 </div>
 
-<!-- TID -->
 <div class="section">
   <strong>Varighed (øvelse):</strong><br>
   <button class="timeBtn" data-time="30">30 sek</button>
@@ -44,7 +39,6 @@
   <button class="timeBtn" data-time="120">2 min</button>
 </div>
 
-<!-- SAMMEN MED -->
 <div class="section">
   <strong>Sammen med:</strong><br>
   <select id="withSelect">
@@ -52,7 +46,6 @@
   </select>
 </div>
 
-<!-- REMINDER INTERVAL -->
 <div class="section">
   <strong>Næste pause om:</strong><br>
   <button class="reminderBtn" data-min="0.5">30 sek (test)</button>
@@ -61,15 +54,12 @@
   <button class="reminderBtn" data-min="40">40 min</button>
 </div>
 
-<!-- START -->
 <div class="section">
   <button id="startBtn">Start øvelse</button>
 </div>
 
-<!-- TIMER -->
 <div id="timer">–</div>
 
-<!-- ENERGI -->
 <div id="energySection" style="display:none">
   <strong>Hvordan er din energi nu?</strong><br><br>
   <button class="energyBtn" data-energy="mindre">Mindre</button>
@@ -80,18 +70,23 @@
 
 <div id="thanks" style="display:none;margin-top:20px;font-weight:600"></div>
 
-<!-- FEED -->
 <div class="section">
   <h3>Team feed</h3>
   <div id="feed"></div>
 </div>
 
 <script>
-// KORREKT URL — UDEN SLASH
+// Sæt denne til din faktiske Worker public URL (uden trailing slash)
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 
+// Helper: fjern trailing slash og join paths korrekt
+const api = (path) => {
+  const base = WORKER_URL.replace(/\/+$/, '');
+  return path.startsWith('/') ? base + path : base + '/' + path;
+};
+
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
+  navigator.serviceWorker.register("service-worker.js").catch(()=>{});
 }
 
 const nameInput = document.getElementById("nameInput");
@@ -110,11 +105,9 @@ let chosenTime = Number(localStorage.getItem("time") || 60);
 let reminderMinutes = Number(localStorage.getItem("reminder") || 25);
 let timerId = null;
 
-// Navn
 nameInput.value = localStorage.getItem("name") || "";
 nameInput.oninput = () => localStorage.setItem("name", nameInput.value);
 
-// Øvelse
 exerciseBtns.forEach(btn => {
   if (btn.dataset.ex === chosenExercise) btn.classList.add("active");
   btn.onclick = () => {
@@ -125,7 +118,6 @@ exerciseBtns.forEach(btn => {
   };
 });
 
-// Tid
 timeBtns.forEach(btn => {
   if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
   btn.onclick = () => {
@@ -136,7 +128,6 @@ timeBtns.forEach(btn => {
   };
 });
 
-// Reminder
 reminderBtns.forEach(btn => {
   if (Number(btn.dataset.min) === reminderMinutes) btn.classList.add("active");
   btn.onclick = () => {
@@ -147,8 +138,8 @@ reminderBtns.forEach(btn => {
   };
 });
 
-// Team‑liste
-fetch(WORKER_URL + "/team")
+// Load team list
+fetch(api('/team'))
   .then(r => r.ok ? r.json() : [])
   .then(list => {
     list.forEach(name => {
@@ -157,16 +148,17 @@ fetch(WORKER_URL + "/team")
       opt.textContent = name;
       withSelect.appendChild(opt);
     });
-  });
+  })
+  .catch(()=>{});
 
-// Notifikationstilladelse
+// Notification permission
 const ensurePermission = async () => {
+  if (!("Notification" in window)) return;
   if (Notification.permission === "default") {
-    await Notification.requestPermission();
+    try { await Notification.requestPermission(); } catch(e){}
   }
 };
 
-// Start øvelse
 startBtn.onclick = async () => {
   await ensurePermission();
   startExerciseTimer();
@@ -175,12 +167,9 @@ startBtn.onclick = async () => {
 function startExerciseTimer() {
   energySection.style.display = "none";
   thanks.style.display = "none";
-
   let s = chosenTime;
   timerEl.textContent = formatTime(s);
-
   if (timerId) clearInterval(timerId);
-
   timerId = setInterval(() => {
     timerEl.textContent = formatTime(s);
     if (s-- <= 0) {
@@ -225,12 +214,12 @@ function randomExercise() {
 
 function nextPauseTime() {
   const now = new Date();
-  now.setSeconds(now.getSeconds() + reminderMinutes * 60);
+  now.setSeconds(now.getSeconds() + Math.round(reminderMinutes * 60));
   return now.toTimeString().slice(0,5);
 }
 
 function scheduleNextNotification() {
-  const ms = reminderMinutes * 60 * 1000;
+  const ms = Math.round(reminderMinutes * 60 * 1000);
   setTimeout(() => {
     navigator.serviceWorker.ready.then(reg => {
       if (Notification.permission === "granted") {
@@ -246,15 +235,15 @@ function scheduleNextNotification() {
 }
 
 function postToFeed(name, exercise, energy, partner) {
-  fetch(WORKER_URL + "/feed", {
+  fetch(api('/feed'), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({ name, exercise, energy, with: partner })
-  }).then(loadFeed);
+  }).then(() => setTimeout(loadFeed, 300)).catch(()=>{});
 }
 
 function loadFeed() {
-  fetch(WORKER_URL + "/feed")
+  fetch(api('/feed'))
     .then(r => r.ok ? r.json() : [])
     .then(items => {
       feedEl.innerHTML = "";
@@ -266,7 +255,8 @@ function loadFeed() {
         div.textContent = txt;
         feedEl.appendChild(div);
       });
-    });
+    })
+    .catch(()=>{});
 }
 
 loadFeed();
