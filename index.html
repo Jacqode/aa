@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus – v212</title>
+<title>Flow Focus – v213</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -19,13 +19,15 @@
 
 <body>
 
-<h2>Flow Focus – v212</h2>
+<h2>Flow Focus – v213</h2>
 
+<!-- NAVN -->
 <div class="section">
   <strong>Dit navn:</strong><br>
   <input id="nameInput" type="text" placeholder="Skriv dit navn">
 </div>
 
+<!-- ØVELSE -->
 <div class="section">
   <strong>Øvelse:</strong><br>
   <button class="exerciseBtn" data-ex="random">Tilfældig</button>
@@ -34,6 +36,7 @@
   <button class="exerciseBtn" data-ex="Stræk">Stræk</button>
 </div>
 
+<!-- TID -->
 <div class="section">
   <strong>Varighed (øvelse):</strong><br>
   <button class="timeBtn" data-time="30">30 sek</button>
@@ -41,6 +44,7 @@
   <button class="timeBtn" data-time="120">2 min</button>
 </div>
 
+<!-- SAMMEN MED -->
 <div class="section">
   <strong>Sammen med:</strong><br>
   <select id="withSelect">
@@ -48,6 +52,7 @@
   </select>
 </div>
 
+<!-- REMINDER INTERVAL -->
 <div class="section">
   <strong>Næste pause om:</strong><br>
   <button class="reminderBtn" data-min="15">15 min</button>
@@ -55,12 +60,15 @@
   <button class="reminderBtn" data-min="40">40 min</button>
 </div>
 
+<!-- START -->
 <div class="section">
   <button id="startBtn">Start øvelse</button>
 </div>
 
+<!-- TIMER -->
 <div id="timer">–</div>
 
+<!-- ENERGI -->
 <div id="energySection" style="display:none">
   <strong>Hvordan er din energi nu?</strong><br><br>
   <button class="energyBtn" data-energy="mindre">Mindre</button>
@@ -71,13 +79,14 @@
 
 <div id="thanks" style="display:none;margin-top:20px;font-weight:600"></div>
 
+<!-- FEED -->
 <div class="section">
   <h3>Team feed</h3>
   <div id="feed"></div>
 </div>
 
 <script>
-const WORKER_URL = "https://YOUR_WORKER_URL"; // <-- RET HER
+const WORKER_URL = "https://flowfocus-aa-2704.<din-subdomain>.workers.dev";
 
 // Service worker
 if ("serviceWorker" in navigator) {
@@ -279,3 +288,4 @@ loadFeed();
 
 </body>
 </html>
+
