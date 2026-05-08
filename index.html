@@ -1,6 +1,42 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow Focus – v225</title>
+<style>
+  body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
+  h2{margin-bottom:10px}
+  .section{margin:20px 0}
+  button{padding:10px 16px;font-size:0.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
+  .active{background:#111;color:#fff}
+  #timer{font-size:40px;margin:20px 0;font-weight:600}
+  #feed div{padding:6px 0;border-bottom:1px solid #eee}
+  input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
+  summary{font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+
+<h2>Flow Focus – v225</h2>
+
+<div class="section">
+  <strong>Dit navn:</strong><br>
+  <input id="nameInput" type="text" placeholder="Skriv dit navn">
+</div>
+
+<div class="section">
+  <strong>Energipause:</strong><br>
+  <button class="exerciseBtn" data-ex="random">Vælg for mig!</button>
+  <button class="exerciseBtn" data-ex="Armstræk">Armstræk</button>
+  <button class="exerciseBtn" data-ex="Squats">Squats</button>
+  <button class="exerciseBtn" data-ex="Stræk">Stræk</button>
+</div>
+
+<!-- ⭐ NYT: Indstillinger toggle -->
 <div class="section">
   <details>
-    <summary style="cursor:pointer;font-weight:600">Indstillinger</summary>
+    <summary>Indstillinger</summary>
 
     <div style="margin-top:12px">
 
@@ -20,3 +56,198 @@
     </div>
   </details>
 </div>
+
+<div class="section">
+  <button id="startBtn">Start energipause</button>
+</div>
+
+<div id="timer">–</div>
+
+<div id="energySection" style="display:none">
+  <strong>Hvordan er din energi nu?</strong><br><br>
+  <button class="energyBtn" data-energy="mindre">Mindre</button>
+  <button class="energyBtn" data-energy="samme">Samme</button>
+  <button class="energyBtn" data-energy="større">Større</button>
+  <button class="energyBtn" data-energy="ved ikke">Ved ikke</button>
+</div>
+
+<div id="thanks" style="display:none;margin-top:20px;font-weight:600"></div>
+
+<div class="section">
+  <h3 id="teamSummary">Teamet har opladet med 0 energipauser.</h3>
+  <h4>Hver team vens seneste energipause:</h4>
+  <div id="feed"></div>
+</div>
+
+<script>
+// Worker URL
+const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev".replace(/\/+$/, "");
+const api = (path) => WORKER_URL + path;
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+}
+
+const nameInput = document.getElementById("nameInput");
+const exerciseBtns = document.querySelectorAll(".exerciseBtn");
+const timeBtns = document.querySelectorAll(".timeBtn");
+const reminderBtns = document.querySelectorAll(".reminderBtn");
+const startBtn = document.getElementById("startBtn");
+const timerEl = document.getElementById("timer");
+const energySection = document.getElementById("energySection");
+const thanks = document.getElementById("thanks");
+const feedEl = document.getElementById("feed");
+const teamSummary = document.getElementById("teamSummary");
+
+let chosenExercise = localStorage.getItem("exercise") || "random";
+let chosenTime = Number(localStorage.getItem("time") || 60);
+let reminderMinutes = Number(localStorage.getItem("reminder") || 25);
+let timerId = null;
+
+nameInput.value = localStorage.getItem("name") || "";
+nameInput.oninput = () => localStorage.setItem("name", nameInput.value);
+
+exerciseBtns.forEach(btn => {
+  if (btn.dataset.ex === chosenExercise) btn.classList.add("active");
+  btn.onclick = () => {
+    exerciseBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    chosenExercise = btn.dataset.ex;
+    localStorage.setItem("exercise", chosenExercise);
+  };
+});
+
+timeBtns.forEach(btn => {
+  if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
+  btn.onclick = () => {
+    timeBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    chosenTime = Number(btn.dataset.time);
+    localStorage.setItem("time", chosenTime);
+  };
+});
+
+reminderBtns.forEach(btn => {
+  if (Number(btn.dataset.min) === reminderMinutes) btn.classList.add("active");
+  btn.onclick = () => {
+    reminderBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    reminderMinutes = Number(btn.dataset.min);
+    localStorage.setItem("reminder", reminderMinutes);
+  };
+});
+
+// Notification permission
+const ensurePermission = async () => {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "default") {
+    try { await Notification.requestPermission(); } catch(e){}
+  }
+};
+
+startBtn.onclick = async () => {
+  await ensurePermission();
+  startExerciseTimer();
+};
+
+function startExerciseTimer() {
+  energySection.style.display = "none";
+  thanks.style.display = "none";
+  let s = chosenTime;
+  timerEl.textContent = formatTime(s);
+  if (timerId) clearInterval(timerId);
+  timerId = setInterval(() => {
+    timerEl.textContent = formatTime(s);
+    if (s-- <= 0) {
+      clearInterval(timerId);
+      timerId = null;
+      timerEl.textContent = "Færdig";
+      showEnergyQuestion();
+    }
+  }, 1000);
+}
+
+function formatTime(sec) {
+  return `${sec/60|0}:${String(sec%60).padStart(2,'0')}`;
+}
+
+function showEnergyQuestion() {
+  energySection.style.display = "block";
+}
+
+document.querySelectorAll(".energyBtn").forEach(btn => {
+  btn.onclick = () => {
+    const energy = btn.dataset.energy;
+    const exercise = chosenExercise === "random" ? randomExercise() : chosenExercise;
+    const name = nameInput.value || "Ukendt";
+
+    postToFeed(name, exercise, energy);
+
+    const next = nextPauseTime();
+    thanks.textContent = `Tak for dit svar. Næste pause er kl. ${next}`;
+    thanks.style.display = "block";
+    energySection.style.display = "none";
+
+    scheduleNextNotification();
+  };
+});
+
+function randomExercise() {
+  const list = ["Armstræk","Squats","Stræk"];
+  return list[Math.floor(Math.random()*list.length)];
+}
+
+function nextPauseTime() {
+  const now = new Date();
+  now.setSeconds(now.getSeconds() + Math.round(reminderMinutes * 60));
+  return now.toTimeString().slice(0,5);
+}
+
+function scheduleNextNotification() {
+  const ms = Math.round(reminderMinutes * 60 * 1000);
+  setTimeout(() => {
+    navigator.serviceWorker.ready.then(reg => {
+      if (Notification.permission === "granted") {
+        reg.showNotification("Tid til en pause", {
+          body: "⏱️ Klar til næste energipause",
+          data: { url: location.href }
+        });
+      }
+    });
+  }, ms);
+}
+
+function postToFeed(name, exercise, energy) {
+  fetch(api('/feed'), {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ name, exercise, energy })
+  }).then(() => setTimeout(loadFeed, 300));
+}
+
+function loadFeed() {
+  fetch(api('/feed'))
+    .then(r => r.ok ? r.json() : [])
+    .then(items => {
+
+      // Toplinje
+      teamSummary.textContent = `Teamet har opladet med ${items.length} energipauser.`;
+
+      // Kun seneste pause per ven
+      const latest = {};
+      items.forEach(i => latest[i.name] = i);
+
+      feedEl.innerHTML = "";
+      Object.values(latest).forEach(i => {
+        const div = document.createElement("div");
+        div.textContent = `• ${i.name} lavede ${i.exercise}`;
+        feedEl.appendChild(div);
+      });
+    });
+}
+
+loadFeed();
+</script>
+
+</body>
+</html>
