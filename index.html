@@ -20,13 +20,19 @@
 
 <h2>Flow Focus – v231</h2>
 
+<!-- ⭐ Velkomst + micro-commitment -->
+<div style="font-size:18px; margin-bottom:10px;">
+  Hej <span id="welcomeName">ven</span> 👋<br>
+  Vælg en lille bevægelse for at komme i gang.
+</div>
+
 <!-- ⭐ Start energipause -->
 <div class="section">
   <strong>Start energipause:</strong><br>
-  <button class="exerciseBtn" data-ex="Armstræk">Armstræk</button>
-  <button class="exerciseBtn" data-ex="Squats">Squats</button>
-  <button class="exerciseBtn" data-ex="Stræk">Stræk</button>
-  <button class="exerciseBtn" data-ex="random">Vælg for mig!</button>
+  <button class="exerciseBtn" data-ex="Armstræk">💪 Armstræk</button>
+  <button class="exerciseBtn" data-ex="Squats">🦵 Squats</button>
+  <button class="exerciseBtn" data-ex="Stræk">🤸 Stræk</button>
+  <button class="exerciseBtn" data-ex="random">🎲 Overrask mig!</button>
 </div>
 
 <!-- ⭐ Indstillinger toggle -->
@@ -89,6 +95,7 @@ if ("serviceWorker" in navigator) {
 }
 
 const nameInput = document.getElementById("nameInput");
+const welcomeName = document.getElementById("welcomeName");
 const exerciseBtns = document.querySelectorAll(".exerciseBtn");
 const timeBtns = document.querySelectorAll(".timeBtn");
 const reminderBtns = document.querySelectorAll(".reminderBtn");
@@ -104,8 +111,13 @@ let chosenTime = Number(localStorage.getItem("time") || 60);
 let reminderMinutes = Number(localStorage.getItem("reminder") || 25);
 let timerId = null;
 
+// Navn
 nameInput.value = localStorage.getItem("name") || "";
-nameInput.oninput = () => localStorage.setItem("name", nameInput.value);
+welcomeName.textContent = nameInput.value || "ven";
+nameInput.oninput = () => {
+  localStorage.setItem("name", nameInput.value);
+  welcomeName.textContent = nameInput.value || "ven";
+};
 
 // ⭐ Energipause-knapper starter øjeblikkeligt
 exerciseBtns.forEach(btn => {
@@ -115,7 +127,7 @@ exerciseBtns.forEach(btn => {
     exerciseBtns.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
 
-    // Hvis brugeren vælger "Vælg for mig!"
+    // Random valg
     if (btn.dataset.ex === "random") {
       const list = ["Armstræk","Squats","Stræk"];
       chosenExercise = list[Math.floor(Math.random()*list.length)];
@@ -125,8 +137,8 @@ exerciseBtns.forEach(btn => {
 
     localStorage.setItem("exercise", chosenExercise);
 
-    // ⭐ Vis hvilken øvelse der blev valgt
-    chosenExerciseDisplay.textContent = "Du laver: " + chosenExercise;
+    // ⭐ Micro-reward + visning
+    chosenExerciseDisplay.textContent = "Godt valg! Du laver: " + chosenExercise;
 
     await ensurePermission();
     startExerciseTimer();
