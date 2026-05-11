@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v243</title>
+<title>Flow Focus v244</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -73,11 +73,11 @@
 
     <div style="margin-top:12px">
 
-      <!-- ⭐ NY TEKST: ikke fed -->
-      <div id="teamSummary" style="margin-bottom:12px;">Teamet: 0 pauser</div>
+      <!-- ⭐ NY TEKST: ikke i fed -->
+      <div id="teamSummary" style="margin-bottom:12px;">Team: 0 energipauser.</div>
 
-      <!-- ⭐ NY TEKST: kort og tydelig -->
-      <div style="margin-bottom:8px;">Seneste pause pr. person</div>
+      <!-- ⭐ NY TEKST: sektionstitel -->
+      <div style="margin-bottom:8px; font-weight:600;">Seneste energipause pr. person:</div>
 
       <div id="feed"></div>
     </div>
@@ -286,7 +286,7 @@ function loadFeed() {
       }
 
       // ⭐ NY TEKST
-      teamSummary.textContent = `Teamet: ${items.length} pauser`;
+      teamSummary.textContent = `Team: ${items.length} energipauser.`;
 
       const latest = {};
       items.forEach(i => latest[i.name] = i);
