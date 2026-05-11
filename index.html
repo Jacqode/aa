@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus – clean v2</title>
+<title>Flow Focus v4</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -20,10 +20,9 @@
 </head>
 <body>
 
-<h2>Flow Focus – clean v2</h2>
-
 <div style="font-size:18px; margin-bottom:10px;">
-  Hej <span id="welcomeName">ven</span> 👋<br>
+  Hej <span id="welcomeName">ven</span> 👋
+  <br><br>
   Få en energipause med et klik:
 </div>
 
@@ -36,14 +35,7 @@
 
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
-
-<div id="energySection" style="display:none">
-  <div>Hvordan er din energi nu?</div><br>
-  <button class="energyBtn" data-energy="mindre">Mindre</button>
-  <button class="energyBtn" data-energy="samme">Samme</button>
-  <button class="energyBtn" data-energy="større">Større</button>
-  <button class="energyBtn" data-energy="ved ikke">Ved ikke</button>
-</div>
+<button id="finishBtn" style="display:none; margin-top:10px;">Færdig nu</button>
 
 <div id="thanks" style="display:none;margin-top:20px;"></div>
 
@@ -53,10 +45,10 @@
   <summary>Statistik</summary>
   <div style="margin-top:12px">
     <div class="stat-title">Team</div>
-    <div id="teamSummary" class="stat-sub">0 energipauser i alt</div>
+    <div id="teamSummary" class="stat-sub">0 pauser i alt</div>
     <br>
     <div class="stat-title">Personer</div>
-    <div class="stat-sub">Seneste energipause pr. person</div>
+    <div class="stat-sub">Seneste pause pr. person</div>
     <div id="feed" style="margin-top:12px;"></div>
   </div>
 </details>
@@ -85,7 +77,7 @@ const exerciseBtns = document.querySelectorAll(".exerciseBtn");
 const timeBtns = document.querySelectorAll(".timeBtn");
 const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
-const energySection = document.getElementById("energySection");
+const finishBtn = document.getElementById("finishBtn");
 const thanks = document.getElementById("thanks");
 const feedEl = document.getElementById("feed");
 const teamSummary = document.getElementById("teamSummary");
@@ -94,6 +86,7 @@ const teamSummary = document.getElementById("teamSummary");
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
 let timerId = null;
+let pauseStart = null;
 
 // NAVN
 nameInput.value = localStorage.getItem("name") || "";
@@ -134,20 +127,19 @@ exerciseBtns.forEach(btn => {
 
 // TIMER
 function startTimer() {
-  energySection.style.display = "none";
   thanks.style.display = "none";
 
   let s = chosenTime;
+  pauseStart = Date.now();
+  finishBtn.style.display = "inline-block";
+
   timerEl.textContent = format(s);
 
   if (timerId) clearInterval(timerId);
   timerId = setInterval(() => {
     timerEl.textContent = format(s);
     if (s-- <= 0) {
-      clearInterval(timerId);
-      timerId = null;
-      timerEl.textContent = "Færdig";
-      energySection.style.display = "block";
+      finishPause();
     }
   }, 1000);
 }
@@ -156,20 +148,28 @@ function format(sec) {
   return `${sec/60|0}:${String(sec%60).padStart(2,'0')}`;
 }
 
-// ENERGI
-document.querySelectorAll(".energyBtn").forEach(btn => {
-  btn.onclick = () => {
-    const payload = {
-      name: nameInput.value || "Ukendt",
-      exercise: chosenExercise,
-      energy: btn.dataset.energy
-    };
-    postToFeed(payload);
-    thanks.textContent = "Tak for dit svar 🙌";
-    thanks.style.display = "block";
-    energySection.style.display = "none";
+// FÆRDIG-KNAP
+finishBtn.onclick = finishPause;
+
+function finishPause() {
+  clearInterval(timerId);
+  timerId = null;
+  finishBtn.style.display = "none";
+  timerEl.textContent = "Færdig";
+
+  const duration = Math.round((Date.now() - pauseStart) / 1000);
+
+  const payload = {
+    name: nameInput.value || "Ukendt",
+    exercise: chosenExercise,
+    duration
   };
-});
+
+  postToFeed(payload);
+
+  thanks.textContent = "Godt gået 🙌";
+  thanks.style.display = "block";
+}
 
 // POST
 function postToFeed(data) {
@@ -189,7 +189,7 @@ function loadFeed() {
   fetch(api("/feed"), { cache:"no-store" })
     .then(r => r.json())
     .then(items => {
-      teamSummary.textContent = `${items.length} energipauser i alt`;
+      teamSummary.textContent = `${items.length} pauser i alt`;
 
       const latest = {};
       items.forEach(i => {
@@ -202,7 +202,7 @@ function loadFeed() {
         .forEach(i => {
           const t = new Date(i.ts).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
           const div = document.createElement("div");
-          div.textContent = `${t} • ${i.name} lavede ${i.exercise} (energi: ${i.energy})`;
+          div.textContent = `${t} • ${i.name} lavede ${i.exercise} (${i.duration}s)`;
           feedEl.appendChild(div);
         });
     });
