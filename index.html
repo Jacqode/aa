@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v5</title>
+<title>Flow Focus v6</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -120,7 +120,9 @@ exerciseBtns.forEach(btn => {
       chosenExercise = btn.dataset.ex;
     }
 
-    chosenExerciseDisplay.textContent = `Godt valg! Du laver ${chosenExercise}.`;
+    // v6: ingen tekst som "Godt valg! Du laver X"
+    chosenExerciseDisplay.textContent = "";
+
     startTimer();
   };
 });
@@ -156,7 +158,7 @@ async function finishPause() {
   timerId = null;
   finishBtn.style.display = "none";
 
-  // v5: ingen "Færdig" tekst
+  // v6: ingen "Færdig" tekst
   timerEl.textContent = "";
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
@@ -183,20 +185,7 @@ async function finishPause() {
   thanks.style.display = "block";
 }
 
-// POST
-function postToFeed(data) {
-  fetch(api("/feed"), {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(data),
-    cache:"no-store"
-  }).then(() => {
-    loadFeed();
-    setTimeout(loadFeed, 300);
-  });
-}
-
-// GET
+// GET FEED
 function loadFeed() {
   fetch(api("/feed"), { cache:"no-store" })
     .then(r => r.json())
