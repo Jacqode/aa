@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v252</title>
+<title>Flow Focus v254</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -82,7 +82,7 @@
     <div style="margin-top:12px">
 
       <div class="stat-title">Team</div>
-      <div id="teamSummary" class="stat-sub">0 energipauser</div>
+      <div id="teamSummary" class="stat-sub">0 energipauser i alt</div>
 
       <br>
 
@@ -176,9 +176,14 @@ exerciseBtns.forEach(btn => {
 
     localStorage.setItem("exercise", chosenExercise);
 
-    // ⭐ NY TEKST: "Squats i dit eget tempo i: X sekunder"
-    chosenExerciseDisplay.textContent =
-      `${chosenExercise} i dit eget tempo i: ${chosenTime} sekunder`;
+    // ⭐ Først: kort feedback
+    chosenExerciseDisplay.textContent = `Godt valg! Du laver ${chosenExercise}.`;
+
+    // ⭐ Efter 1 sekund: den lange tekst
+    setTimeout(() => {
+      chosenExerciseDisplay.textContent =
+        `${chosenExercise} i dit eget tempo i: ${chosenTime} sekunder`;
+    }, 1000);
 
     await ensurePermission();
     startExerciseTimer();
@@ -291,7 +296,8 @@ function loadFeed() {
 
       statsToggle.removeAttribute("open");
 
-      teamSummary.textContent = `${items.length} energipauser`;
+      // ⭐ Ny tekst
+      teamSummary.textContent = `${items.length} energipauser i alt`;
 
       const latest = {};
       items.forEach(i => latest[i.name] = i);
