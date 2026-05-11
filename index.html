@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v245</title>
+<title>Flow Focus v246</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -21,7 +21,6 @@
   #feed div{padding:6px 0;border-bottom:1px solid #eee}
   input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
 
-  /* Kun summary og h3/h4 i fed */
   summary,
   h3,
   h4 {
@@ -33,6 +32,26 @@
     margin-top:10px;
     line-height:1;
     min-height:24px;
+  }
+
+  /* Bullet-stil til statistikpunkter */
+  .stat-bullet {
+    margin-left: 0;
+    padding-left: 0;
+    list-style: none;
+  }
+  .stat-bullet li {
+    margin-bottom: 10px;
+  }
+  .stat-bullet li::before {
+    content: "• ";
+    margin-right: 4px;
+  }
+
+  /* Indrykning af underlinjer */
+  .stat-sub {
+    margin-left: 20px;
+    opacity: 0.9;
   }
 </style>
 </head>
@@ -73,14 +92,22 @@
 
     <div style="margin-top:12px">
 
-      <!-- ⭐ SEMANTISK STRUKTUR (ikke fed) -->
-      <div style="margin-bottom:4px;">Team</div>
-      <div id="teamSummary" style="margin-bottom:16px;">0 pauser</div>
+      <!-- ⭐ SEMANTISK + BULLETS + IKKE FED -->
+      <ul class="stat-bullet">
 
-      <div style="margin-bottom:4px;">Personer</div>
-      <div style="margin-bottom:8px;">Seneste pause pr. person</div>
+        <li>
+          <div>Team</div>
+          <div id="teamSummary" class="stat-sub">0 pauser</div>
+        </li>
 
-      <div id="feed"></div>
+        <li>
+          <div>Personer</div>
+          <div class="stat-sub">Seneste pause pr. person</div>
+        </li>
+
+      </ul>
+
+      <div id="feed" style="margin-top:12px;"></div>
     </div>
 
   </details>
@@ -279,14 +306,12 @@ function loadFeed() {
     .then(r => r.ok ? r.json() : [])
     .then(items => {
 
-      // ⭐ Auto-toggle logik
       if (items.length === 0) {
         statsToggle.removeAttribute("open");
       } else {
         statsToggle.setAttribute("open", "");
       }
 
-      // ⭐ NY TEKST
       teamSummary.textContent = `${items.length} pauser`;
 
       const latest = {};
