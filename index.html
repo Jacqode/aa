@@ -3,15 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v13</title>
+<title>Flow Focus v14</title>
 <style>
-  body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
+  body{
+    font-family:system-ui;
+    margin:0;
+    padding:20px;
+    background:#fff;
+    color:#111;
+    font-weight:400;
+  }
   .section{margin:20px 0}
-  button{padding:10px 16px;font-size:0.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
+  button{
+    padding:10px 16px;
+    font-size:0.95rem;
+    border-radius:8px;
+    border:1px solid #ccc;
+    background:#fafafa;
+    cursor:pointer;
+    margin:4px;
+    font-weight:400;
+  }
   .active{background:#111;color:#fff}
-  #timer{font-size:40px;margin:20px 0;min-height:48px}
-  input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
-  #chosenExerciseDisplay{font-size:18px;margin-top:10px;min-height:24px}
+  
+  /* ⭐ v14: Timer i 26px, rolig typografi */
+  #timer{
+    font-size:26px;
+    margin:20px 0;
+    min-height:32px;
+    font-weight:400;
+  }
+
+  input{
+    padding:8px;
+    font-size:0.95rem;
+    border-radius:6px;
+    border:1px solid #ccc;
+    margin:4px 0;
+    font-weight:400;
+  }
+
+  #chosenExerciseDisplay{
+    font-size:18px;
+    margin-top:10px;
+    min-height:24px;
+    font-weight:400;
+  }
 </style>
 </head>
 <body>
@@ -32,7 +69,7 @@
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
 
-<!-- ⭐ Færdig-knappen forbliver synlig -->
+<!-- ⭐ v13/v14: Færdig-knappen forbliver synlig -->
 <button id="finishBtn" style="margin-top:10px;">Færdig nu</button>
 
 <!-- ⭐ Microfeedback kommer nedenunder -->
@@ -128,14 +165,14 @@ function startTimer() {
   }, 1000);
 }
 
-// ⭐ v11/v12/v13: LANGT FORMAT
+// ⭐ v14: LANGT FORMAT + rolig typografi
 function format(sec) {
   const m = sec / 60 | 0;
   const s = sec % 60;
   return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
-// ⭐ v13: Timer og knap forbliver synlige
+// ⭐ v13/v14: Timer og knap forbliver synlige
 finishBtn.onclick = finishPause;
 
 async function finishPause() {
@@ -157,7 +194,6 @@ async function finishPause() {
     cache:"no-store"
   });
 
-  // ⭐ Microfeedback vises blot nedenunder
   setTimeout(() => {
     showMicroFeedback();
   }, 300);
@@ -170,7 +206,7 @@ const emojiMap = {
   "Stræk": "🤸"
 };
 
-// ⭐ MICROFEEDBACK v12/v13
+// ⭐ MICROFEEDBACK v14
 function showMicroFeedback() {
   const items = latestFeedCache;
   const total = items.length;
@@ -181,10 +217,10 @@ function showMicroFeedback() {
   });
 
   let lines = "Godt gået! 🙌\n\n";
-  lines += `Dit team har nu ladt op med i alt ${total} energipauser.\n\n`;
 
-  // ⭐ v12 ændring
-  lines += "Dit teams seneste er:\n";
+  // ⭐ v14 ændring
+  lines += `Dit team har ladt op med i alt ${total} energipauser.\n\n`;
+  lines += "De seneste er:\n";
 
   Object.values(latest)
     .sort((a,b)=>b.ts - a.ts)
