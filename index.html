@@ -3,14 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v242</title>
+<title>Flow Focus v243</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
   button{padding:10px 16px;font-size:0.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
   .active{background:#111;color:#fff}
 
-  /* Timer fix */
   #timer{
     font-size:40px;
     margin:20px 0;
@@ -29,7 +28,6 @@
     font-weight:600;
   }
 
-  /* Chosen exercise */
   #chosenExerciseDisplay{
     font-size:18px;
     margin-top:10px;
@@ -40,13 +38,11 @@
 </head>
 <body>
 
-<!-- ⭐ Velkomst -->
 <div style="font-size:18px; margin-bottom:10px;">
   Hej <span id="welcomeName">ven</span> 👋<br>
   Klik på en energipause, og du er i gang:
 </div>
 
-<!-- ⭐ Energipause-knapper -->
 <div class="section">
   <button class="exerciseBtn" data-ex="Armstræk">💪 Armstræk</button>
   <button class="exerciseBtn" data-ex="Squats">🦵 Squats</button>
@@ -54,13 +50,10 @@
   <button class="exerciseBtn" data-ex="random">🎲 Overrask mig!</button>
 </div>
 
-<!-- ⭐ Valgt øvelse -->
 <div id="chosenExerciseDisplay"></div>
 
-<!-- ⭐ Timer -->
 <div id="timer"></div>
 
-<!-- ⭐ Energi-spørgsmål -->
 <div id="energySection" style="display:none">
   <div>Hvordan er din energi nu?</div><br>
   <button class="energyBtn" data-energy="mindre">Mindre</button>
@@ -71,7 +64,6 @@
 
 <div id="thanks" style="display:none;margin-top:20px;"></div>
 
-<!-- ⭐ Divider -->
 <hr style="border:0; border-top:1px solid #eee; margin:30px 0;">
 
 <!-- ⭐ Statistik som toggle -->
@@ -80,15 +72,20 @@
     <summary>Statistik</summary>
 
     <div style="margin-top:12px">
-      <h4 id="teamSummary">Teamet har opladet med 0 energipauser.</h4>
-      <div style="margin-bottom:8px;">Hver team vens seneste energipause:</div>
+
+      <!-- ⭐ NY TEKST: ikke fed -->
+      <div id="teamSummary" style="margin-bottom:12px;">Teamet: 0 pauser</div>
+
+      <!-- ⭐ NY TEKST: kort og tydelig -->
+      <div style="margin-bottom:8px;">Seneste pause pr. person</div>
+
       <div id="feed"></div>
     </div>
 
   </details>
 </div>
 
-<!-- ⭐ Indstillinger nederst -->
+<!-- ⭐ Indstillinger -->
 <div class="section">
   <details>
     <summary>Indstillinger</summary>
@@ -117,13 +114,11 @@
   </details>
 </div>
 
-<!-- ⭐ Branding -->
 <div style="text-align:center; opacity:0.5; margin-top:40px; font-size:14px;">
   Flow Focus
 </div>
 
 <script>
-// Worker URL
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev".replace(/\/+$/, "");
 const api = (path) => WORKER_URL + path;
 
@@ -149,7 +144,6 @@ let chosenTime = Number(localStorage.getItem("time") || 60);
 let reminderMinutes = Number(localStorage.getItem("reminder") || 25);
 let timerId = null;
 
-// Navn
 nameInput.value = localStorage.getItem("name") || "";
 welcomeName.textContent = nameInput.value || "ven";
 nameInput.oninput = () => {
@@ -157,7 +151,6 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
-// ⭐ Energipause-knapper
 exerciseBtns.forEach(btn => {
   if (btn.dataset.ex === chosenExercise) btn.classList.add("active");
 
@@ -181,7 +174,6 @@ exerciseBtns.forEach(btn => {
   };
 });
 
-// Varighed
 timeBtns.forEach(btn => {
   if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
   btn.onclick = () => {
@@ -192,7 +184,6 @@ timeBtns.forEach(btn => {
   };
 });
 
-// Reminder
 reminderBtns.forEach(btn => {
   if (Number(btn.dataset.min) === reminderMinutes) btn.classList.add("active");
   btn.onclick = () => {
@@ -203,7 +194,6 @@ reminderBtns.forEach(btn => {
   };
 });
 
-// Notifications
 const ensurePermission = async () => {
   if (!("Notification" in window)) return;
   if (Notification.permission === "default") {
@@ -295,7 +285,8 @@ function loadFeed() {
         statsToggle.setAttribute("open", "");
       }
 
-      teamSummary.textContent = `Teamet har opladet med ${items.length} energipauser.`;
+      // ⭐ NY TEKST
+      teamSummary.textContent = `Teamet: ${items.length} pauser`;
 
       const latest = {};
       items.forEach(i => latest[i.name] = i);
