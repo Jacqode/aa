@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v12</title>
+<title>Flow Focus v13</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -31,8 +31,11 @@
 
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
-<button id="finishBtn" style="display:none; margin-top:10px;">Færdig nu</button>
 
+<!-- ⭐ Færdig-knappen forbliver synlig -->
+<button id="finishBtn" style="margin-top:10px;">Færdig nu</button>
+
+<!-- ⭐ Microfeedback kommer nedenunder -->
 <div id="thanks" style="display:none;margin-top:20px; white-space:pre-line;"></div>
 
 <!-- Indstillinger rykket 40px ned -->
@@ -113,7 +116,6 @@ function startTimer() {
 
   let s = chosenTime;
   pauseStart = Date.now();
-  finishBtn.style.display = "inline-block";
 
   timerEl.textContent = format(s);
 
@@ -126,21 +128,19 @@ function startTimer() {
   }, 1000);
 }
 
-// ⭐ v11/v12: LANGT FORMAT
+// ⭐ v11/v12/v13: LANGT FORMAT
 function format(sec) {
   const m = sec / 60 | 0;
   const s = sec % 60;
   return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
-// FÆRDIG-KNAP
+// ⭐ v13: Timer og knap forbliver synlige
 finishBtn.onclick = finishPause;
 
 async function finishPause() {
   clearInterval(timerId);
   timerId = null;
-  finishBtn.style.display = "none";
-  timerEl.textContent = "";
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
 
@@ -157,6 +157,7 @@ async function finishPause() {
     cache:"no-store"
   });
 
+  // ⭐ Microfeedback vises blot nedenunder
   setTimeout(() => {
     showMicroFeedback();
   }, 300);
@@ -169,7 +170,7 @@ const emojiMap = {
   "Stræk": "🤸"
 };
 
-// ⭐ MICROFEEDBACK v12
+// ⭐ MICROFEEDBACK v12/v13
 function showMicroFeedback() {
   const items = latestFeedCache;
   const total = items.length;
