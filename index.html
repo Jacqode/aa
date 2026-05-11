@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v8</title>
+<title>Flow Focus v9</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -11,7 +11,6 @@
   .active{background:#111;color:#fff}
   #timer{font-size:40px;margin:20px 0;min-height:48px}
   input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
-  summary{font-weight:600}
   #chosenExerciseDisplay{font-size:18px;margin-top:10px;min-height:24px}
 </style>
 </head>
@@ -166,7 +165,7 @@ const emojiMap = {
   "Stræk": "🤸"
 };
 
-// MICROFEEDBACK v8
+// MICROFEEDBACK v9
 function showMicroFeedback() {
   const items = latestFeedCache;
   const total = items.length;
@@ -176,8 +175,12 @@ function showMicroFeedback() {
     if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
   });
 
-  let lines = "Godt gået! 🙌\n";
-  lines += `Dit team har nu ladt op med i alt ${total} energipauser.\n`;
+  // ⭐ Blank linje efter "Godt gået! 🙌"
+  let lines = "Godt gået! 🙌\n\n";
+
+  // ⭐ Blank linje efter team-total
+  lines += `Dit team har nu ladt op med i alt ${total} energipauser.\n\n`;
+
   lines += "Dine team venners seneste energipauser er:\n";
 
   Object.values(latest)
