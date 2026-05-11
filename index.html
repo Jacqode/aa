@@ -3,41 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v257</title>
-
-<!-- Force browser to revalidate HTML -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-
+<title>Flow Focus – clean v1</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
   button{padding:10px 16px;font-size:0.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
   .active{background:#111;color:#fff}
-  #header {display:flex;align-items:center;gap:12px}
-  #version {font-size:12px;color:#666}
-  #timer{font-size:40px;margin:20px 0;line-height:1;display:block;min-height:48px}
+  #timer{font-size:40px;margin:20px 0;line-height:1;min-height:48px}
   #feed div{padding:6px 0;border-bottom:1px solid #eee}
   input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
-  summary,h3,h4{font-weight:600}
-  #chosenExerciseDisplay{font-size:18px;margin-top:10px;line-height:1;min-height:24px}
+  summary{font-weight:600}
+  #chosenExerciseDisplay{font-size:18px;margin-top:10px;min-height:24px}
   .stat-title{font-style:italic;margin-bottom:2px}
   .stat-sub{margin-left:16px;opacity:0.9}
-  #debug{margin-top:12px;padding:10px;border-radius:8px;background:#f7f7f7;border:1px dashed #e0e0e0;font-size:13px}
-  #debug pre{margin:0;white-space:pre-wrap;word-break:break-word}
 </style>
 </head>
 <body>
 
-<div id="header">
-  <div style="font-size:18px;">
-    Hej <span id="welcomeName">ven</span> 👋
-  </div>
-  <div id="version">Flow Focus <strong>v257</strong></div>
-</div>
-
-<div style="font-size:15px; color:#444; margin-top:6px;">
+<div style="font-size:18px; margin-bottom:10px;">
+  Hej <span id="welcomeName">ven</span> 👋<br>
   Få en energipause med et klik:
 </div>
 
@@ -49,7 +33,6 @@
 </div>
 
 <div id="chosenExerciseDisplay"></div>
-
 <div id="timer"></div>
 
 <div id="energySection" style="display:none">
@@ -65,7 +48,7 @@
 <hr style="border:0; border-top:1px solid #eee; margin:30px 0;">
 
 <div class="section">
-  <details id="statsToggle">
+  <details id="statsToggle" open>
     <summary>Statistik</summary>
     <div style="margin-top:12px">
       <div class="stat-title">Team</div>
@@ -89,48 +72,24 @@
       <button class="timeBtn" data-time="30">30 sek</button>
       <button class="timeBtn" data-time="60">1 min</button>
       <button class="timeBtn" data-time="120">2 min</button>
-      <br><br>
-      <div>Næste energipause om:</div>
-      <button class="reminderBtn" data-min="0.5">30 sek (test)</button>
-      <button class="reminderBtn" data-min="15">15 min</button>
-      <button class="reminderBtn" data-min="25">25 min</button>
-      <button class="reminderBtn" data-min="40">40 min</button>
     </div>
   </details>
 </div>
 
-<div id="debug" aria-live="polite">
-  <div style="font-weight:600; margin-bottom:6px;">Debug</div>
-  <div>Seneste POST payload:</div>
-  <pre id="lastPayload">— ingen</pre>
-  <div style="margin-top:8px;">
-    <button id="forceReloadFeed">Force hent feed nu</button>
-    <button id="unregisterSW" style="margin-left:8px">Unregister service worker</button>
-  </div>
+<div style="text-align:center; opacity:0.5; margin-top:40px; font-size:14px;">
+  Flow Focus – clean v1
 </div>
 
 <script>
-const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev".replace(/\/+$/, "");
-const API_VERSION = "v257";
-const api = (path) => WORKER_URL + path + "?v=" + API_VERSION;
+// *** KONFIG ***
+const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
+const api = (path) => WORKER_URL.replace(/\/+$/,"") + path;
 
-// Unregister any old service workers on load to avoid stale caching
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(r => r.unregister().catch(()=>{}));
-  }).catch(()=>{});
-}
-
-// Try to register the current service worker but allow bypassing
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js?v=257").catch(()=>{});
-}
-
+// *** DOM ***
 const nameInput = document.getElementById("nameInput");
 const welcomeName = document.getElementById("welcomeName");
 const exerciseBtns = document.querySelectorAll(".exerciseBtn");
 const timeBtns = document.querySelectorAll(".timeBtn");
-const reminderBtns = document.querySelectorAll(".reminderBtn");
 const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const energySection = document.getElementById("energySection");
@@ -138,16 +97,13 @@ const thanks = document.getElementById("thanks");
 const feedEl = document.getElementById("feed");
 const teamSummary = document.getElementById("teamSummary");
 const statsToggle = document.getElementById("statsToggle");
-const lastPayloadEl = document.getElementById("lastPayload");
-const forceReloadFeedBtn = document.getElementById("forceReloadFeed");
-const unregisterSWBtn = document.getElementById("unregisterSW");
 
-// v257: chosenExercise never initialized from localStorage
+// *** STATE ***
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
-let reminderMinutes = Number(localStorage.getItem("reminder") || 25);
 let timerId = null;
 
+// *** NAVN ***
 nameInput.value = localStorage.getItem("name") || "";
 welcomeName.textContent = nameInput.value || "ven";
 nameInput.oninput = () => {
@@ -155,26 +111,7 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
-exerciseBtns.forEach(btn => {
-  btn.onclick = async () => {
-    exerciseBtns.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-
-    if (btn.dataset.ex === "random") {
-      const list = ["Armstræk","Squats","Stræk"];
-      chosenExercise = list[Math.floor(Math.random()*list.length)];
-    } else {
-      chosenExercise = btn.dataset.ex;
-    }
-
-    // Only short text, stays until timer finishes
-    chosenExerciseDisplay.textContent = `Godt valg! Du laver ${chosenExercise}.`;
-
-    await ensurePermission();
-    startExerciseTimer();
-  };
-});
-
+// *** TID ***
 timeBtns.forEach(btn => {
   if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
   btn.onclick = () => {
@@ -185,23 +122,25 @@ timeBtns.forEach(btn => {
   };
 });
 
-reminderBtns.forEach(btn => {
-  if (Number(btn.dataset.min) === reminderMinutes) btn.classList.add("active");
+// *** ØVELSE ***
+exerciseBtns.forEach(btn => {
   btn.onclick = () => {
-    reminderBtns.forEach(b => b.classList.remove("active"));
+    exerciseBtns.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    reminderMinutes = Number(btn.dataset.min);
-    localStorage.setItem("reminder", reminderMinutes);
+
+    if (btn.dataset.ex === "random") {
+      const list = ["Armstræk","Squats","Stræk"];
+      chosenExercise = list[Math.floor(Math.random()*list.length)];
+    } else {
+      chosenExercise = btn.dataset.ex;
+    }
+
+    chosenExerciseDisplay.textContent = `Godt valg! Du laver ${chosenExercise}.`;
+    startExerciseTimer();
   };
 });
 
-const ensurePermission = async () => {
-  if (!("Notification" in window)) return;
-  if (Notification.permission === "default") {
-    try { await Notification.requestPermission(); } catch(e){}
-  }
-};
-
+// *** TIMER ***
 function startExerciseTimer() {
   energySection.style.display = "none";
   thanks.style.display = "none";
@@ -229,6 +168,7 @@ function showEnergyQuestion() {
   energySection.style.display = "block";
 }
 
+// *** ENERGI-SVAR ***
 document.querySelectorAll(".energyBtn").forEach(btn => {
   btn.onclick = () => {
     const energy = btn.dataset.energy;
@@ -237,98 +177,60 @@ document.querySelectorAll(".energyBtn").forEach(btn => {
 
     postToFeed(name, exercise, energy);
 
-    const next = nextPauseTime();
-    thanks.textContent = `Tak for dit svar. Næste energipause er kl. ${next}`;
+    thanks.textContent = `Tak for dit svar 🙌`;
     thanks.style.display = "block";
     energySection.style.display = "none";
-
-    scheduleNextNotification();
   };
 });
 
-function nextPauseTime() {
-  const now = new Date();
-  now.setSeconds(now.getSeconds() + Math.round(reminderMinutes * 60));
-  return now.toTimeString().slice(0,5);
-}
-
-function scheduleNextNotification() {
-  const ms = Math.round(reminderMinutes * 60 * 1000);
-  setTimeout(() => {
-    navigator.serviceWorker.ready.then(reg => {
-      if (Notification.permission === "granted") {
-        reg.showNotification("Tid til en energipause", {
-          body: "⏱️ Klar til næste energipause",
-          data: { url: location.href }
-        });
-      }
-    });
-  }, ms);
-}
-
+// *** FEED ***
 function postToFeed(name, exercise, energy) {
-  const payload = { name, exercise, energy, ts: Date.now() };
-  // Update debug panel
-  lastPayloadEl.textContent = JSON.stringify(payload, null, 2);
+  const payload = { name, exercise, energy };
 
-  // POST then force reload feed immediately (and again shortly after)
-  fetch(api('/feed'), {
+  fetch(api("/feed"), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(payload),
     cache: "no-store"
-  })
-  .then(res => {
-    // ensure we attempt to refresh feed regardless of response
+  }).then(() => {
+    // hent feed lige efter
     loadFeed();
     setTimeout(loadFeed, 500);
-    return res;
-  })
-  .catch(() => {
-    // still try to refresh feed on error
+  }).catch(() => {
+    // prøv alligevel
     loadFeed();
-    setTimeout(loadFeed, 500);
   });
 }
 
 function loadFeed() {
-  fetch(api('/feed'), { cache: "no-store" })
+  fetch(api("/feed"), { cache:"no-store" })
     .then(r => r.ok ? r.json() : [])
     .then(items => {
-      statsToggle.removeAttribute("open");
+      // items er allerede sorteret nyeste først i Worker
       teamSummary.textContent = `${items.length} energipauser i alt`;
 
+      // seneste pr. person
       const latest = {};
-      items.forEach(i => latest[i.name] = i);
+      items.forEach(i => {
+        if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
+      });
 
       feedEl.innerHTML = "";
-      Object.values(latest).forEach(i => {
-        const div = document.createElement("div");
-        div.textContent = `• ${i.name} lavede en energipause: ${i.exercise}`;
-        feedEl.appendChild(div);
-      });
+      Object.values(latest)
+        .sort((a,b)=>b.ts - a.ts)
+        .forEach(i => {
+          const div = document.createElement("div");
+          const t = new Date(i.ts).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
+          div.textContent = `${t} • ${i.name} lavede ${i.exercise} (energi: ${i.energy})`;
+          feedEl.appendChild(div);
+        });
     })
-    .catch(err => {
-      // show minimal feedback on error
+    .catch(() => {
       feedEl.innerHTML = "<div>Kunne ikke hente feed</div>";
-      console.error("loadFeed error", err);
     });
 }
 
-// Buttons in debug panel
-forceReloadFeedBtn.onclick = () => loadFeed();
-unregisterSWBtn.onclick = () => {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(r => r.unregister().catch(()=>{}));
-      alert("Service workers unregistered (if any). Genindlæs siden.");
-    }).catch(()=>{ alert("Kunne ikke unregister service worker"); });
-  } else {
-    alert("Service worker ikke understøttet i denne browser");
-  }
-};
-
-// Initial load
+// første load
 loadFeed();
 </script>
 
