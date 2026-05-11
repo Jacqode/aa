@@ -34,20 +34,6 @@
     min-height:24px;
   }
 
-  /* Bullet-stil til statistikpunkter */
-  .stat-bullet {
-    margin-left: 0;
-    padding-left: 0;
-    list-style: none;
-  }
-  .stat-bullet li {
-    margin-bottom: 12px;
-  }
-  .stat-bullet li::before {
-    content: "• ";
-    margin-right: 4px;
-  }
-
   /* Underoverskrifter i kursiv */
   .stat-title {
     font-style: italic;
@@ -56,7 +42,7 @@
 
   /* Indhold under underoverskrifter */
   .stat-sub {
-    margin-left: 20px;
+    margin-left: 16px;
     opacity: 0.9;
   }
 </style>
@@ -91,27 +77,22 @@
 
 <hr style="border:0; border-top:1px solid #eee; margin:30px 0;">
 
-<!-- ⭐ Statistik som toggle -->
+<!-- ⭐ Statistik (lukket som standard) -->
 <div class="section">
   <details id="statsToggle">
     <summary>Statistik</summary>
 
     <div style="margin-top:12px">
 
-      <!-- ⭐ SEMANTISK + BULLETS + KURSIV -->
-      <ul class="stat-bullet">
+      <!-- ⭐ Team -->
+      <div class="stat-title">Team</div>
+      <div id="teamSummary" class="stat-sub">0 pauser</div>
 
-        <li>
-          <div class="stat-title">Team</div>
-          <div id="teamSummary" class="stat-sub">0 pauser</div>
-        </li>
+      <br>
 
-        <li>
-          <div class="stat-title">Personer</div>
-          <div class="stat-sub">Seneste pause pr. person</div>
-        </li>
-
-      </ul>
+      <!-- ⭐ Personer -->
+      <div class="stat-title">Personer</div>
+      <div class="stat-sub">Seneste pause pr. person</div>
 
       <div id="feed" style="margin-top:12px;"></div>
     </div>
@@ -312,11 +293,8 @@ function loadFeed() {
     .then(r => r.ok ? r.json() : [])
     .then(items => {
 
-      if (items.length === 0) {
-        statsToggle.removeAttribute("open");
-      } else {
-        statsToggle.setAttribute("open", "");
-      }
+      // ⭐ Statistik skal være lukket som standard
+      statsToggle.removeAttribute("open");
 
       teamSummary.textContent = `${items.length} pauser`;
 
