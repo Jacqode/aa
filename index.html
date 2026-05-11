@@ -3,28 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v240</title>
+<title>Flow Focus v241</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
   button{padding:10px 16px;font-size:0.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
   .active{background:#111;color:#fff}
 
-  /* ⭐ Timer fix: fjern baseline-linjen */
+  /* Timer fix */
   #timer{
     font-size:40px;
     margin:20px 0;
     font-weight:600;
     line-height:1;
     display:block;
-    min-height:48px; /* så layout ikke hopper */
+    min-height:48px;
   }
 
   #feed div{padding:6px 0;border-bottom:1px solid #eee}
   input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
   summary{font-weight:600;cursor:pointer}
 
-  /* Chosen exercise fix */
   #chosenExerciseDisplay{
     font-size:18px;
     margin-top:10px;
@@ -36,7 +35,7 @@
 </head>
 <body>
 
-<!-- ⭐ Velkomst + micro-commitment -->
+<!-- ⭐ Velkomst -->
 <div style="font-size:18px; margin-bottom:10px;">
   Hej <span id="welcomeName">ven</span> 👋<br>
   Klik på en energipause, og du er i gang:
@@ -50,12 +49,13 @@
   <button class="exerciseBtn" data-ex="random">🎲 Overrask mig!</button>
 </div>
 
-<!-- ⭐ Vis valgt øvelse -->
+<!-- ⭐ Valgt øvelse -->
 <div id="chosenExerciseDisplay"></div>
 
-<!-- ⭐ Timer uden “–” -->
+<!-- ⭐ Timer -->
 <div id="timer"></div>
 
+<!-- ⭐ Energi-spørgsmål -->
 <div id="energySection" style="display:none">
   <strong>Hvordan er din energi nu?</strong><br><br>
   <button class="energyBtn" data-energy="mindre">Mindre</button>
@@ -66,16 +66,21 @@
 
 <div id="thanks" style="display:none;margin-top:20px;font-weight:600"></div>
 
-<!-- ⭐ Divider før statistik -->
+<!-- ⭐ Divider -->
 <hr style="border:0; border-top:1px solid #eee; margin:30px 0;">
 
-<!-- ⭐ Statistik-sektion -->
+<!-- ⭐ Statistik som toggle -->
 <div class="section">
-  <h3 style="margin-top:0;">Statistik</h3>
+  <details id="statsToggle">
+    <summary>Statistik</summary>
 
-  <h4 id="teamSummary">Teamet har opladet med 0 energipauser.</h4>
-  <div style="margin-bottom:8px;">Hver team vens seneste energipause:</div>
-  <div id="feed"></div>
+    <div style="margin-top:12px">
+      <h4 id="teamSummary">Teamet har opladet med 0 energipauser.</h4>
+      <div style="margin-bottom:8px;">Hver team vens seneste energipause:</div>
+      <div id="feed"></div>
+    </div>
+
+  </details>
 </div>
 
 <!-- ⭐ Indstillinger nederst -->
@@ -107,7 +112,7 @@
   </details>
 </div>
 
-<!-- ⭐ Diskret branding nederst -->
+<!-- ⭐ Branding -->
 <div style="text-align:center; opacity:0.5; margin-top:40px; font-size:14px;">
   Flow Focus
 </div>
@@ -132,6 +137,7 @@ const energySection = document.getElementById("energySection");
 const thanks = document.getElementById("thanks");
 const feedEl = document.getElementById("feed");
 const teamSummary = document.getElementById("teamSummary");
+const statsToggle = document.getElementById("statsToggle");
 
 let chosenExercise = localStorage.getItem("exercise") || "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
@@ -146,7 +152,7 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
-// ⭐ Energipause-knapper starter øjeblikkeligt
+// ⭐ Energipause-knapper
 exerciseBtns.forEach(btn => {
   if (btn.dataset.ex === chosenExercise) btn.classList.add("active");
 
@@ -154,7 +160,6 @@ exerciseBtns.forEach(btn => {
     exerciseBtns.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
 
-    // Random valg
     if (btn.dataset.ex === "random") {
       const list = ["Armstræk","Squats","Stræk"];
       chosenExercise = list[Math.floor(Math.random()*list.length)];
@@ -206,7 +211,6 @@ function startExerciseTimer() {
   thanks.style.display = "none";
 
   let s = chosenTime;
-
   timerEl.textContent = formatTime(s);
 
   if (timerId) clearInterval(timerId);
@@ -278,6 +282,13 @@ function loadFeed() {
   fetch(api('/feed'))
     .then(r => r.ok ? r.json() : [])
     .then(items => {
+
+      // ⭐ Auto-toggle logik
+      if (items.length === 0) {
+        statsToggle.removeAttribute("open");
+      } else {
+        statsToggle.setAttribute("open", "");
+      }
 
       teamSummary.textContent = `Teamet har opladet med ${items.length} energipauser.`;
 
