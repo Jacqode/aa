@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v248</title>
+<title>Flow Focus v251</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -82,12 +82,12 @@
     <div style="margin-top:12px">
 
       <div class="stat-title">Team</div>
-      <div id="teamSummary" class="stat-sub">0 pauser</div>
+      <div id="teamSummary" class="stat-sub">0 energipauser</div>
 
       <br>
 
       <div class="stat-title">Personer</div>
-      <div class="stat-sub">Seneste pause pr. person</div>
+      <div class="stat-sub">Seneste energipause pr. person</div>
 
       <div id="feed" style="margin-top:12px;"></div>
     </div>
@@ -113,7 +113,7 @@
 
       <br><br>
 
-      <div>Næste pause om:</div>
+      <div>Næste energipause om:</div>
       <button class="reminderBtn" data-min="0.5">30 sek (test)</button>
       <button class="reminderBtn" data-min="15">15 min</button>
       <button class="reminderBtn" data-min="25">25 min</button>
@@ -176,7 +176,7 @@ exerciseBtns.forEach(btn => {
 
     localStorage.setItem("exercise", chosenExercise);
 
-    chosenExerciseDisplay.textContent = "Godt valg! Du laver: " + chosenExercise;
+    chosenExerciseDisplay.textContent = "Godt valg! Du laver en energipause: " + chosenExercise;
 
     await ensurePermission();
     startExerciseTimer();
@@ -246,7 +246,7 @@ document.querySelectorAll(".energyBtn").forEach(btn => {
     postToFeed(name, exercise, energy);
 
     const next = nextPauseTime();
-    thanks.textContent = `Tak for dit svar. Næste pause er kl. ${next}`;
+    thanks.textContent = `Tak for dit svar. Næste energipause er kl. ${next}`;
     thanks.style.display = "block";
     energySection.style.display = "none";
 
@@ -265,7 +265,7 @@ function scheduleNextNotification() {
   setTimeout(() => {
     navigator.serviceWorker.ready.then(reg => {
       if (Notification.permission === "granted") {
-        reg.showNotification("Tid til en pause", {
+        reg.showNotification("Tid til en energipause", {
           body: "⏱️ Klar til næste energipause",
           data: { url: location.href }
         });
@@ -289,7 +289,7 @@ function loadFeed() {
 
       statsToggle.removeAttribute("open");
 
-      teamSummary.textContent = `${items.length} pauser`;
+      teamSummary.textContent = `${items.length} energipauser`;
 
       const latest = {};
       items.forEach(i => latest[i.name] = i);
@@ -297,7 +297,7 @@ function loadFeed() {
       feedEl.innerHTML = "";
       Object.values(latest).forEach(i => {
         const div = document.createElement("div");
-        div.textContent = `• ${i.name} lavede ${i.exercise}`;
+        div.textContent = `• ${i.name} lavede en energipause: ${i.exercise}`;
         feedEl.appendChild(div);
       });
     });
