@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v251</title>
+<title>Flow Focus v252</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -176,7 +176,9 @@ exerciseBtns.forEach(btn => {
 
     localStorage.setItem("exercise", chosenExercise);
 
-    chosenExerciseDisplay.textContent = "Godt valg! Du laver en energipause: " + chosenExercise;
+    // ⭐ NY TEKST: "Squats i dit eget tempo i: X sekunder"
+    chosenExerciseDisplay.textContent =
+      `${chosenExercise} i dit eget tempo i: ${chosenTime} sekunder`;
 
     await ensurePermission();
     startExerciseTimer();
