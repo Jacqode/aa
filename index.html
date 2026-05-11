@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dur men forskellige tekstfont og str - Flow Focus v241</title>
+<title>Flow Focus v242</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -14,7 +14,6 @@
   #timer{
     font-size:40px;
     margin:20px 0;
-    font-weight:600;
     line-height:1;
     display:block;
     min-height:48px;
@@ -22,12 +21,18 @@
 
   #feed div{padding:6px 0;border-bottom:1px solid #eee}
   input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
-  summary{font-weight:600;cursor:pointer}
 
+  /* Kun sektionstitler i fed */
+  summary,
+  h3,
+  h4 {
+    font-weight:600;
+  }
+
+  /* Chosen exercise */
   #chosenExerciseDisplay{
     font-size:18px;
     margin-top:10px;
-    font-weight:500;
     line-height:1;
     min-height:24px;
   }
@@ -57,14 +62,14 @@
 
 <!-- ⭐ Energi-spørgsmål -->
 <div id="energySection" style="display:none">
-  <strong>Hvordan er din energi nu?</strong><br><br>
+  <div>Hvordan er din energi nu?</div><br>
   <button class="energyBtn" data-energy="mindre">Mindre</button>
   <button class="energyBtn" data-energy="samme">Samme</button>
   <button class="energyBtn" data-energy="større">Større</button>
   <button class="energyBtn" data-energy="ved ikke">Ved ikke</button>
 </div>
 
-<div id="thanks" style="display:none;margin-top:20px;font-weight:600"></div>
+<div id="thanks" style="display:none;margin-top:20px;"></div>
 
 <!-- ⭐ Divider -->
 <hr style="border:0; border-top:1px solid #eee; margin:30px 0;">
@@ -90,19 +95,19 @@
 
     <div style="margin-top:12px">
 
-      <strong>Dit navn:</strong><br>
+      <div>Dit navn:</div>
       <input id="nameInput" type="text" placeholder="Skriv dit navn">
 
       <br><br>
 
-      <strong>Varighed (energipause):</strong><br>
+      <div>Varighed (energipause):</div>
       <button class="timeBtn" data-time="30">30 sek</button>
       <button class="timeBtn" data-time="60">1 min</button>
       <button class="timeBtn" data-time="120">2 min</button>
 
       <br><br>
 
-      <strong>Næste pause om:</strong><br>
+      <div>Næste pause om:</div>
       <button class="reminderBtn" data-min="0.5">30 sek (test)</button>
       <button class="reminderBtn" data-min="15">15 min</button>
       <button class="reminderBtn" data-min="25">25 min</button>
