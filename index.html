@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v246</title>
+<title>Flow Focus v247</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -41,14 +41,20 @@
     list-style: none;
   }
   .stat-bullet li {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
   .stat-bullet li::before {
     content: "• ";
     margin-right: 4px;
   }
 
-  /* Indrykning af underlinjer */
+  /* Underoverskrifter i kursiv */
+  .stat-title {
+    font-style: italic;
+    margin-bottom: 2px;
+  }
+
+  /* Indhold under underoverskrifter */
   .stat-sub {
     margin-left: 20px;
     opacity: 0.9;
@@ -92,16 +98,16 @@
 
     <div style="margin-top:12px">
 
-      <!-- ⭐ SEMANTISK + BULLETS + IKKE FED -->
+      <!-- ⭐ SEMANTISK + BULLETS + KURSIV -->
       <ul class="stat-bullet">
 
         <li>
-          <div>Team</div>
+          <div class="stat-title">Team</div>
           <div id="teamSummary" class="stat-sub">0 pauser</div>
         </li>
 
         <li>
-          <div>Personer</div>
+          <div class="stat-title">Personer</div>
           <div class="stat-sub">Seneste pause pr. person</div>
         </li>
 
