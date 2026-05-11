@@ -3,52 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v256</title>
+<title>Flow Focus v257</title>
+
+<!-- Force browser to revalidate HTML -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
   button{padding:10px 16px;font-size:0.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
   .active{background:#111;color:#fff}
-
-  #timer{
-    font-size:40px;
-    margin:20px 0;
-    line-height:1;
-    display:block;
-    min-height:48px;
-  }
-
+  #header {display:flex;align-items:center;gap:12px}
+  #version {font-size:12px;color:#666}
+  #timer{font-size:40px;margin:20px 0;line-height:1;display:block;min-height:48px}
   #feed div{padding:6px 0;border-bottom:1px solid #eee}
   input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
-
-  summary,
-  h3,
-  h4 {
-    font-weight:600;
-  }
-
-  #chosenExerciseDisplay{
-    font-size:18px;
-    margin-top:10px;
-    line-height:1;
-    min-height:24px;
-  }
-
-  .stat-title {
-    font-style: italic;
-    margin-bottom: 2px;
-  }
-
-  .stat-sub {
-    margin-left: 16px;
-    opacity: 0.9;
-  }
+  summary,h3,h4{font-weight:600}
+  #chosenExerciseDisplay{font-size:18px;margin-top:10px;line-height:1;min-height:24px}
+  .stat-title{font-style:italic;margin-bottom:2px}
+  .stat-sub{margin-left:16px;opacity:0.9}
+  #debug{margin-top:12px;padding:10px;border-radius:8px;background:#f7f7f7;border:1px dashed #e0e0e0;font-size:13px}
+  #debug pre{margin:0;white-space:pre-wrap;word-break:break-word}
 </style>
 </head>
 <body>
 
-<div style="font-size:18px; margin-bottom:10px;">
-  Hej <span id="welcomeName">ven</span> 👋<br>
+<div id="header">
+  <div style="font-size:18px;">
+    Hej <span id="welcomeName">ven</span> 👋
+  </div>
+  <div id="version">Flow Focus <strong>v257</strong></div>
+</div>
+
+<div style="font-size:15px; color:#444; margin-top:6px;">
   Få en energipause med et klik:
 </div>
 
@@ -78,61 +67,63 @@
 <div class="section">
   <details id="statsToggle">
     <summary>Statistik</summary>
-
     <div style="margin-top:12px">
-
       <div class="stat-title">Team</div>
       <div id="teamSummary" class="stat-sub">0 energipauser i alt</div>
-
       <br>
-
       <div class="stat-title">Personer</div>
       <div class="stat-sub">Seneste energipause pr. person</div>
-
       <div id="feed" style="margin-top:12px;"></div>
     </div>
-
   </details>
 </div>
 
 <div class="section">
   <details>
     <summary>Indstillinger</summary>
-
     <div style="margin-top:12px">
-
       <div>Dit navn:</div>
       <input id="nameInput" type="text" placeholder="Skriv dit navn">
-
       <br><br>
-
       <div>Varighed (energipause):</div>
       <button class="timeBtn" data-time="30">30 sek</button>
       <button class="timeBtn" data-time="60">1 min</button>
       <button class="timeBtn" data-time="120">2 min</button>
-
       <br><br>
-
       <div>Næste energipause om:</div>
       <button class="reminderBtn" data-min="0.5">30 sek (test)</button>
       <button class="reminderBtn" data-min="15">15 min</button>
       <button class="reminderBtn" data-min="25">25 min</button>
       <button class="reminderBtn" data-min="40">40 min</button>
-
     </div>
   </details>
 </div>
 
-<div style="text-align:center; opacity:0.5; margin-top:40px; font-size:14px;">
-  Flow Focus
+<div id="debug" aria-live="polite">
+  <div style="font-weight:600; margin-bottom:6px;">Debug</div>
+  <div>Seneste POST payload:</div>
+  <pre id="lastPayload">— ingen</pre>
+  <div style="margin-top:8px;">
+    <button id="forceReloadFeed">Force hent feed nu</button>
+    <button id="unregisterSW" style="margin-left:8px">Unregister service worker</button>
+  </div>
 </div>
 
 <script>
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev".replace(/\/+$/, "");
-const api = (path) => WORKER_URL + path;
+const API_VERSION = "v257";
+const api = (path) => WORKER_URL + path + "?v=" + API_VERSION;
 
+// Unregister any old service workers on load to avoid stale caching
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => r.unregister().catch(()=>{}));
+  }).catch(()=>{});
+}
+
+// Try to register the current service worker but allow bypassing
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  navigator.serviceWorker.register("service-worker.js?v=257").catch(()=>{});
 }
 
 const nameInput = document.getElementById("nameInput");
@@ -147,8 +138,11 @@ const thanks = document.getElementById("thanks");
 const feedEl = document.getElementById("feed");
 const teamSummary = document.getElementById("teamSummary");
 const statsToggle = document.getElementById("statsToggle");
+const lastPayloadEl = document.getElementById("lastPayload");
+const forceReloadFeedBtn = document.getElementById("forceReloadFeed");
+const unregisterSWBtn = document.getElementById("unregisterSW");
 
-// v256: ingen exercise i localStorage
+// v257: chosenExercise never initialized from localStorage
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
 let reminderMinutes = Number(localStorage.getItem("reminder") || 25);
@@ -173,6 +167,7 @@ exerciseBtns.forEach(btn => {
       chosenExercise = btn.dataset.ex;
     }
 
+    // Only short text, stays until timer finishes
     chosenExerciseDisplay.textContent = `Godt valg! Du laver ${chosenExercise}.`;
 
     await ensurePermission();
@@ -272,20 +267,35 @@ function scheduleNextNotification() {
 }
 
 function postToFeed(name, exercise, energy) {
+  const payload = { name, exercise, energy, ts: Date.now() };
+  // Update debug panel
+  lastPayloadEl.textContent = JSON.stringify(payload, null, 2);
+
+  // POST then force reload feed immediately (and again shortly after)
   fetch(api('/feed'), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ name, exercise, energy })
-  }).then(() => setTimeout(loadFeed, 300));
+    body: JSON.stringify(payload),
+    cache: "no-store"
+  })
+  .then(res => {
+    // ensure we attempt to refresh feed regardless of response
+    loadFeed();
+    setTimeout(loadFeed, 500);
+    return res;
+  })
+  .catch(() => {
+    // still try to refresh feed on error
+    loadFeed();
+    setTimeout(loadFeed, 500);
+  });
 }
 
 function loadFeed() {
-  fetch(api('/feed'))
+  fetch(api('/feed'), { cache: "no-store" })
     .then(r => r.ok ? r.json() : [])
     .then(items => {
-
       statsToggle.removeAttribute("open");
-
       teamSummary.textContent = `${items.length} energipauser i alt`;
 
       const latest = {};
@@ -297,9 +307,28 @@ function loadFeed() {
         div.textContent = `• ${i.name} lavede en energipause: ${i.exercise}`;
         feedEl.appendChild(div);
       });
+    })
+    .catch(err => {
+      // show minimal feedback on error
+      feedEl.innerHTML = "<div>Kunne ikke hente feed</div>";
+      console.error("loadFeed error", err);
     });
 }
 
+// Buttons in debug panel
+forceReloadFeedBtn.onclick = () => loadFeed();
+unregisterSWBtn.onclick = () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister().catch(()=>{}));
+      alert("Service workers unregistered (if any). Genindlæs siden.");
+    }).catch(()=>{ alert("Kunne ikke unregister service worker"); });
+  } else {
+    alert("Service worker ikke understøttet i denne browser");
+  }
+};
+
+// Initial load
 loadFeed();
 </script>
 
