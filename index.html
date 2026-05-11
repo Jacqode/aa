@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v15</title>
+<title>Flow Focus v16</title>
 <style>
   body{
     font-family:system-ui;
@@ -15,7 +15,7 @@
   }
 
   .section{
-    margin:10px 0 20px 0; /* ⭐ v15: mindre afstand over timer */
+    margin:10px 0 20px 0;
   }
 
   button{
@@ -31,10 +31,9 @@
 
   .active{background:#111;color:#fff}
 
-  /* ⭐ v15: Timer i 26px og rolig typografi */
   #timer{
     font-size:26px;
-    margin:10px 0 20px 0; /* ⭐ samme afstand som til Færdig-knap */
+    margin:10px 0 20px 0;
     min-height:32px;
     font-weight:400;
   }
@@ -78,6 +77,15 @@
 
 <div id="thanks" style="display:none;margin-top:20px; white-space:pre-line;"></div>
 
+<!-- ⭐ v16: Team statistik -->
+<div id="teamStats" style="display:none; margin-top:20px;">
+  <div style="font-weight:600; margin-bottom:6px;">Team statistik</div>
+  <ul style="margin:0; padding-left:20px;">
+    <li id="statTotal"></li>
+    <li>Seneste energipauser er:</li>
+  </ul>
+</div>
+
 <details style="margin-top:40px;">
   <summary>Indstillinger</summary>
   <div style="margin-top:12px">
@@ -103,6 +111,8 @@ const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const finishBtn = document.getElementById("finishBtn");
 const thanks = document.getElementById("thanks");
+const teamStats = document.getElementById("teamStats");
+const statTotal = document.getElementById("statTotal");
 
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
@@ -146,6 +156,7 @@ exerciseBtns.forEach(btn => {
 
 function startTimer() {
   thanks.style.display = "none";
+  teamStats.style.display = "none";
 
   let s = chosenTime;
   pauseStart = Date.now();
@@ -205,7 +216,6 @@ function showMicroFeedback() {
   });
 
   let lines = "Godt gået! 🙌\n\n";
-
   lines += `Dit team har ladt op med i alt ${total} energipauser.\n\n`;
   lines += "De seneste er:\n";
 
@@ -218,6 +228,10 @@ function showMicroFeedback() {
 
   thanks.textContent = lines;
   thanks.style.display = "block";
+
+  // ⭐ v16: Team statistik
+  statTotal.textContent = `I har ladt op med i alt ${total} energipauser`;
+  teamStats.style.display = "block";
 }
 
 function loadFeed() {
