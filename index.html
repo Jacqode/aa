@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v10</title>
+<title>Flow Focus v11</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -126,8 +126,11 @@ function startTimer() {
   }, 1000);
 }
 
+// ⭐ v11: LANGT FORMAT
 function format(sec) {
-  return `${sec/60|0}:${String(sec%60).padStart(2,'0')}`;
+  const m = sec / 60 | 0;
+  const s = sec % 60;
+  return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
 // FÆRDIG-KNAP
@@ -166,7 +169,7 @@ const emojiMap = {
   "Stræk": "🤸"
 };
 
-// MICROFEEDBACK v10
+// MICROFEEDBACK v11
 function showMicroFeedback() {
   const items = latestFeedCache;
   const total = items.length;
