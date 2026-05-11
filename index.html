@@ -3,19 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v7</title>
+<title>Flow Focus v8</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
   button{padding:10px 16px;font-size:0.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
   .active{background:#111;color:#fff}
   #timer{font-size:40px;margin:20px 0;min-height:48px}
-  #feed div{padding:6px 0;border-bottom:1px solid #eee}
   input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
   summary{font-weight:600}
   #chosenExerciseDisplay{font-size:18px;margin-top:10px;min-height:24px}
-  .stat-title{font-style:italic;margin-bottom:2px}
-  .stat-sub{margin-left:16px;opacity:0.9}
 </style>
 </head>
 <body>
@@ -37,21 +34,7 @@
 <div id="timer"></div>
 <button id="finishBtn" style="display:none; margin-top:10px;">Færdig nu</button>
 
-<div id="thanks" style="display:none;margin-top:20px;"></div>
-
-<hr style="border:0; border-top:1px solid #eee; margin:30px 0;">
-
-<details open>
-  <summary>Statistik</summary>
-  <div style="margin-top:12px">
-    <div class="stat-title">Team</div>
-    <div id="teamSummary" class="stat-sub">0 pauser i alt</div>
-    <br>
-    <div class="stat-title">Personer</div>
-    <div class="stat-sub">Seneste pause pr. person</div>
-    <div id="feed" style="margin-top:12px;"></div>
-  </div>
-</details>
+<div id="thanks" style="display:none;margin-top:20px; white-space:pre-line;"></div>
 
 <details>
   <summary>Indstillinger</summary>
@@ -79,14 +62,13 @@ const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const finishBtn = document.getElementById("finishBtn");
 const thanks = document.getElementById("thanks");
-const feedEl = document.getElementById("feed");
-const teamSummary = document.getElementById("teamSummary");
 
 // STATE
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
 let timerId = null;
 let pauseStart = null;
+let latestFeedCache = [];
 
 // NAVN
 nameInput.value = localStorage.getItem("name") || "";
@@ -120,9 +102,7 @@ exerciseBtns.forEach(btn => {
       chosenExercise = btn.dataset.ex;
     }
 
-    // v7: ingen tekst som "Godt valg!"
     chosenExerciseDisplay.textContent = "";
-
     startTimer();
   };
 });
@@ -157,8 +137,6 @@ async function finishPause() {
   clearInterval(timerId);
   timerId = null;
   finishBtn.style.display = "none";
-
-  // v7: ingen "Færdig"
   timerEl.textContent = "";
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
@@ -176,8 +154,40 @@ async function finishPause() {
     cache:"no-store"
   });
 
-  // v7: ingen delay — auto-refresh klarer resten
-  thanks.textContent = "Godt gået! 🙌";
+  setTimeout(() => {
+    showMicroFeedback();
+  }, 300);
+}
+
+// EMOJI MAP
+const emojiMap = {
+  "Armstræk": "💪",
+  "Squats": "🦵",
+  "Stræk": "🤸"
+};
+
+// MICROFEEDBACK v8
+function showMicroFeedback() {
+  const items = latestFeedCache;
+  const total = items.length;
+
+  const latest = {};
+  items.forEach(i => {
+    if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
+  });
+
+  let lines = "Godt gået! 🙌\n";
+  lines += `Dit team har nu ladt op med i alt ${total} energipauser.\n`;
+  lines += "Dine team venners seneste energipauser er:\n";
+
+  Object.values(latest)
+    .sort((a,b)=>b.ts - a.ts)
+    .forEach(i => {
+      const emoji = emojiMap[i.exercise] || "✨";
+      lines += `${emoji} ${i.name}: ${i.exercise}\n`;
+    });
+
+  thanks.textContent = lines;
   thanks.style.display = "block";
 }
 
@@ -186,26 +196,11 @@ function loadFeed() {
   fetch(api("/feed"), { cache:"no-store" })
     .then(r => r.json())
     .then(items => {
-      teamSummary.textContent = `${items.length} pauser i alt`;
-
-      const latest = {};
-      items.forEach(i => {
-        if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
-      });
-
-      feedEl.innerHTML = "";
-      Object.values(latest)
-        .sort((a,b)=>b.ts - a.ts)
-        .forEach(i => {
-          const t = new Date(i.ts).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-          const div = document.createElement("div");
-          div.textContent = `${t} • ${i.name} lavede ${i.exercise} (${i.duration}s)`;
-          feedEl.appendChild(div);
-        });
+      latestFeedCache = items;
     });
 }
 
-// v7: AUTO-REFRESH
+// AUTO-REFRESH
 setInterval(loadFeed, 3000);
 
 loadFeed();
