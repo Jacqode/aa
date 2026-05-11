@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v4</title>
+<title>Flow Focus v5</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -151,11 +151,13 @@ function format(sec) {
 // FÆRDIG-KNAP
 finishBtn.onclick = finishPause;
 
-function finishPause() {
+async function finishPause() {
   clearInterval(timerId);
   timerId = null;
   finishBtn.style.display = "none";
-  timerEl.textContent = "Færdig";
+
+  // v5: ingen "Færdig" tekst
+  timerEl.textContent = "";
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
 
@@ -165,9 +167,19 @@ function finishPause() {
     duration
   };
 
-  postToFeed(payload);
+  await fetch(api("/feed"), {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload),
+    cache:"no-store"
+  });
 
-  thanks.textContent = "Godt gået 🙌";
+  // Vent kort pga. KV eventual consistency
+  setTimeout(() => {
+    loadFeed();
+  }, 250);
+
+  thanks.textContent = "Godt gået! 🙌";
   thanks.style.display = "block";
 }
 
