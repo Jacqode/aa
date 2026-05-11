@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus – clean v1</title>
+<title>Flow Focus – clean v2</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
   button{padding:10px 16px;font-size:0.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
   .active{background:#111;color:#fff}
-  #timer{font-size:40px;margin:20px 0;line-height:1;min-height:48px}
+  #timer{font-size:40px;margin:20px 0;min-height:48px}
   #feed div{padding:6px 0;border-bottom:1px solid #eee}
   input{padding:8px;font-size:0.95rem;border-radius:6px;border:1px solid #ccc;margin:4px 0}
   summary{font-weight:600}
@@ -19,6 +19,8 @@
 </style>
 </head>
 <body>
+
+<h2>Flow Focus – clean v2</h2>
 
 <div style="font-size:18px; margin-bottom:10px;">
   Hej <span id="welcomeName">ven</span> 👋<br>
@@ -47,45 +49,36 @@
 
 <hr style="border:0; border-top:1px solid #eee; margin:30px 0;">
 
-<div class="section">
-  <details id="statsToggle" open>
-    <summary>Statistik</summary>
-    <div style="margin-top:12px">
-      <div class="stat-title">Team</div>
-      <div id="teamSummary" class="stat-sub">0 energipauser i alt</div>
-      <br>
-      <div class="stat-title">Personer</div>
-      <div class="stat-sub">Seneste energipause pr. person</div>
-      <div id="feed" style="margin-top:12px;"></div>
-    </div>
-  </details>
-</div>
+<details open>
+  <summary>Statistik</summary>
+  <div style="margin-top:12px">
+    <div class="stat-title">Team</div>
+    <div id="teamSummary" class="stat-sub">0 energipauser i alt</div>
+    <br>
+    <div class="stat-title">Personer</div>
+    <div class="stat-sub">Seneste energipause pr. person</div>
+    <div id="feed" style="margin-top:12px;"></div>
+  </div>
+</details>
 
-<div class="section">
-  <details>
-    <summary>Indstillinger</summary>
-    <div style="margin-top:12px">
-      <div>Dit navn:</div>
-      <input id="nameInput" type="text" placeholder="Skriv dit navn">
-      <br><br>
-      <div>Varighed (energipause):</div>
-      <button class="timeBtn" data-time="30">30 sek</button>
-      <button class="timeBtn" data-time="60">1 min</button>
-      <button class="timeBtn" data-time="120">2 min</button>
-    </div>
-  </details>
-</div>
-
-<div style="text-align:center; opacity:0.5; margin-top:40px; font-size:14px;">
-  Flow Focus – clean v1
-</div>
+<details>
+  <summary>Indstillinger</summary>
+  <div style="margin-top:12px">
+    <div>Dit navn:</div>
+    <input id="nameInput" type="text" placeholder="Skriv dit navn">
+    <br><br>
+    <div>Varighed (energipause):</div>
+    <button class="timeBtn" data-time="30">30 sek</button>
+    <button class="timeBtn" data-time="60">1 min</button>
+    <button class="timeBtn" data-time="120">2 min</button>
+  </div>
+</details>
 
 <script>
-// *** KONFIG ***
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
-const api = (path) => WORKER_URL.replace(/\/+$/,"") + path;
+const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
 
-// *** DOM ***
+// DOM
 const nameInput = document.getElementById("nameInput");
 const welcomeName = document.getElementById("welcomeName");
 const exerciseBtns = document.querySelectorAll(".exerciseBtn");
@@ -96,14 +89,13 @@ const energySection = document.getElementById("energySection");
 const thanks = document.getElementById("thanks");
 const feedEl = document.getElementById("feed");
 const teamSummary = document.getElementById("teamSummary");
-const statsToggle = document.getElementById("statsToggle");
 
-// *** STATE ***
+// STATE
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
 let timerId = null;
 
-// *** NAVN ***
+// NAVN
 nameInput.value = localStorage.getItem("name") || "";
 welcomeName.textContent = nameInput.value || "ven";
 nameInput.oninput = () => {
@@ -111,7 +103,7 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
-// *** TID ***
+// TID
 timeBtns.forEach(btn => {
   if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
   btn.onclick = () => {
@@ -122,7 +114,7 @@ timeBtns.forEach(btn => {
   };
 });
 
-// *** ØVELSE ***
+// ØVELSE
 exerciseBtns.forEach(btn => {
   btn.onclick = () => {
     exerciseBtns.forEach(b => b.classList.remove("active"));
@@ -136,80 +128,69 @@ exerciseBtns.forEach(btn => {
     }
 
     chosenExerciseDisplay.textContent = `Godt valg! Du laver ${chosenExercise}.`;
-    startExerciseTimer();
+    startTimer();
   };
 });
 
-// *** TIMER ***
-function startExerciseTimer() {
+// TIMER
+function startTimer() {
   energySection.style.display = "none";
   thanks.style.display = "none";
 
   let s = chosenTime;
-  timerEl.textContent = formatTime(s);
+  timerEl.textContent = format(s);
 
   if (timerId) clearInterval(timerId);
   timerId = setInterval(() => {
-    timerEl.textContent = formatTime(s);
+    timerEl.textContent = format(s);
     if (s-- <= 0) {
       clearInterval(timerId);
       timerId = null;
       timerEl.textContent = "Færdig";
-      showEnergyQuestion();
+      energySection.style.display = "block";
     }
   }, 1000);
 }
 
-function formatTime(sec) {
+function format(sec) {
   return `${sec/60|0}:${String(sec%60).padStart(2,'0')}`;
 }
 
-function showEnergyQuestion() {
-  energySection.style.display = "block";
-}
-
-// *** ENERGI-SVAR ***
+// ENERGI
 document.querySelectorAll(".energyBtn").forEach(btn => {
   btn.onclick = () => {
-    const energy = btn.dataset.energy;
-    const exercise = chosenExercise;
-    const name = nameInput.value || "Ukendt";
-
-    postToFeed(name, exercise, energy);
-
-    thanks.textContent = `Tak for dit svar 🙌`;
+    const payload = {
+      name: nameInput.value || "Ukendt",
+      exercise: chosenExercise,
+      energy: btn.dataset.energy
+    };
+    postToFeed(payload);
+    thanks.textContent = "Tak for dit svar 🙌";
     thanks.style.display = "block";
     energySection.style.display = "none";
   };
 });
 
-// *** FEED ***
-function postToFeed(name, exercise, energy) {
-  const payload = { name, exercise, energy };
-
+// POST
+function postToFeed(data) {
   fetch(api("/feed"), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(payload),
-    cache: "no-store"
+    body: JSON.stringify(data),
+    cache:"no-store"
   }).then(() => {
-    // hent feed lige efter
     loadFeed();
-    setTimeout(loadFeed, 500);
-  }).catch(() => {
-    // prøv alligevel
-    loadFeed();
+    setTimeout(loadFeed, 300);
   });
 }
 
+// GET
 function loadFeed() {
   fetch(api("/feed"), { cache:"no-store" })
-    .then(r => r.ok ? r.json() : [])
+    .then(r => r.json())
     .then(items => {
-      // items er allerede sorteret nyeste først i Worker
       teamSummary.textContent = `${items.length} energipauser i alt`;
 
-      // seneste pr. person
       const latest = {};
       items.forEach(i => {
         if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
@@ -219,18 +200,14 @@ function loadFeed() {
       Object.values(latest)
         .sort((a,b)=>b.ts - a.ts)
         .forEach(i => {
-          const div = document.createElement("div");
           const t = new Date(i.ts).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
+          const div = document.createElement("div");
           div.textContent = `${t} • ${i.name} lavede ${i.exercise} (energi: ${i.energy})`;
           feedEl.appendChild(div);
         });
-    })
-    .catch(() => {
-      feedEl.innerHTML = "<div>Kunne ikke hente feed</div>";
     });
 }
 
-// første load
 loadFeed();
 </script>
 
