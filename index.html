@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v11</title>
+<title>Flow Focus v12</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -35,7 +35,7 @@
 
 <div id="thanks" style="display:none;margin-top:20px; white-space:pre-line;"></div>
 
-<!-- ⭐ Indstillinger rykket 40px ned -->
+<!-- Indstillinger rykket 40px ned -->
 <details style="margin-top:40px;">
   <summary>Indstillinger</summary>
   <div style="margin-top:12px">
@@ -126,7 +126,7 @@ function startTimer() {
   }, 1000);
 }
 
-// ⭐ v11: LANGT FORMAT
+// ⭐ v11/v12: LANGT FORMAT
 function format(sec) {
   const m = sec / 60 | 0;
   const s = sec % 60;
@@ -169,7 +169,7 @@ const emojiMap = {
   "Stræk": "🤸"
 };
 
-// MICROFEEDBACK v11
+// ⭐ MICROFEEDBACK v12
 function showMicroFeedback() {
   const items = latestFeedCache;
   const total = items.length;
@@ -181,7 +181,9 @@ function showMicroFeedback() {
 
   let lines = "Godt gået! 🙌\n\n";
   lines += `Dit team har nu ladt op med i alt ${total} energipauser.\n\n`;
-  lines += "Dine team venners seneste energipauser er:\n";
+
+  // ⭐ v12 ændring
+  lines += "Dit teams seneste er:\n";
 
   Object.values(latest)
     .sort((a,b)=>b.ts - a.ts)
