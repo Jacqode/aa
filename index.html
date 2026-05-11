@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v247</title>
+<title>Flow Focus v248</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -34,13 +34,11 @@
     min-height:24px;
   }
 
-  /* Underoverskrifter i kursiv */
   .stat-title {
     font-style: italic;
     margin-bottom: 2px;
   }
 
-  /* Indhold under underoverskrifter */
   .stat-sub {
     margin-left: 16px;
     opacity: 0.9;
@@ -51,7 +49,7 @@
 
 <div style="font-size:18px; margin-bottom:10px;">
   Hej <span id="welcomeName">ven</span> 👋<br>
-  Klik på en energipause, og du er i gang:
+  Få en energipause med et klik:
 </div>
 
 <div class="section">
@@ -77,20 +75,17 @@
 
 <hr style="border:0; border-top:1px solid #eee; margin:30px 0;">
 
-<!-- ⭐ Statistik (lukket som standard) -->
 <div class="section">
   <details id="statsToggle">
     <summary>Statistik</summary>
 
     <div style="margin-top:12px">
 
-      <!-- ⭐ Team -->
       <div class="stat-title">Team</div>
       <div id="teamSummary" class="stat-sub">0 pauser</div>
 
       <br>
 
-      <!-- ⭐ Personer -->
       <div class="stat-title">Personer</div>
       <div class="stat-sub">Seneste pause pr. person</div>
 
@@ -100,7 +95,6 @@
   </details>
 </div>
 
-<!-- ⭐ Indstillinger -->
 <div class="section">
   <details>
     <summary>Indstillinger</summary>
@@ -293,7 +287,6 @@ function loadFeed() {
     .then(r => r.ok ? r.json() : [])
     .then(items => {
 
-      // ⭐ Statistik skal være lukket som standard
       statsToggle.removeAttribute("open");
 
       teamSummary.textContent = `${items.length} pauser`;
