@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v16</title>
+<title>Flow Focus v17</title>
 <style>
   body{
     font-family:system-ui;
@@ -75,15 +75,17 @@
 
 <button id="finishBtn" style="margin-top:10px;">Færdig nu</button>
 
+<!-- ⭐ v17: Microfeedback kun som “Godt gået!” -->
 <div id="thanks" style="display:none;margin-top:20px; white-space:pre-line;"></div>
 
-<!-- ⭐ v16: Team statistik -->
+<!-- ⭐ v17: Team statistik -->
 <div id="teamStats" style="display:none; margin-top:20px;">
   <div style="font-weight:600; margin-bottom:6px;">Team statistik</div>
   <ul style="margin:0; padding-left:20px;">
     <li id="statTotal"></li>
     <li>Seneste energipauser er:</li>
   </ul>
+  <div id="latestList" style="margin-top:6px; white-space:pre-line;"></div>
 </div>
 
 <details style="margin-top:40px;">
@@ -113,6 +115,7 @@ const finishBtn = document.getElementById("finishBtn");
 const thanks = document.getElementById("thanks");
 const teamStats = document.getElementById("teamStats");
 const statTotal = document.getElementById("statTotal");
+const latestList = document.getElementById("latestList");
 
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
@@ -197,7 +200,7 @@ async function finishPause() {
     cache:"no-store"
   });
 
-  setTimeout(() => showMicroFeedback(), 300);
+  setTimeout(() => showFeedback(), 300);
 }
 
 const emojiMap = {
@@ -206,7 +209,7 @@ const emojiMap = {
   "Stræk": "🤸"
 };
 
-function showMicroFeedback() {
+function showFeedback() {
   const items = latestFeedCache;
   const total = items.length;
 
@@ -215,22 +218,22 @@ function showMicroFeedback() {
     if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
   });
 
-  let lines = "Godt gået! 🙌\n\n";
-  lines += `Dit team har ladt op med i alt ${total} energipauser.\n\n`;
-  lines += "De seneste er:\n";
+  // ⭐ v17: Microfeedback kun “Godt gået!”
+  thanks.textContent = "Godt gået! 🙌";
+  thanks.style.display = "block";
 
+  // ⭐ Team statistik
+  statTotal.textContent = `I har ladt op med i alt ${total} energipauser`;
+
+  let list = "";
   Object.values(latest)
     .sort((a,b)=>b.ts - a.ts)
     .forEach(i => {
       const emoji = emojiMap[i.exercise] || "✨";
-      lines += `${emoji} ${i.name}: ${i.exercise}\n`;
+      list += `${emoji} ${i.name}: ${i.exercise}\n`;
     });
 
-  thanks.textContent = lines;
-  thanks.style.display = "block";
-
-  // ⭐ v16: Team statistik
-  statTotal.textContent = `I har ladt op med i alt ${total} energipauser`;
+  latestList.textContent = list;
   teamStats.style.display = "block";
 }
 
