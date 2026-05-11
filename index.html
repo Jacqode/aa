@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v6</title>
+<title>Flow Focus v7</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -120,7 +120,7 @@ exerciseBtns.forEach(btn => {
       chosenExercise = btn.dataset.ex;
     }
 
-    // v6: ingen tekst som "Godt valg! Du laver X"
+    // v7: ingen tekst som "Godt valg!"
     chosenExerciseDisplay.textContent = "";
 
     startTimer();
@@ -158,7 +158,7 @@ async function finishPause() {
   timerId = null;
   finishBtn.style.display = "none";
 
-  // v6: ingen "Færdig" tekst
+  // v7: ingen "Færdig"
   timerEl.textContent = "";
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
@@ -176,11 +176,7 @@ async function finishPause() {
     cache:"no-store"
   });
 
-  // Vent kort pga. KV eventual consistency
-  setTimeout(() => {
-    loadFeed();
-  }, 250);
-
+  // v7: ingen delay — auto-refresh klarer resten
   thanks.textContent = "Godt gået! 🙌";
   thanks.style.display = "block";
 }
@@ -208,6 +204,9 @@ function loadFeed() {
         });
     });
 }
+
+// v7: AUTO-REFRESH
+setInterval(loadFeed, 3000);
 
 loadFeed();
 </script>
