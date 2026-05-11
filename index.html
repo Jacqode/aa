@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v255</title>
+<title>Flow Focus v256</title>
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
   .section{margin:20px 0}
@@ -148,7 +148,8 @@ const feedEl = document.getElementById("feed");
 const teamSummary = document.getElementById("teamSummary");
 const statsToggle = document.getElementById("statsToggle");
 
-let chosenExercise = localStorage.getItem("exercise") || "random";
+// v256: ingen exercise i localStorage
+let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
 let reminderMinutes = Number(localStorage.getItem("reminder") || 25);
 let timerId = null;
@@ -161,8 +162,6 @@ nameInput.oninput = () => {
 };
 
 exerciseBtns.forEach(btn => {
-  if (btn.dataset.ex === chosenExercise) btn.classList.add("active");
-
   btn.onclick = async () => {
     exerciseBtns.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
@@ -174,9 +173,6 @@ exerciseBtns.forEach(btn => {
       chosenExercise = btn.dataset.ex;
     }
 
-    localStorage.setItem("exercise", chosenExercise);
-
-    // ⭐ v255 — kun kort tekst
     chosenExerciseDisplay.textContent = `Godt valg! Du laver ${chosenExercise}.`;
 
     await ensurePermission();
@@ -290,7 +286,6 @@ function loadFeed() {
 
       statsToggle.removeAttribute("open");
 
-      // ⭐ v255 — ny tekst
       teamSummary.textContent = `${items.length} energipauser i alt`;
 
       const latest = {};
@@ -310,3 +305,4 @@ loadFeed();
 
 </body>
 </html>
+
