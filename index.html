@@ -1,250 +1,158 @@
-<!doctype html>
+<!-- ------------------------------------------------------
+     Flow Focus — FRONTEND v18
+     Version: v18
+     Backend: Cloudflare Worker + D1
+     ------------------------------------------------------ -->
+
+<!DOCTYPE html>
 <html lang="da">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v17</title>
-<style>
-  body{
-    font-family:system-ui;
-    margin:0;
-    padding:20px;
-    background:#fff;
-    color:#111;
-    font-weight:400;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flow Focus v18</title>
 
-  .section{
-    margin:10px 0 20px 0;
-  }
-
-  button{
-    padding:10px 16px;
-    font-size:0.95rem;
-    border-radius:8px;
-    border:1px solid #ccc;
-    background:#fafafa;
-    cursor:pointer;
-    margin:4px;
-    font-weight:400;
-  }
-
-  .active{background:#111;color:#fff}
-
-  #timer{
-    font-size:26px;
-    margin:10px 0 20px 0;
-    min-height:32px;
-    font-weight:400;
-  }
-
-  input{
-    padding:8px;
-    font-size:0.95rem;
-    border-radius:6px;
-    border:1px solid #ccc;
-    margin:4px 0;
-    font-weight:400;
-  }
-
-  #chosenExerciseDisplay{
-    font-size:18px;
-    margin-top:10px;
-    min-height:24px;
-    font-weight:400;
-  }
-</style>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 20px;
+      padding-bottom: 80px;
+    }
+    h1 { margin-bottom: 5px; }
+    .small { color: #777; font-size: 13px; margin-bottom: 20px; }
+    button {
+      padding: 12px 18px;
+      margin: 6px 0;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      width: 100%;
+    }
+    #status { margin-top: 20px; font-size: 14px; color: #444; }
+    #statsBox { margin-top: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 6px; }
+    #statsBox h3 { margin-top: 0; }
+  </style>
 </head>
+
 <body>
 
-<div style="font-size:18px; margin-bottom:10px;">
-  Hej <span id="welcomeName">ven</span> 👋
-  <br><br>
-  Få en energipause med et klik:
-</div>
+  <h1>Flow Focus</h1>
+  <div class="small">Version <strong>v18</strong> — D1 backend</div>
 
-<div class="section">
-  <button class="exerciseBtn" data-ex="Armstræk">💪 Armstræk</button>
-  <button class="exerciseBtn" data-ex="Squats">🦵 Squats</button>
-  <button class="exerciseBtn" data-ex="Stræk">🤸 Stræk</button>
-  <button class="exerciseBtn" data-ex="random">🎲 Overrask mig!</button>
-</div>
+  <label>Dit navn:</label><br>
+  <input id="name" placeholder="Skriv dit navn" style="width:100%;padding:10px;margin-bottom:15px">
 
-<div id="chosenExerciseDisplay"></div>
-<div id="timer"></div>
+  <label>Vælg øvelse:</label><br>
+  <select id="exercise" style="width:100%;padding:10px;margin-bottom:15px">
+    <option value="Stræk">Stræk</option>
+    <option value="Vejrtrækning">Vejrtrækning</option>
+    <option value="Pause">Pause</option>
+    <option value="Gåtur">Gåtur</option>
+  </select>
 
-<button id="finishBtn" style="margin-top:10px;">Færdig nu</button>
+  <button id="startBtn">Start</button>
+  <button id="stopBtn" disabled>Færdig nu</button>
 
-<!-- ⭐ v17: Microfeedback kun som “Godt gået!” -->
-<div id="thanks" style="display:none;margin-top:20px; white-space:pre-line;"></div>
+  <div id="status"></div>
 
-<!-- ⭐ v17: Team statistik -->
-<div id="teamStats" style="display:none; margin-top:20px;">
-  <div style="font-weight:600; margin-bottom:6px;">Team statistik</div>
-  <ul style="margin:0; padding-left:20px;">
-    <li id="statTotal"></li>
-    <li>Seneste energipauser er:</li>
-  </ul>
-  <div id="latestList" style="margin-top:6px; white-space:pre-line;"></div>
-</div>
-
-<details style="margin-top:40px;">
-  <summary>Indstillinger</summary>
-  <div style="margin-top:12px">
-    <div>Dit navn:</div>
-    <input id="nameInput" type="text" placeholder="Skriv dit navn">
-    <br><br>
-    <div>Varighed (energipause):</div>
-    <button class="timeBtn" data-time="30">30 sek</button>
-    <button class="timeBtn" data-time="60">1 min</button>
-    <button class="timeBtn" data-time="120">2 min</button>
+  <div id="statsBox">
+    <h3>Statistik</h3>
+    <div id="statsContent">Indlæser…</div>
   </div>
-</details>
 
 <script>
-const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
-const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
+  // ------------------------------------------------------
+  // Konfiguration
+  // ------------------------------------------------------
+  const workerBase = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
+  const urlParams = new URLSearchParams(window.location.search);
+  const team = urlParams.get("team") || "default";
 
-const nameInput = document.getElementById("nameInput");
-const welcomeName = document.getElementById("welcomeName");
-const exerciseBtns = document.querySelectorAll(".exerciseBtn");
-const timeBtns = document.querySelectorAll(".timeBtn");
-const timerEl = document.getElementById("timer");
-const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
-const finishBtn = document.getElementById("finishBtn");
-const thanks = document.getElementById("thanks");
-const teamStats = document.getElementById("teamStats");
-const statTotal = document.getElementById("statTotal");
-const latestList = document.getElementById("latestList");
+  let startTime = null;
 
-let chosenExercise = "random";
-let chosenTime = Number(localStorage.getItem("time") || 60);
-let timerId = null;
-let pauseStart = null;
-let latestFeedCache = [];
+  // ------------------------------------------------------
+  // Notifikationstilladelse
+  // ------------------------------------------------------
+  if (Notification && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
 
-nameInput.value = localStorage.getItem("name") || "";
-welcomeName.textContent = nameInput.value || "ven";
-nameInput.oninput = () => {
-  localStorage.setItem("name", nameInput.value);
-  welcomeName.textContent = nameInput.value || "ven";
-};
+  function notify(msg) {
+    if (Notification.permission === "granted") {
+      new Notification(msg);
+    }
+  }
 
-timeBtns.forEach(btn => {
-  if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
-  btn.onclick = () => {
-    timeBtns.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    chosenTime = Number(btn.dataset.time);
-    localStorage.setItem("time", chosenTime);
+  // ------------------------------------------------------
+  // Start pause
+  // ------------------------------------------------------
+  document.getElementById("startBtn").onclick = () => {
+    startTime = Date.now();
+    document.getElementById("startBtn").disabled = true;
+    document.getElementById("stopBtn").disabled = false;
+    document.getElementById("status").innerText = "I gang…";
+
+    notify("Din pause er startet");
   };
-});
 
-exerciseBtns.forEach(btn => {
-  btn.onclick = () => {
-    exerciseBtns.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+  // ------------------------------------------------------
+  // Stop pause → send event til worker
+  // ------------------------------------------------------
+  document.getElementById("stopBtn").onclick = async () => {
+    const name = document.getElementById("name").value.trim();
+    const exercise = document.getElementById("exercise").value;
 
-    if (btn.dataset.ex === "random") {
-      const list = ["Armstræk","Squats","Stræk"];
-      chosenExercise = list[Math.floor(Math.random()*list.length)];
-    } else {
-      chosenExercise = btn.dataset.ex;
+    if (!name) {
+      alert("Skriv dit navn først");
+      return;
     }
 
-    chosenExerciseDisplay.textContent = "";
-    startTimer();
-  };
-});
+    const duration = Math.round((Date.now() - startTime) / 1000);
 
-function startTimer() {
-  thanks.style.display = "none";
-  teamStats.style.display = "none";
+    document.getElementById("status").innerText = "Sender…";
 
-  let s = chosenTime;
-  pauseStart = Date.now();
-
-  timerEl.textContent = format(s);
-
-  if (timerId) clearInterval(timerId);
-  timerId = setInterval(() => {
-    timerEl.textContent = format(s);
-    if (s-- <= 0) finishPause();
-  }, 1000);
-}
-
-function format(sec) {
-  const m = sec / 60 | 0;
-  const s = sec % 60;
-  return `${m} min ${String(s).padStart(2,'0')} sek`;
-}
-
-finishBtn.onclick = finishPause;
-
-async function finishPause() {
-  clearInterval(timerId);
-  timerId = null;
-
-  const duration = Math.round((Date.now() - pauseStart) / 1000);
-
-  const payload = {
-    name: nameInput.value || "Ukendt",
-    exercise: chosenExercise,
-    duration
-  };
-
-  await fetch(api("/feed"), {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(payload),
-    cache:"no-store"
-  });
-
-  setTimeout(() => showFeedback(), 300);
-}
-
-const emojiMap = {
-  "Armstræk": "💪",
-  "Squats": "🦵",
-  "Stræk": "🤸"
-};
-
-function showFeedback() {
-  const items = latestFeedCache;
-  const total = items.length;
-
-  const latest = {};
-  items.forEach(i => {
-    if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
-  });
-
-  // ⭐ v17: Microfeedback kun “Godt gået!”
-  thanks.textContent = "Godt gået! 🙌";
-  thanks.style.display = "block";
-
-  // ⭐ Team statistik
-  statTotal.textContent = `I har ladt op med i alt ${total} energipauser`;
-
-  let list = "";
-  Object.values(latest)
-    .sort((a,b)=>b.ts - a.ts)
-    .forEach(i => {
-      const emoji = emojiMap[i.exercise] || "✨";
-      list += `${emoji} ${i.name}: ${i.exercise}\n`;
+    await fetch(workerBase + "/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        team_id: team,
+        name,
+        exercise,
+        duration
+      })
     });
 
-  latestList.textContent = list;
-  teamStats.style.display = "block";
-}
+    document.getElementById("status").innerText = "Gemt ✔";
+    notify("Din pause er gemt");
 
-function loadFeed() {
-  fetch(api("/feed"), { cache:"no-store" })
-    .then(r => r.json())
-    .then(items => latestFeedCache = items);
-}
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("stopBtn").disabled = true;
 
-setInterval(loadFeed, 3000);
-loadFeed();
+    loadStats();
+  };
+
+  // ------------------------------------------------------
+  // Hent statistik
+  // ------------------------------------------------------
+  async function loadStats() {
+    const res = await fetch(workerBase + "/stats?team=" + team);
+    const data = await res.json();
+
+    let html = `
+      <div><strong>Total:</strong> ${data.total}</div>
+      <br>
+      <strong>Seneste:</strong><br>
+    `;
+
+    data.latest.forEach(ev => {
+      const d = new Date(ev.ts * 1000).toLocaleTimeString("da-DK");
+      html += `${d} — ${ev.name} (${ev.exercise}, ${ev.duration}s)<br>`;
+    });
+
+    document.getElementById("statsContent").innerHTML = html;
+  }
+
+  loadStats();
 </script>
 
 </body>
