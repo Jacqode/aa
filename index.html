@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dur Flow Focus v27</title>
+<title>Flow Focus v28 test</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -75,11 +75,9 @@
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
 
+// UI refs
 const nameInput = document.getElementById("nameInput");
 const welcomeName = document.getElementById("welcomeName");
-const exerciseBtns = document.querySelectorAll(".exerciseBtn");
-const timeBtns = document.querySelectorAll(".timeBtn");
-const intervalBtns = document.querySelectorAll(".intervalBtn");
 const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const finishBtn = document.getElementById("finishBtn");
@@ -88,6 +86,7 @@ const teamStats = document.getElementById("teamStats");
 const statTotal = document.getElementById("statTotal");
 const latestList = document.getElementById("latestList");
 
+// State
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
 let chosenInterval = Number(localStorage.getItem("interval") || 1500);
@@ -95,8 +94,29 @@ let timerId = null;
 let pauseStart = null;
 let latestFeedCache = [];
 
-if (Notification.permission === "default") Notification.requestPermission();
+// ⭐ GENERIC BUTTON BINDER
+function bindButtons(selector, stateKey, callback) {
+  document.querySelectorAll(selector).forEach(btn => {
+    const val = btn.dataset.ex || btn.dataset.time || btn.dataset.int;
 
+    if (Number(val) === window[stateKey] || val === window[stateKey]) {
+      btn.classList.add("active");
+    }
+
+    btn.onclick = () => {
+      document.querySelectorAll(selector).forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Update state
+      window[stateKey] = isNaN(val) ? val : Number(val);
+      localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
+
+      callback && callback(btn);
+    };
+  });
+}
+
+// ⭐ Name
 nameInput.value = localStorage.getItem("name") || "";
 welcomeName.textContent = nameInput.value || "ven";
 nameInput.oninput = () => {
@@ -104,44 +124,19 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
-intervalBtns.forEach(btn => {
-  if (Number(btn.dataset.int) === chosenInterval) btn.classList.add("active");
-  btn.onclick = () => {
-    intervalBtns.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    chosenInterval = Number(btn.dataset.int);
-    localStorage.setItem("interval", chosenInterval);
-    updateNextPauseDisplay();
-  };
+// ⭐ Bind interval + time + exercise
+bindButtons(".intervalBtn", "chosenInterval", () => updateNextPauseDisplay());
+bindButtons(".timeBtn", "chosenTime");
+bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
+  if (btn.dataset.ex === "random") {
+    const list = ["Armstræk","Squats","Stræk"];
+    chosenExercise = list[Math.random()*list.length|0];
+  }
+  chosenExerciseDisplay.textContent = "";
+  startTimer();
 });
 
-timeBtns.forEach(btn => {
-  if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
-  btn.onclick = () => {
-    timeBtns.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    chosenTime = Number(btn.dataset.time);
-    localStorage.setItem("time", chosenTime);
-  };
-});
-
-exerciseBtns.forEach(btn => {
-  btn.onclick = () => {
-    exerciseBtns.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-
-    if (btn.dataset.ex === "random") {
-      const list = ["Armstræk","Squats","Stræk"];
-      chosenExercise = list[Math.floor(Math.random()*list.length)];
-    } else {
-      chosenExercise = btn.dataset.ex;
-    }
-
-    chosenExerciseDisplay.textContent = "";
-    startTimer();
-  };
-});
-
+// ⭐ Timer
 function startTimer() {
   thanks.style.display = "none";
   teamStats.style.display = "none";
@@ -165,9 +160,10 @@ function format(sec) {
 
 finishBtn.onclick = finishPause;
 
+// ⭐ Microfeedback
 function nextPauseTime() {
-  const t = new Date(Date.now() + chosenInterval * 1000);
-  return t.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
+  return new Date(Date.now() + chosenInterval * 1000)
+    .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 }
 
 function updateNextPauseDisplay() {
@@ -176,6 +172,7 @@ function updateNextPauseDisplay() {
   }
 }
 
+// ⭐ OS notification
 function scheduleNotification() {
   if (Notification.permission !== "granted") return;
   setTimeout(() => {
@@ -186,6 +183,7 @@ function scheduleNotification() {
   }, chosenInterval * 1000);
 }
 
+// ⭐ Finish pause
 async function finishPause() {
   clearInterval(timerId);
   timerId = null;
@@ -211,18 +209,18 @@ async function finishPause() {
   thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
   thanks.style.display = "block";
 
-  localStorage.setItem("lastPause", Date.now());
   scheduleNotification();
-
   showFeedback();
 }
 
+// ⭐ Emoji map
 const emojiMap = {
   "Armstræk": "💪",
   "Squats": "🦵",
   "Stræk": "🤸"
 };
 
+// ⭐ Feedback
 function showFeedback() {
   const items = latestFeedCache || [];
   const total = items.length;
@@ -234,18 +232,15 @@ function showFeedback() {
 
   statTotal.textContent = `I har ladt op med i alt ${total} energipauser`;
 
-  let list = "";
-  Object.values(latest)
+  latestList.textContent = Object.values(latest)
     .sort((a,b)=>b.ts - a.ts)
-    .forEach(i => {
-      const emoji = emojiMap[i.exercise] || "✨";
-      list += `${emoji} ${i.name}: ${i.exercise}\n`;
-    });
+    .map(i => `${emojiMap[i.exercise] || "✨"} ${i.name}: ${i.exercise}`)
+    .join("\n");
 
-  latestList.textContent = list;
   teamStats.style.display = "block";
 }
 
+// ⭐ Load feed
 async function loadFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
   const res = await fetch(api("/feed?team=" + team), { cache:"no-store" });
