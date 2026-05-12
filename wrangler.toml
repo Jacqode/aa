@@ -1,0 +1,5 @@
+[[d1_databases]]
+binding = "DB"
+database_name = "flowfocus"
+database_id = "DIN-D1-ID"
+migrations_dir = "migrations"
