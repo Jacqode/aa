@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v29 test</title>
+<title>Flow Focus v30 test</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -125,7 +125,9 @@ nameInput.oninput = () => {
 
 // ⭐ Bind interval + time + exercise
 bindButtons(".intervalBtn", "chosenInterval", () => {
-  // ⭐ v29 FIX: Live opdatering af microfeedback
+  // ⭐ v30 FIX: hent altid nyeste intervalværdi
+  chosenInterval = Number(localStorage.getItem("interval"));
+
   if (thanks.style.display === "block") {
     thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
   }
