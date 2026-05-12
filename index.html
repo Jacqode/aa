@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v24</title>
+<title>Flow Focus v25</title>
 
 <style>
   body{
@@ -95,11 +95,13 @@
     <div>Dit navn:</div>
     <input id="nameInput" type="text" placeholder="Skriv dit navn">
     <br><br>
+
     <div>Interval til næste pause:</div>
     <button class="intervalBtn" data-int="30">30 sek</button>
     <button class="intervalBtn" data-int="1500">25 min</button>
     <button class="intervalBtn" data-int="1800">30 min</button>
     <button class="intervalBtn" data-int="2400">40 min</button>
+
     <br><br>
     <div>Varighed (energipause):</div>
     <button class="timeBtn" data-time="30">30 sek</button>
@@ -130,7 +132,7 @@ const latestList = document.getElementById("latestList");
 // ⭐ State
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
-let chosenInterval = Number(localStorage.getItem("interval") || 1500); // default 25 min
+let chosenInterval = Number(localStorage.getItem("interval") || 1500);
 let timerId = null;
 let pauseStart = null;
 let latestFeedCache = [];
@@ -148,7 +150,7 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
-// ⭐ Load interval buttons
+// ⭐ Interval buttons
 intervalBtns.forEach(btn => {
   if (Number(btn.dataset.int) === chosenInterval) btn.classList.add("active");
   btn.onclick = () => {
@@ -156,10 +158,11 @@ intervalBtns.forEach(btn => {
     btn.classList.add("active");
     chosenInterval = Number(btn.dataset.int);
     localStorage.setItem("interval", chosenInterval);
+    updateNextPauseDisplay(); // ⭐ LIVE opdatering
   };
 });
 
-// ⭐ Load time buttons
+// ⭐ Time buttons
 timeBtns.forEach(btn => {
   if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
   btn.onclick = () => {
@@ -221,6 +224,13 @@ function nextPauseTime() {
   return `${hh}.${mm}`;
 }
 
+// ⭐ LIVE opdatering af microfeedback
+function updateNextPauseDisplay() {
+  if (thanks.style.display === "block") {
+    thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
+  }
+}
+
 // ⭐ OS-notifikation
 function scheduleNotification() {
   if (Notification.permission !== "granted") return;
@@ -257,8 +267,7 @@ async function finishPause() {
   await loadFeed();
 
   // ⭐ Microfeedback
-  const nextTime = nextPauseTime();
-  thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextTime}`;
+  thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
   thanks.style.display = "block";
 
   // ⭐ OS-notifikation
