@@ -3,57 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v26</title>
+<title>Flow Focus v27 test</title>
 
 <style>
-  body{
-    font-family:system-ui;
-    margin:0;
-    padding:20px;
-    background:#fff;
-    color:#111;
-    font-weight:400;
+  body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
+  .section{margin:10px 0 20px 0}
+  button,input{
+    padding:10px 16px;font-size:0.95rem;border-radius:8px;
+    border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px
   }
-
-  .section{
-    margin:10px 0 20px 0;
-  }
-
-  button{
-    padding:10px 16px;
-    font-size:0.95rem;
-    border-radius:8px;
-    border:1px solid #ccc;
-    background:#fafafa;
-    cursor:pointer;
-    margin:4px;
-    font-weight:400;
-  }
-
+  input{padding:8px}
   .active{background:#111;color:#fff}
-
-  #timer{
-    font-size:26px;
-    margin:10px 0 20px 0;
-    min-height:32px;
-    font-weight:400;
-  }
-
-  input{
-    padding:8px;
-    font-size:0.95rem;
-    border-radius:6px;
-    border:1px solid #ccc;
-    margin:4px 0;
-    font-weight:400;
-  }
-
-  #chosenExerciseDisplay{
-    font-size:18px;
-    margin-top:10px;
-    min-height:24px;
-    font-weight:400;
-  }
+  #timer{font-size:26px;margin:10px 0 20px 0;min-height:32px}
+  #chosenExerciseDisplay{font-size:18px;margin-top:10px;min-height:24px}
+  #thanks,#teamStats,#latestList{white-space:pre-line}
 </style>
 </head>
 <body>
@@ -74,19 +37,17 @@
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
 
-<button id="finishBtn" style="margin-top:10px;">Færdig nu</button>
+<button id="finishBtn">Færdig nu</button>
 
-<!-- Microfeedback -->
-<div id="thanks" style="display:none;margin-top:20px; white-space:pre-line;"></div>
+<div id="thanks" style="display:none; margin-top:20px;"></div>
 
-<!-- Team statistik -->
 <div id="teamStats" style="display:none; margin-top:20px;">
   <div style="font-weight:600; margin-bottom:6px;">Team statistik</div>
   <ul style="margin:0; padding-left:20px;">
     <li id="statTotal"></li>
     <li>Seneste energipauser er:</li>
   </ul>
-  <div id="latestList" style="margin-top:6px; white-space:pre-line;"></div>
+  <div id="latestList" style="margin-top:6px;"></div>
 </div>
 
 <details style="margin-top:40px;">
@@ -111,11 +72,9 @@
 </details>
 
 <script>
-// ⭐ Worker URL
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
 
-// ⭐ UI refs
 const nameInput = document.getElementById("nameInput");
 const welcomeName = document.getElementById("welcomeName");
 const exerciseBtns = document.querySelectorAll(".exerciseBtn");
@@ -129,7 +88,6 @@ const teamStats = document.getElementById("teamStats");
 const statTotal = document.getElementById("statTotal");
 const latestList = document.getElementById("latestList");
 
-// ⭐ State
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
 let chosenInterval = Number(localStorage.getItem("interval") || 1500);
@@ -137,12 +95,8 @@ let timerId = null;
 let pauseStart = null;
 let latestFeedCache = [];
 
-// ⭐ Notification permission
-if (Notification.permission === "default") {
-  Notification.requestPermission();
-}
+if (Notification.permission === "default") Notification.requestPermission();
 
-// ⭐ Load name
 nameInput.value = localStorage.getItem("name") || "";
 welcomeName.textContent = nameInput.value || "ven";
 nameInput.oninput = () => {
@@ -150,7 +104,6 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
-// ⭐ Interval buttons
 intervalBtns.forEach(btn => {
   if (Number(btn.dataset.int) === chosenInterval) btn.classList.add("active");
   btn.onclick = () => {
@@ -158,11 +111,10 @@ intervalBtns.forEach(btn => {
     btn.classList.add("active");
     chosenInterval = Number(btn.dataset.int);
     localStorage.setItem("interval", chosenInterval);
-    updateNextPauseDisplay(); // ⭐ LIVE opdatering
+    updateNextPauseDisplay();
   };
 });
 
-// ⭐ Time buttons
 timeBtns.forEach(btn => {
   if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
   btn.onclick = () => {
@@ -173,7 +125,6 @@ timeBtns.forEach(btn => {
   };
 });
 
-// ⭐ Exercise buttons
 exerciseBtns.forEach(btn => {
   btn.onclick = () => {
     exerciseBtns.forEach(b => b.classList.remove("active"));
@@ -191,14 +142,12 @@ exerciseBtns.forEach(btn => {
   };
 });
 
-// ⭐ Timer
 function startTimer() {
   thanks.style.display = "none";
   teamStats.style.display = "none";
 
   let s = chosenTime;
   pauseStart = Date.now();
-
   timerEl.textContent = format(s);
 
   if (timerId) clearInterval(timerId);
@@ -216,25 +165,19 @@ function format(sec) {
 
 finishBtn.onclick = finishPause;
 
-// ⭐ Microfeedback: næste pause tidspunkt
 function nextPauseTime() {
   const t = new Date(Date.now() + chosenInterval * 1000);
-  const hh = String(t.getHours()).padStart(2, "0");
-  const mm = String(t.getMinutes()).padStart(2, "0");
-  return `${hh}.${mm}`;
+  return t.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 }
 
-// ⭐ LIVE opdatering af microfeedback
 function updateNextPauseDisplay() {
   if (thanks.style.display === "block") {
     thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
   }
 }
 
-// ⭐ OS-notifikation
 function scheduleNotification() {
   if (Notification.permission !== "granted") return;
-
   setTimeout(() => {
     new Notification("Tid til en ny energipause ✨", {
       body: "Vil du lade op igen?",
@@ -243,7 +186,6 @@ function scheduleNotification() {
   }, chosenInterval * 1000);
 }
 
-// ⭐ Finish pause
 async function finishPause() {
   clearInterval(timerId);
   timerId = null;
@@ -266,25 +208,21 @@ async function finishPause() {
 
   await loadFeed();
 
-  // ⭐ Microfeedback
   thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
   thanks.style.display = "block";
 
-  // ⭐ OS-notifikation
   localStorage.setItem("lastPause", Date.now());
   scheduleNotification();
 
   showFeedback();
 }
 
-// ⭐ Emoji map
 const emojiMap = {
   "Armstræk": "💪",
   "Squats": "🦵",
   "Stræk": "🤸"
 };
 
-// ⭐ Feedback + stats
 function showFeedback() {
   const items = latestFeedCache || [];
   const total = items.length;
@@ -308,7 +246,6 @@ function showFeedback() {
   teamStats.style.display = "block";
 }
 
-// ⭐ Load feed
 async function loadFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
   const res = await fetch(api("/feed?team=" + team), { cache:"no-store" });
