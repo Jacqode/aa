@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v28 test</title>
+<title>Flow Focus v29 test</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -107,7 +107,6 @@ function bindButtons(selector, stateKey, callback) {
       document.querySelectorAll(selector).forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
 
-      // Update state
       window[stateKey] = isNaN(val) ? val : Number(val);
       localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
 
@@ -125,8 +124,15 @@ nameInput.oninput = () => {
 };
 
 // ⭐ Bind interval + time + exercise
-bindButtons(".intervalBtn", "chosenInterval", () => updateNextPauseDisplay());
+bindButtons(".intervalBtn", "chosenInterval", () => {
+  // ⭐ v29 FIX: Live opdatering af microfeedback
+  if (thanks.style.display === "block") {
+    thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
+  }
+});
+
 bindButtons(".timeBtn", "chosenTime");
+
 bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
   if (btn.dataset.ex === "random") {
     const list = ["Armstræk","Squats","Stræk"];
@@ -164,12 +170,6 @@ finishBtn.onclick = finishPause;
 function nextPauseTime() {
   return new Date(Date.now() + chosenInterval * 1000)
     .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-}
-
-function updateNextPauseDisplay() {
-  if (thanks.style.display === "block") {
-    thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
-  }
 }
 
 // ⭐ OS notification
