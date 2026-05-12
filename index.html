@@ -1,11 +1,9 @@
-<!-- Flow Focus — FRONTEND v23 (v17-UI, korrekt stats-timing, korrekt worker URL) -->
-
 <!doctype html>
 <html lang="da">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v23</title>
+<title>Flow Focus v24</title>
 
 <style>
   body{
@@ -78,8 +76,10 @@
 
 <button id="finishBtn" style="margin-top:10px;">Færdig nu</button>
 
+<!-- Microfeedback -->
 <div id="thanks" style="display:none;margin-top:20px; white-space:pre-line;"></div>
 
+<!-- Team statistik -->
 <div id="teamStats" style="display:none; margin-top:20px;">
   <div style="font-weight:600; margin-bottom:6px;">Team statistik</div>
   <ul style="margin:0; padding-left:20px;">
@@ -95,6 +95,12 @@
     <div>Dit navn:</div>
     <input id="nameInput" type="text" placeholder="Skriv dit navn">
     <br><br>
+    <div>Interval til næste pause:</div>
+    <button class="intervalBtn" data-int="30">30 sek</button>
+    <button class="intervalBtn" data-int="1500">25 min</button>
+    <button class="intervalBtn" data-int="1800">30 min</button>
+    <button class="intervalBtn" data-int="2400">40 min</button>
+    <br><br>
     <div>Varighed (energipause):</div>
     <button class="timeBtn" data-time="30">30 sek</button>
     <button class="timeBtn" data-time="60">1 min</button>
@@ -103,17 +109,16 @@
 </details>
 
 <script>
-// ⭐ KORREKT WORKER URL (D1-versionen)
+// ⭐ Worker URL
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
 
-const urlParams = new URLSearchParams(location.search);
-const team = urlParams.get("team") || "default";
-
+// ⭐ UI refs
 const nameInput = document.getElementById("nameInput");
 const welcomeName = document.getElementById("welcomeName");
 const exerciseBtns = document.querySelectorAll(".exerciseBtn");
 const timeBtns = document.querySelectorAll(".timeBtn");
+const intervalBtns = document.querySelectorAll(".intervalBtn");
 const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const finishBtn = document.getElementById("finishBtn");
@@ -122,12 +127,20 @@ const teamStats = document.getElementById("teamStats");
 const statTotal = document.getElementById("statTotal");
 const latestList = document.getElementById("latestList");
 
+// ⭐ State
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
+let chosenInterval = Number(localStorage.getItem("interval") || 1500); // default 25 min
 let timerId = null;
 let pauseStart = null;
 let latestFeedCache = [];
 
+// ⭐ Notification permission
+if (Notification.permission === "default") {
+  Notification.requestPermission();
+}
+
+// ⭐ Load name
 nameInput.value = localStorage.getItem("name") || "";
 welcomeName.textContent = nameInput.value || "ven";
 nameInput.oninput = () => {
@@ -135,6 +148,18 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
+// ⭐ Load interval buttons
+intervalBtns.forEach(btn => {
+  if (Number(btn.dataset.int) === chosenInterval) btn.classList.add("active");
+  btn.onclick = () => {
+    intervalBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    chosenInterval = Number(btn.dataset.int);
+    localStorage.setItem("interval", chosenInterval);
+  };
+});
+
+// ⭐ Load time buttons
 timeBtns.forEach(btn => {
   if (Number(btn.dataset.time) === chosenTime) btn.classList.add("active");
   btn.onclick = () => {
@@ -145,6 +170,7 @@ timeBtns.forEach(btn => {
   };
 });
 
+// ⭐ Exercise buttons
 exerciseBtns.forEach(btn => {
   btn.onclick = () => {
     exerciseBtns.forEach(b => b.classList.remove("active"));
@@ -162,6 +188,7 @@ exerciseBtns.forEach(btn => {
   };
 });
 
+// ⭐ Timer
 function startTimer() {
   thanks.style.display = "none";
   teamStats.style.display = "none";
@@ -186,6 +213,27 @@ function format(sec) {
 
 finishBtn.onclick = finishPause;
 
+// ⭐ Microfeedback: næste pause tidspunkt
+function nextPauseTime() {
+  const t = new Date(Date.now() + chosenInterval * 1000);
+  const hh = String(t.getHours()).padStart(2, "0");
+  const mm = String(t.getMinutes()).padStart(2, "0");
+  return `${hh}.${mm}`;
+}
+
+// ⭐ OS-notifikation
+function scheduleNotification() {
+  if (Notification.permission !== "granted") return;
+
+  setTimeout(() => {
+    new Notification("Tid til en ny energipause ✨", {
+      body: "Vil du lade op igen?",
+      icon: "icon.png"
+    });
+  }, chosenInterval * 1000);
+}
+
+// ⭐ Finish pause
 async function finishPause() {
   clearInterval(timerId);
   timerId = null;
@@ -193,13 +241,12 @@ async function finishPause() {
   const duration = Math.round((Date.now() - pauseStart) / 1000);
 
   const payload = {
-    team_id: team,
+    team_id: new URLSearchParams(location.search).get("team") || "default",
     name: nameInput.value || "Ukendt",
     exercise: chosenExercise,
     duration
   };
 
-  // 1) Gem event
   await fetch(api("/event"), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
@@ -207,19 +254,28 @@ async function finishPause() {
     cache:"no-store"
   });
 
-  // 2) Hent frisk feed (v17-style)
   await loadFeed();
 
-  // 3) Vis feedback + stats
+  // ⭐ Microfeedback
+  const nextTime = nextPauseTime();
+  thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextTime}`;
+  thanks.style.display = "block";
+
+  // ⭐ OS-notifikation
+  localStorage.setItem("lastPause", Date.now());
+  scheduleNotification();
+
   showFeedback();
 }
 
+// ⭐ Emoji map
 const emojiMap = {
   "Armstræk": "💪",
   "Squats": "🦵",
   "Stræk": "🤸"
 };
 
+// ⭐ Feedback + stats
 function showFeedback() {
   const items = latestFeedCache || [];
   const total = items.length;
@@ -228,9 +284,6 @@ function showFeedback() {
   items.forEach(i => {
     if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
   });
-
-  thanks.textContent = "Godt gået! 🙌";
-  thanks.style.display = "block";
 
   statTotal.textContent = `I har ladt op med i alt ${total} energipauser`;
 
@@ -246,7 +299,9 @@ function showFeedback() {
   teamStats.style.display = "block";
 }
 
+// ⭐ Load feed
 async function loadFeed() {
+  const team = new URLSearchParams(location.search).get("team") || "default";
   const res = await fetch(api("/feed?team=" + team), { cache:"no-store" });
   const data = await res.json();
   latestFeedCache = data.feed || [];
