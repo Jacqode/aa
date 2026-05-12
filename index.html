@@ -1,11 +1,11 @@
-<!-- Flow Focus — FRONTEND v22 (v17-UI, korrekt stats-timing) -->
+<!-- Flow Focus — FRONTEND v23 (v17-UI, korrekt stats-timing, korrekt worker URL) -->
 
 <!doctype html>
 <html lang="da">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v22</title>
+<title>Flow Focus v23</title>
 
 <style>
   body{
@@ -103,6 +103,7 @@
 </details>
 
 <script>
+// ⭐ KORREKT WORKER URL (D1-versionen)
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
 
@@ -206,7 +207,7 @@ async function finishPause() {
     cache:"no-store"
   });
 
-  // 2) Hent frisk feed (så stats matcher med det samme)
+  // 2) Hent frisk feed (v17-style)
   await loadFeed();
 
   // 3) Vis feedback + stats
