@@ -1,11 +1,11 @@
-<!-- Flow Focus — FRONTEND v21 (v17-UI, fixed stats timing) -->
+<!-- Flow Focus — FRONTEND v22 (v17-UI, korrekt stats-timing) -->
 
 <!doctype html>
 <html lang="da">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v21</title>
+<title>Flow Focus v22</title>
 
 <style>
   body{
@@ -198,6 +198,7 @@ async function finishPause() {
     duration
   };
 
+  // 1) Gem event
   await fetch(api("/event"), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
@@ -205,9 +206,10 @@ async function finishPause() {
     cache:"no-store"
   });
 
-  // 🔁 Hent frisk feed, så stats matcher med det samme
+  // 2) Hent frisk feed (så stats matcher med det samme)
   await loadFeed();
 
+  // 3) Vis feedback + stats
   showFeedback();
 }
 
