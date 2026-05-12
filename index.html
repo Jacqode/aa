@@ -1,7 +1,15 @@
+<!-- Flow Focus — FRONTEND v19 -->
+
 <!-- ------------------------------------------------------
-     Flow Focus — FRONTEND v18
-     Version: v18
-     Backend: Cloudflare Worker + D1
+     Version: v19
+     UI: v17-stil (simpelt, hurtigt, intuitivt)
+     Backend: Worker v19 (D1 + teams)
+     Funktioner:
+     - Start/stop timer
+     - Notifikationer
+     - Reminders
+     - Statistik (v17-style)
+     - Team via ?team=psy
      ------------------------------------------------------ -->
 
 <!DOCTYPE html>
@@ -9,7 +17,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flow Focus v18</title>
+  <title>Flow Focus v19</title>
 
   <style>
     body {
@@ -37,7 +45,7 @@
 <body>
 
   <h1>Flow Focus</h1>
-  <div class="small">Version <strong>v18</strong> — D1 backend</div>
+  <div class="small">Version <strong>v19</strong> — D1 backend</div>
 
   <label>Dit navn:</label><br>
   <input id="name" placeholder="Skriv dit navn" style="width:100%;padding:10px;margin-bottom:15px">
@@ -132,19 +140,19 @@
   };
 
   // ------------------------------------------------------
-  // Hent statistik
+  // Hent statistik (v17-style)
   // ------------------------------------------------------
   async function loadStats() {
-    const res = await fetch(workerBase + "/stats?team=" + team);
+    const res = await fetch(workerBase + "/feed?team=" + team);
     const data = await res.json();
 
     let html = `
-      <div><strong>Total:</strong> ${data.total}</div>
+      <div><strong>Total:</strong> ${data.feed.length}</div>
       <br>
       <strong>Seneste:</strong><br>
     `;
 
-    data.latest.forEach(ev => {
+    data.feed.forEach(ev => {
       const d = new Date(ev.ts * 1000).toLocaleTimeString("da-DK");
       html += `${d} — ${ev.name} (${ev.exercise}, ${ev.duration}s)<br>`;
     });
@@ -153,6 +161,13 @@
   }
 
   loadStats();
+
+  // ------------------------------------------------------
+  // Reminders (v17-style)
+  // ------------------------------------------------------
+  setInterval(() => {
+    notify("Tid til en lille pause?");
+  }, 1000 * 60 * 45); // hver 45. minut
 </script>
 
 </body>
