@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Feed dur – v37 (2‑klik‑logik)</title>
+<title>Feed dur – v39</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -92,6 +92,7 @@ let chosenTime = Number(localStorage.getItem("time") || 60);
 let chosenInterval = Number(localStorage.getItem("interval") || 1500);
 let timerId = null;
 let pauseStart = null;
+let reminderTimeoutId = null;
 
 // ⭐ GENERIC BUTTON BINDER
 function bindButtons(selector, stateKey, callback) {
@@ -109,6 +110,9 @@ function bindButtons(selector, stateKey, callback) {
       if (selector !== ".exerciseBtn") {
         window[stateKey] = isNaN(val) ? val : Number(val);
         localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
+
+        // ⭐ Instant reminder update
+        if (pauseStart) rescheduleReminder();
       }
 
       callback && callback(btn);
@@ -139,7 +143,7 @@ bindButtons(".intervalBtn", "chosenInterval", () => {
 
 bindButtons(".timeBtn", "chosenTime");
 
-// ⭐ Bind exercise (v37 fix)
+// ⭐ Bind exercise
 bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
   const ex = btn.dataset.ex;
 
@@ -153,6 +157,23 @@ bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
   chosenExerciseDisplay.textContent = "";
   startTimer();
 });
+
+// ⭐ Reminder logic (MODEL B)
+function scheduleReminder() {
+  if (Notification.permission !== "granted") return;
+
+  reminderTimeoutId = setTimeout(() => {
+    new Notification("Tid til en ny energipause ✨", {
+      body: "Vil du lade op igen?",
+      icon: "icon.png"
+    });
+  }, chosenInterval * 1000);
+}
+
+function rescheduleReminder() {
+  if (reminderTimeoutId) clearTimeout(reminderTimeoutId);
+  scheduleReminder();
+}
 
 // ⭐ Timer
 function startTimer() {
@@ -216,7 +237,7 @@ async function refreshFeed() {
   teamStats.style.display = "block";
 }
 
-// ⭐ Finish pause (ENESTE måde at registrere)
+// ⭐ Finish pause (registrering + reminder)
 async function finishPause() {
   if (!pauseStart) return;
 
@@ -224,6 +245,9 @@ async function finishPause() {
   timerId = null;
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
+
+  // ⭐ Reminder sættes ved slut (MODEL B)
+  rescheduleReminder();
 
   const payload = {
     team_id: new URLSearchParams(location.search).get("team") || "default",
