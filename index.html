@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v30 test</title>
+<title>Flow Focus v31 test</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -123,14 +123,18 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
+// ⭐ Microfeedback (samlet)
+function setFeedback() {
+  const t = new Date(Date.now() + chosenInterval * 1000)
+    .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
+
+  thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${t}`;
+}
+
 // ⭐ Bind interval + time + exercise
 bindButtons(".intervalBtn", "chosenInterval", () => {
-  // ⭐ v30 FIX: hent altid nyeste intervalværdi
   chosenInterval = Number(localStorage.getItem("interval"));
-
-  if (thanks.style.display === "block") {
-    thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
-  }
+  if (thanks.style.display === "block") setFeedback();
 });
 
 bindButtons(".timeBtn", "chosenTime");
@@ -168,12 +172,6 @@ function format(sec) {
 
 finishBtn.onclick = finishPause;
 
-// ⭐ Microfeedback
-function nextPauseTime() {
-  return new Date(Date.now() + chosenInterval * 1000)
-    .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-}
-
 // ⭐ OS notification
 function scheduleNotification() {
   if (Notification.permission !== "granted") return;
@@ -183,6 +181,31 @@ function scheduleNotification() {
       icon: "icon.png"
     });
   }, chosenInterval * 1000);
+}
+
+// ⭐ Feed + feedback samlet
+async function refreshFeed() {
+  const team = new URLSearchParams(location.search).get("team") || "default";
+  const res = await fetch(api("/feed?team=" + team), { cache:"no-store" });
+  const data = await res.json();
+  latestFeedCache = data.feed || [];
+
+  const items = latestFeedCache;
+  const total = items.length;
+
+  const latest = {};
+  items.forEach(i => {
+    if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
+  });
+
+  statTotal.textContent = `I har ladt op med i alt ${total} energipauser`;
+
+  latestList.textContent = Object.values(latest)
+    .sort((a,b)=>b.ts - a.ts)
+    .map(i => `${{"Armstræk":"💪","Squats":"🦵","Stræk":"🤸"}[i.exercise] || "✨"} ${i.name}: ${i.exercise}`)
+    .join("\n");
+
+  teamStats.style.display = "block";
 }
 
 // ⭐ Finish pause
@@ -206,52 +229,16 @@ async function finishPause() {
     cache:"no-store"
   });
 
-  await loadFeed();
+  await refreshFeed();
 
-  thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${nextPauseTime()}`;
+  setFeedback();
   thanks.style.display = "block";
 
   scheduleNotification();
-  showFeedback();
 }
 
-// ⭐ Emoji map
-const emojiMap = {
-  "Armstræk": "💪",
-  "Squats": "🦵",
-  "Stræk": "🤸"
-};
-
-// ⭐ Feedback
-function showFeedback() {
-  const items = latestFeedCache || [];
-  const total = items.length;
-
-  const latest = {};
-  items.forEach(i => {
-    if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
-  });
-
-  statTotal.textContent = `I har ladt op med i alt ${total} energipauser`;
-
-  latestList.textContent = Object.values(latest)
-    .sort((a,b)=>b.ts - a.ts)
-    .map(i => `${emojiMap[i.exercise] || "✨"} ${i.name}: ${i.exercise}`)
-    .join("\n");
-
-  teamStats.style.display = "block";
-}
-
-// ⭐ Load feed
-async function loadFeed() {
-  const team = new URLSearchParams(location.search).get("team") || "default";
-  const res = await fetch(api("/feed?team=" + team), { cache:"no-store" });
-  const data = await res.json();
-  latestFeedCache = data.feed || [];
-}
-
-setInterval(loadFeed, 3000);
-loadFeed();
+setInterval(refreshFeed, 3000);
+refreshFeed();
 </script>
 
 </body>
