@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Feed dur – v36</title>
+<title>Feed dur – v37 (2‑klik‑logik)</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -92,7 +92,6 @@ let chosenTime = Number(localStorage.getItem("time") || 60);
 let chosenInterval = Number(localStorage.getItem("interval") || 1500);
 let timerId = null;
 let pauseStart = null;
-let latestFeedCache = [];
 
 // ⭐ GENERIC BUTTON BINDER
 function bindButtons(selector, stateKey, callback) {
@@ -107,7 +106,6 @@ function bindButtons(selector, stateKey, callback) {
       document.querySelectorAll(selector).forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
 
-      // Kun tid/interval gemmes automatisk
       if (selector !== ".exerciseBtn") {
         window[stateKey] = isNaN(val) ? val : Number(val);
         localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
@@ -141,7 +139,7 @@ bindButtons(".intervalBtn", "chosenInterval", () => {
 
 bindButtons(".timeBtn", "chosenTime");
 
-// ⭐ Bind exercise (v35 fix)
+// ⭐ Bind exercise (v37 fix)
 bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
   const ex = btn.dataset.ex;
 
@@ -161,7 +159,7 @@ function startTimer() {
   thanks.style.display = "none";
   teamStats.style.display = "none";
 
-  // ⭐ Pre-authorize lyd
+  // Pre-authorize lyd
   const audio = new Audio("done.mp3");
   audio.volume = 0;
   audio.play().then(() => {
@@ -179,7 +177,9 @@ function startTimer() {
 
     if (s-- <= 0) {
       new Audio("done.mp3").play();
-      finishPause();
+      clearInterval(timerId);
+      timerId = null;
+      timerEl.textContent = "Tiden er gået ⏰";
     }
 
   }, 1000);
@@ -191,17 +191,14 @@ function format(sec) {
   return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
-finishBtn.onclick = finishPause;
-
 // ⭐ Feed
 async function refreshFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
 
   const res = await fetch(api(`/feed?team=${team}`), { cache:"no-store" });
   const data = await res.json();
-  latestFeedCache = data.feed || [];
+  const items = data.feed || [];
 
-  const items = latestFeedCache;
   const total = items.length;
 
   const latest = {};
@@ -219,8 +216,10 @@ async function refreshFeed() {
   teamStats.style.display = "block";
 }
 
-// ⭐ Finish pause
+// ⭐ Finish pause (ENESTE måde at registrere)
 async function finishPause() {
+  if (!pauseStart) return;
+
   clearInterval(timerId);
   timerId = null;
 
@@ -245,6 +244,8 @@ async function finishPause() {
   setFeedback();
   thanks.style.display = "block";
 }
+
+finishBtn.onclick = finishPause;
 
 setInterval(refreshFeed, 3000);
 refreshFeed();
