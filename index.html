@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v34 test</title>
+<title>Flow Focus v35</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -107,8 +107,11 @@ function bindButtons(selector, stateKey, callback) {
       document.querySelectorAll(selector).forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
 
-      window[stateKey] = isNaN(val) ? val : Number(val);
-      localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
+      // Kun tid/interval gemmes automatisk
+      if (selector !== ".exerciseBtn") {
+        window[stateKey] = isNaN(val) ? val : Number(val);
+        localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
+      }
 
       callback && callback(btn);
     };
@@ -130,7 +133,7 @@ function setFeedback() {
   thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${t}`;
 }
 
-// ⭐ Bind interval + time + exercise
+// ⭐ Bind interval + time
 bindButtons(".intervalBtn", "chosenInterval", () => {
   chosenInterval = Number(localStorage.getItem("interval"));
   if (thanks.style.display === "block") setFeedback();
@@ -138,11 +141,17 @@ bindButtons(".intervalBtn", "chosenInterval", () => {
 
 bindButtons(".timeBtn", "chosenTime");
 
+// ⭐ Bind exercise (v35 fix)
 bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
-  if (btn.dataset.ex === "random") {
+  const ex = btn.dataset.ex;
+
+  if (ex === "random") {
     const list = ["Armstræk","Squats","Stræk"];
     chosenExercise = list[Math.random()*list.length|0];
+  } else {
+    chosenExercise = ex;
   }
+
   chosenExerciseDisplay.textContent = "";
   startTimer();
 });
@@ -152,7 +161,7 @@ function startTimer() {
   thanks.style.display = "none";
   teamStats.style.display = "none";
 
-  // ⭐ Pre-authorize done.mp3 (krævet for at lyd må spille ved timer-slut)
+  // ⭐ Pre-authorize lyd
   const audio = new Audio("done.mp3");
   audio.volume = 0;
   audio.play().then(() => {
@@ -169,7 +178,7 @@ function startTimer() {
     timerEl.textContent = format(s);
 
     if (s-- <= 0) {
-      new Audio("done.mp3").play();   // ⭐ Lyd ved timer-slut
+      new Audio("done.mp3").play();
       finishPause();
     }
 
@@ -184,26 +193,11 @@ function format(sec) {
 
 finishBtn.onclick = finishPause;
 
-// ⭐ OS notification
-function scheduleNotification() {
-  if (Notification.permission !== "granted") return;
-  setTimeout(() => {
-    new Notification("Tid til en ny energipause ✨", {
-      body: "Vil du lade op igen?",
-      icon: "icon.png"
-    });
-  }, chosenInterval * 1000);
-}
-
-// ⭐ Feed + feedback samlet
+// ⭐ Feed
 async function refreshFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
 
-  const res = await fetch(
-    api(`/feed?team=${team}`),
-    { cache:"no-store" }
-  );
-
+  const res = await fetch(api(`/feed?team=${team}`), { cache:"no-store" });
   const data = await res.json();
   latestFeedCache = data.feed || [];
 
@@ -250,8 +244,6 @@ async function finishPause() {
 
   setFeedback();
   thanks.style.display = "block";
-
-  scheduleNotification();
 }
 
 setInterval(refreshFeed, 3000);
