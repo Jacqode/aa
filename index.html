@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v31 test</title>
+<title>Flow Focus v32 test</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -160,7 +160,13 @@ function startTimer() {
   if (timerId) clearInterval(timerId);
   timerId = setInterval(() => {
     timerEl.textContent = format(s);
-    if (s-- <= 0) finishPause();
+
+    // ⭐ Lyd ved timer-slut (KUN HER)
+    if (s-- <= 0) {
+      new Audio("done.mp3").play();
+      finishPause();
+    }
+
   }, 1000);
 }
 
