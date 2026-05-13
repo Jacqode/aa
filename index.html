@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v33 test</title>
+<title>Flow Focus v34 test</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -198,7 +198,13 @@ function scheduleNotification() {
 // ⭐ Feed + feedback samlet
 async function refreshFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
-  const res = await fetch(api("/feed?team=" + team), { cache:"no-store" });
+
+  // ⭐ FIX: korrekt endpoint
+  const res = await fetch(
+    api(`/api/team_feed?team_id=${team}&limit=20`),
+    { cache:"no-store" }
+  );
+
   const data = await res.json();
   latestFeedCache = data.feed || [];
 
@@ -234,7 +240,7 @@ async function finishPause() {
     duration
   };
 
-  await fetch(api("/event"), {
+  await fetch(api("/api/event"), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(payload),
