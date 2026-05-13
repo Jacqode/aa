@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v32 test</title>
+<title>Flow Focus v33 test</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -123,11 +123,10 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
-// ⭐ Microfeedback (samlet)
+// ⭐ Microfeedback
 function setFeedback() {
   const t = new Date(Date.now() + chosenInterval * 1000)
     .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-
   thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${t}`;
 }
 
@@ -153,6 +152,14 @@ function startTimer() {
   thanks.style.display = "none";
   teamStats.style.display = "none";
 
+  // ⭐ Pre-authorize done.mp3 (krævet for at lyd må spille ved timer-slut)
+  const audio = new Audio("done.mp3");
+  audio.volume = 0;
+  audio.play().then(() => {
+    audio.pause();
+    audio.currentTime = 0;
+  });
+
   let s = chosenTime;
   pauseStart = Date.now();
   timerEl.textContent = format(s);
@@ -161,9 +168,8 @@ function startTimer() {
   timerId = setInterval(() => {
     timerEl.textContent = format(s);
 
-    // ⭐ Lyd ved timer-slut (KUN HER)
     if (s-- <= 0) {
-      new Audio("done.mp3").play();
+      new Audio("done.mp3").play();   // ⭐ Lyd ved timer-slut
       finishPause();
     }
 
