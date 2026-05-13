@@ -41,13 +41,12 @@
 
 <div id="thanks" style="display:none; margin-top:20px;"></div>
 
-<div id="teamStats" style="display:none; margin-top:20px;">
-  <div style="font-weight:600; margin-bottom:6px;">Team statistik</div>
-  <ul style="margin:0; padding-left:20px;">
-    <li id="statTotal"></li>
-    <li>Seneste energipauser er:</li>
-  </ul>
-  <div id="latestList" style="margin-top:6px;"></div>
+<!-- ⭐ Løsning A: Nyt, roligt layout -->
+<div id="teamStats" style="display:none; margin-top:28px;">
+  <div style="font-weight:600; margin-bottom:4px; font-size:17px;">Team statistik</div>
+  <div id="statTotal" style="margin-bottom:8px; color:#444;"></div>
+  <div style="font-weight:500; margin-bottom:6px;">Seneste pauser:</div>
+  <div id="latestList" style="margin-top:0;"></div>
 </div>
 
 <details style="margin-top:40px;">
@@ -227,7 +226,7 @@ async function refreshFeed() {
     if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
   });
 
-  statTotal.textContent = `I har ladt op med i alt ${total} energipauser`;
+  statTotal.textContent = `${total} energipauser i alt`;
 
   latestList.textContent = Object.values(latest)
     .sort((a,b)=>b.ts - a.ts)
