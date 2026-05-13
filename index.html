@@ -199,9 +199,8 @@ function scheduleNotification() {
 async function refreshFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
 
-  // ⭐ FIX: korrekt endpoint
   const res = await fetch(
-    api(`/api/team_feed?team_id=${team}&limit=20`),
+    api(`/feed?team=${team}`),
     { cache:"no-store" }
   );
 
@@ -240,7 +239,7 @@ async function finishPause() {
     duration
   };
 
-  await fetch(api("/api/event"), {
+  await fetch(api("/event"), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(payload),
