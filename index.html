@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Feed dur – v39</title>
+<title>Feed dur – v40</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -16,14 +16,30 @@
   .active{background:#111;color:#fff}
   #timer{font-size:26px;margin:10px 0 20px 0;min-height:32px}
   #chosenExerciseDisplay{font-size:18px;margin-top:10px;min-height:24px}
-  #thanks,#teamStats,#latestList{white-space:pre-line}
+  #thanks,#latestList{white-space:pre-line}
 </style>
 </head>
 <body>
 
+<!-- ⭐ Top: Hej + Team statistik toggle -->
 <div style="font-size:18px; margin-bottom:10px;">
   Hej <span id="welcomeName">ven</span> 👋
-  <br><br>
+</div>
+
+<details id="teamToggle" style="margin-bottom:20px;">
+  <summary style="cursor:pointer; font-size:16px; font-weight:500;">
+    Team statistik
+  </summary>
+
+  <div style="margin-top:12px;">
+    <div id="statTotal" style="margin-bottom:8px; color:#444;"></div>
+    <div style="font-weight:500; margin-bottom:6px;">Seneste pauser:</div>
+    <div id="latestList"></div>
+  </div>
+</details>
+
+<!-- ⭐ Primær handling -->
+<div style="font-size:18px; margin-bottom:10px;">
   Få en energipause med et klik:
 </div>
 
@@ -39,16 +55,10 @@
 
 <button id="finishBtn">Færdig nu</button>
 
+<!-- ⭐ Feedback efter pause (helt rent) -->
 <div id="thanks" style="display:none; margin-top:20px;"></div>
 
-<!-- ⭐ Løsning A: Nyt, roligt layout -->
-<div id="teamStats" style="display:none; margin-top:28px;">
-  <div style="font-weight:600; margin-bottom:4px; font-size:17px;">Team statistik</div>
-  <div id="statTotal" style="margin-bottom:8px; color:#444;"></div>
-  <div style="font-weight:500; margin-bottom:6px;">Seneste pauser:</div>
-  <div id="latestList" style="margin-top:0;"></div>
-</div>
-
+<!-- ⭐ Indstillinger -->
 <details style="margin-top:40px;">
   <summary>Indstillinger</summary>
   <div style="margin-top:12px">
@@ -81,7 +91,6 @@ const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const finishBtn = document.getElementById("finishBtn");
 const thanks = document.getElementById("thanks");
-const teamStats = document.getElementById("teamStats");
 const statTotal = document.getElementById("statTotal");
 const latestList = document.getElementById("latestList");
 
@@ -110,7 +119,6 @@ function bindButtons(selector, stateKey, callback) {
         window[stateKey] = isNaN(val) ? val : Number(val);
         localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
 
-        // ⭐ Instant reminder update
         if (pauseStart) rescheduleReminder();
       }
 
@@ -177,9 +185,7 @@ function rescheduleReminder() {
 // ⭐ Timer
 function startTimer() {
   thanks.style.display = "none";
-  teamStats.style.display = "none";
 
-  // Pre-authorize lyd
   const audio = new Audio("done.mp3");
   audio.volume = 0;
   audio.play().then(() => {
@@ -232,8 +238,6 @@ async function refreshFeed() {
     .sort((a,b)=>b.ts - a.ts)
     .map(i => `${{"Armstræk":"💪","Squats":"🦵","Stræk":"🤸"}[i.exercise] || "✨"} ${i.name}: ${i.exercise}`)
     .join("\n");
-
-  teamStats.style.display = "block";
 }
 
 // ⭐ Finish pause (registrering + reminder)
@@ -245,7 +249,6 @@ async function finishPause() {
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
 
-  // ⭐ Reminder sættes ved slut (MODEL B)
   rescheduleReminder();
 
   const payload = {
