@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Feed dur – v40</title>
+<title>Feed dur – v41</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -21,28 +21,14 @@
 </head>
 <body>
 
-<!-- ⭐ Top: Hej + Team statistik toggle -->
+<!-- ⭐ Top: Hej -->
 <div style="font-size:18px; margin-bottom:10px;">
   Hej <span id="welcomeName">ven</span> 👋
-</div>
-
-<details id="teamToggle" style="margin-bottom:20px;">
-  <summary style="cursor:pointer; font-size:16px; font-weight:500;">
-    Team statistik
-  </summary>
-
-  <div style="margin-top:12px;">
-    <div id="statTotal" style="margin-bottom:8px; color:#444;"></div>
-    <div style="font-weight:500; margin-bottom:6px;">Seneste pauser:</div>
-    <div id="latestList"></div>
-  </div>
-</details>
-
-<!-- ⭐ Primær handling -->
-<div style="font-size:18px; margin-bottom:10px;">
+  <br><br>
   Få en energipause med et klik:
 </div>
 
+<!-- ⭐ Primær handling -->
 <div class="section">
   <button class="exerciseBtn" data-ex="Armstræk">💪 Armstræk</button>
   <button class="exerciseBtn" data-ex="Squats">🦵 Squats</button>
@@ -58,8 +44,21 @@
 <!-- ⭐ Feedback efter pause (helt rent) -->
 <div id="thanks" style="display:none; margin-top:20px;"></div>
 
+<!-- ⭐ Team statistik toggle (NY PLACERING i v41) -->
+<details id="teamToggle" style="margin-top:30px; margin-bottom:20px;">
+  <summary style="cursor:pointer; font-size:16px; font-weight:500;">
+    Team statistik
+  </summary>
+
+  <div style="margin-top:12px;">
+    <div id="statTotal" style="margin-bottom:8px; color:#444;"></div>
+    <div style="font-weight:500; margin-bottom:6px;">Seneste pauser:</div>
+    <div id="latestList"></div>
+  </div>
+</details>
+
 <!-- ⭐ Indstillinger -->
-<details style="margin-top:40px;">
+<details style="margin-top:20px;">
   <summary>Indstillinger</summary>
   <div style="margin-top:12px">
     <div>Dit navn:</div>
