@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Feed dur – v42</title>
+<title>Feed dur – v43</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -14,21 +14,23 @@
   }
   input{padding:8px}
   .active{background:#111;color:#fff}
-  #timer{font-size:26px;margin:10px 0 20px 0;min-height:32px}
-  #chosenExerciseDisplay{font-size:18px;margin-top:10px;min-height:24px}
+
+  /* ⭐ Symmetrisk spacing i v43 */
+  #chosenExerciseDisplay{font-size:18px;margin-top:16px;min-height:24px}
+  #timer{font-size:26px;margin:16px 0 16px 0;min-height:32px}
+  #finishBtn{margin-top:16px;}
+
   #thanks,#latestList{white-space:pre-line}
 </style>
 </head>
 <body>
 
-<!-- ⭐ Top: Hej -->
 <div style="font-size:18px; margin-bottom:10px;">
   Hej <span id="welcomeName">ven</span> 👋
   <br><br>
   Få en energipause med et klik:
 </div>
 
-<!-- ⭐ Primær handling -->
 <div class="section">
   <button class="exerciseBtn" data-ex="Armstræk">💪 Armstræk</button>
   <button class="exerciseBtn" data-ex="Squats">🦵 Squats</button>
@@ -41,10 +43,8 @@
 
 <button id="finishBtn">Færdig nu</button>
 
-<!-- ⭐ Feedback efter pause (helt rent) -->
 <div id="thanks" style="display:none; margin-top:20px;"></div>
 
-<!-- ⭐ Team statistik toggle (PLACERET MELLEM FÆRDIG NU OG INDSTILLINGER) -->
 <details id="teamToggle" style="margin-top:30px; margin-bottom:20px;">
   <summary style="cursor:pointer; font-size:16px; font-weight:500;">
     Team statistik
@@ -52,15 +52,11 @@
 
   <div style="margin-top:12px;">
     <div id="statTotal" style="margin-bottom:8px; color:#444;"></div>
-
-    <!-- ⭐ Ikke længere fed -->
     <div style="font-weight:400; margin-bottom:6px;">Seneste pauser:</div>
-
     <div id="latestList"></div>
   </div>
 </details>
 
-<!-- ⭐ Indstillinger (NU I FED) -->
 <details style="margin-top:20px;">
   <summary style="font-weight:600;">Indstillinger</summary>
 
@@ -87,7 +83,6 @@
 const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
 
-// UI refs
 const nameInput = document.getElementById("nameInput");
 const welcomeName = document.getElementById("welcomeName");
 const timerEl = document.getElementById("timer");
@@ -97,7 +92,6 @@ const thanks = document.getElementById("thanks");
 const statTotal = document.getElementById("statTotal");
 const latestList = document.getElementById("latestList");
 
-// State
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
 let chosenInterval = Number(localStorage.getItem("interval") || 1500);
@@ -105,7 +99,6 @@ let timerId = null;
 let pauseStart = null;
 let reminderTimeoutId = null;
 
-// ⭐ GENERIC BUTTON BINDER
 function bindButtons(selector, stateKey, callback) {
   document.querySelectorAll(selector).forEach(btn => {
     const val = btn.dataset.ex || btn.dataset.time || btn.dataset.int;
@@ -130,7 +123,6 @@ function bindButtons(selector, stateKey, callback) {
   });
 }
 
-// ⭐ Name
 nameInput.value = localStorage.getItem("name") || "";
 welcomeName.textContent = nameInput.value || "ven";
 nameInput.oninput = () => {
@@ -138,14 +130,12 @@ nameInput.oninput = () => {
   welcomeName.textContent = nameInput.value || "ven";
 };
 
-// ⭐ Microfeedback
 function setFeedback() {
   const t = new Date(Date.now() + chosenInterval * 1000)
     .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
   thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${t}`;
 }
 
-// ⭐ Bind interval + time
 bindButtons(".intervalBtn", "chosenInterval", () => {
   chosenInterval = Number(localStorage.getItem("interval"));
   if (thanks.style.display === "block") setFeedback();
@@ -153,7 +143,6 @@ bindButtons(".intervalBtn", "chosenInterval", () => {
 
 bindButtons(".timeBtn", "chosenTime");
 
-// ⭐ Bind exercise
 bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
   const ex = btn.dataset.ex;
 
@@ -168,7 +157,6 @@ bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
   startTimer();
 });
 
-// ⭐ Reminder logic (MODEL B)
 function scheduleReminder() {
   if (Notification.permission !== "granted") return;
 
@@ -185,7 +173,6 @@ function rescheduleReminder() {
   scheduleReminder();
 }
 
-// ⭐ Timer
 function startTimer() {
   thanks.style.display = "none";
 
@@ -220,7 +207,6 @@ function format(sec) {
   return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
-// ⭐ Feed
 async function refreshFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
 
@@ -243,7 +229,6 @@ async function refreshFeed() {
     .join("\n");
 }
 
-// ⭐ Finish pause (registrering + reminder)
 async function finishPause() {
   if (!pauseStart) return;
 
