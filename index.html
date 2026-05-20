@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v76</title>
+<title>Flow Focus v77</title>
 
 <style>
   body{
@@ -49,7 +49,6 @@
 </head>
 <body>
 
-<!-- Hej Pablo øverst -->
 <div id="feedTop">Hej Pablo</div>
 
 <div class="section">
@@ -106,6 +105,7 @@ let chosenInterval = Number(localStorage.getItem("interval") || 1500);
 let timerId = null;
 let pauseStart = null;
 let reminderTimeoutId = null;
+// nextPauseTimestamp styrer hvornår start-knappen må vises igen
 let nextPauseTimestamp = 0;
 
 function bindButtons(selector, stateKey, callback) {
@@ -140,6 +140,7 @@ bindButtons(".timeBtn", "chosenTime");
 
 // Start-knap forsvinder ved klik og kommer først tilbage ved næste pause
 bindButtons(".exerciseBtn", "chosenExercise", () => {
+  // skjul øjeblikkeligt
   startBtn.style.display = "none";
   startNewPause();
 });
@@ -176,6 +177,10 @@ function startTimer() {
   pauseStart = Date.now();
   timerEl.textContent = format(s);
 
+  // Sæt tidspunkt for næste pause allerede ved start
+  // Dette holder start-knappen væk under hele pausen og indtil intervallet er nået.
+  nextPauseTimestamp = Date.now() + (chosenTime + chosenInterval) * 1000;
+
   if (timerId) clearInterval(timerId);
   timerId = setInterval(() => {
     timerEl.textContent = format(s);
@@ -210,7 +215,7 @@ async function refreshFeed() {
 
   const latest = {};
   items.forEach(i => {
-    // i.ts forventes at være UNIX-sekunder fra worker; konverter til ms
+    // worker sender UNIX-sekunder; konverter til ms
     const ts = Number(i.ts) * 1000;
     const copy = Object.assign({}, i, { ts });
     if (!latest[copy.name] || copy.ts > latest[copy.name].ts) latest[copy.name] = copy;
@@ -240,7 +245,7 @@ async function refreshFeed() {
     })
     .join("\n");
 
-  // Ændret overskrift som ønsket
+  // ønsket overskrift
   feedTop.textContent = `Hej Pablo\n\nDit teams seneste opladninger:\n${lines}`;
 }
 
@@ -249,6 +254,7 @@ async function finishPause() {
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
 
+  // nextPauseTimestamp er allerede sat i startTimer; opdatering her er valgfri
   nextPauseTimestamp = Date.now() + chosenInterval * 1000;
 
   rescheduleReminder();
@@ -276,7 +282,7 @@ async function finishPause() {
   thanks.style.display = "block";
 }
 
-// Knap kun synlig når tiden er inde
+// Knap kun synlig når tidspunktet for næste pause er nået
 setInterval(() => {
   if (Date.now() >= nextPauseTimestamp) {
     startBtn.style.display = "inline-block";
