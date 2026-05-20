@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v73</title>
+<title>Flow Focus v74</title>
 
 <style>
   body{
@@ -49,7 +49,7 @@
 </head>
 <body>
 
-<!-- ⭐ NYT: Hej Pablo øverst -->
+<!-- ⭐ Hej Pablo øverst -->
 <div id="feedTop">Hej Pablo</div>
 
 <div class="section">
@@ -216,9 +216,24 @@ async function refreshFeed() {
   const lines = Object.values(latest)
     .sort((a,b)=>b.ts - a.ts)
     .map(i => {
-      const t = new Date(i.ts).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-      const d = new Date(i.ts).toLocaleDateString("da-DK",{day:"numeric",month:"numeric"});
-      return `${d} kl. ${t} ${i.name}: ${i.exercise}`;
+      const date = new Date(i.ts);
+      const now = new Date();
+
+      const isToday =
+        date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear();
+
+      const dayLabel = isToday
+        ? "I dag"
+        : date.toLocaleDateString("da-DK", { day: "numeric", month: "long" });
+
+      const time = date.toLocaleTimeString("da-DK", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      return `${dayLabel} kl. ${time} ${i.name}: ${i.exercise}`;
     })
     .join("\n");
 
