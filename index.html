@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v74</title>
+<title>Flow Focus v76</title>
 
 <style>
   body{
@@ -49,7 +49,7 @@
 </head>
 <body>
 
-<!-- ⭐ Hej Pablo øverst -->
+<!-- Hej Pablo øverst -->
 <div id="feedTop">Hej Pablo</div>
 
 <div class="section">
@@ -138,7 +138,7 @@ nameInput.oninput = () => {
 bindButtons(".intervalBtn", "chosenInterval");
 bindButtons(".timeBtn", "chosenTime");
 
-// ⭐ Start-knap forsvinder ved klik
+// Start-knap forsvinder ved klik og kommer først tilbage ved næste pause
 bindButtons(".exerciseBtn", "chosenExercise", () => {
   startBtn.style.display = "none";
   startNewPause();
@@ -200,7 +200,7 @@ function format(sec) {
   return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
-// ⭐ Feed øverst
+// Feed øverst med “I dag”-logik og ændret overskrift
 async function refreshFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
 
@@ -210,7 +210,10 @@ async function refreshFeed() {
 
   const latest = {};
   items.forEach(i => {
-    if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
+    // i.ts forventes at være UNIX-sekunder fra worker; konverter til ms
+    const ts = Number(i.ts) * 1000;
+    const copy = Object.assign({}, i, { ts });
+    if (!latest[copy.name] || copy.ts > latest[copy.name].ts) latest[copy.name] = copy;
   });
 
   const lines = Object.values(latest)
@@ -237,7 +240,8 @@ async function refreshFeed() {
     })
     .join("\n");
 
-  feedTop.textContent = `Hej Pablo\n\nSeneste energipauser i dit team:\n${lines}`;
+  // Ændret overskrift som ønsket
+  feedTop.textContent = `Hej Pablo\n\nDit teams seneste opladninger:\n${lines}`;
 }
 
 async function finishPause() {
@@ -272,7 +276,7 @@ async function finishPause() {
   thanks.style.display = "block";
 }
 
-// ⭐ Knap kun synlig når tiden er inde
+// Knap kun synlig når tiden er inde
 setInterval(() => {
   if (Date.now() >= nextPauseTimestamp) {
     startBtn.style.display = "inline-block";
