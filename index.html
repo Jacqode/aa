@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v56</title>
+<title>Flow Focus v57</title>
 
 <style>
   body{
@@ -53,14 +53,12 @@
 <div style="font-size:18px; margin-bottom:10px; line-height:1.3;">
   Hej <span id="welcomeName">ven</span> 👋
   <br><br>
-  <span id="introText">Klik på en energipause:</span>
+  <!-- Intro-tekst fjernet -->
 </div>
 
 <div class="section">
-  <button class="exerciseBtn" data-ex="Squats">🦵 Squats</button>
-  <button class="exerciseBtn" data-ex="Knæløft">🏃 Høje knæløft</button>
-  <button class="exerciseBtn" data-ex="Armsving">💨 Armsving</button>
-  <button class="exerciseBtn" data-ex="random">🎲 Overrask mig!</button>
+  <!-- Kun én knap tilbage -->
+  <button class="exerciseBtn" data-ex="random">✨ Få en energipause</button>
 </div>
 
 <div id="chosenExerciseDisplay"></div>
@@ -108,7 +106,6 @@ const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
 
 const nameInput = document.getElementById("nameInput");
 const welcomeName = document.getElementById("welcomeName");
-const introText = document.getElementById("introText");
 const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const thanks = document.getElementById("thanks");
@@ -121,9 +118,6 @@ let chosenInterval = Number(localStorage.getItem("interval") || 1500);
 let timerId = null;
 let pauseStart = null;
 let reminderTimeoutId = null;
-
-/* Intro-tekst er statisk */
-introText.textContent = "Klik på en energipause:";
 
 function bindButtons(selector, stateKey, callback) {
   document.querySelectorAll(selector).forEach(btn => {
@@ -163,16 +157,11 @@ function setFeedback() {
 bindButtons(".intervalBtn", "chosenInterval");
 bindButtons(".timeBtn", "chosenTime");
 
-/* Overrask mig + visning af valgt øvelse */
-bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
-  const ex = btn.dataset.ex;
+/* Kun én knap → random vælger øvelse */
+bindButtons(".exerciseBtn", "chosenExercise", () => {
 
-  if (ex === "random") {
-    const list = ["Squats","Knæløft","Armsving"];
-    chosenExercise = list[Math.floor(Math.random() * list.length)];
-  } else {
-    chosenExercise = ex;
-  }
+  const list = ["Squats","Knæløft","Armsving"];
+  chosenExercise = list[Math.floor(Math.random() * list.length)];
 
   chosenExerciseDisplay.textContent = `Du laver ${chosenExercise}.`;
 
