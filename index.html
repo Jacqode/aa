@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v66</title>
+<title>Flow Focus v67</title>
 
 <style>
   body{
@@ -71,3 +71,215 @@
   <div style="margin-top:12px;">
     <div id="statTotal" style="margin-bottom:8px; color:#444;"></div>
     <div style="font-weight:400; margin-bottom:6px;">Seneste pauser:</div>
+    <div id="latestList"></div>
+  </div>
+</details>
+
+<details style="margin-top:20px;">
+  <summary style="font-weight:600;">Indstillinger</summary>
+
+  <div style="margin-top:12px">
+    <div>Dit navn:</div>
+    <input id="nameInput" type="text" placeholder="Skriv dit navn">
+    <br><br>
+
+    <div>Interval til næste pause:</div>
+    <button class="intervalBtn" data-int="30">30 sek</button>
+    <button class="intervalBtn" data-int="1500">25 min</button>
+    <button class="intervalBtn" data-int="1800">30 min</button>
+    <button class="intervalBtn" data-int="2400">40 min</button>
+
+    <br><br>
+    <div>Varighed (energipause):</div>
+    <button class="timeBtn" data-time="30">30 sek</button>
+    <button class="timeBtn" data-time="60">1 min</button>
+    <button class="timeBtn" data-time="120">2 min</button>
+  </div>
+</details>
+
+<script>
+// --- Service worker registrering (v67) ---
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+
+// --- App kode ---
+const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
+const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
+
+const nameInput = document.getElementById("nameInput");
+const welcomeName = document.getElementById("welcomeName");
+const timerEl = document.getElementById("timer");
+const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
+const thanks = document.getElementById("thanks");
+const startBtn = document.querySelector(".exerciseBtn");
+const statTotal = document.getElementById("statTotal");
+const latestList = document.getElementById("latestList");
+
+let chosenExercise = "random";
+let chosenTime = Number(localStorage.getItem("time") || 60);
+let chosenInterval = Number(localStorage.getItem("interval") || 1500);
+let timerId = null;
+let pauseStart = null;
+let reminderTimeoutId = null;
+
+function bindButtons(selector, stateKey, callback) {
+  document.querySelectorAll(selector).forEach(btn => {
+    const val = btn.dataset.ex || btn.dataset.time || btn.dataset.int;
+
+    if (Number(val) === window[stateKey] || val === window[stateKey]) {
+      btn.classList.add("active");
+    }
+
+    btn.onclick = () => {
+      document.querySelectorAll(selector).forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      if (selector !== ".exerciseBtn") {
+        window[stateKey] = isNaN(val) ? val : Number(val);
+        localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
+      }
+
+      callback && callback(btn);
+    };
+  });
+}
+
+nameInput.value = localStorage.getItem("name") || "";
+welcomeName.textContent = nameInput.value || "ven";
+nameInput.oninput = () => {
+  localStorage.setItem("name", nameInput.value);
+  welcomeName.textContent = nameInput.value || "ven";
+};
+
+function setFeedback() {
+  const t = new Date(Date.now() + chosenInterval * 1000)
+    .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
+
+  thanks.textContent = `Næste pause kl. ${t}`;
+}
+
+bindButtons(".intervalBtn", "chosenInterval");
+bindButtons(".timeBtn", "chosenTime");
+
+bindButtons(".exerciseBtn", "chosenExercise", () => startNewPause());
+
+function startNewPause() {
+  startBtn.style.display = "none";
+  thanks.style.display = "none";
+
+  const list = ["Squats","Knæløft","Armsving"];
+  chosenExercise = list[Math.floor(Math.random() * list.length)];
+
+  chosenExerciseDisplay.textContent = `${chosenExercise} i:`;
+
+  startTimer();
+}
+
+function scheduleReminder() {
+  if (Notification.permission !== "granted") return;
+
+  reminderTimeoutId = setTimeout(() => {
+    new Notification("Tid til en ny energipause", {
+      body: "Tryk for at åbne Flow Focus",
+      icon: "icon.png"
+    });
+  }, chosenInterval * 1000);
+}
+
+function rescheduleReminder() {
+  if (reminderTimeoutId) clearTimeout(reminderTimeoutId);
+  scheduleReminder();
+}
+
+function startTimer() {
+  let s = chosenTime;
+  pauseStart = Date.now();
+  timerEl.textContent = format(s);
+
+  if (timerId) clearInterval(timerId);
+  timerId = setInterval(() => {
+    timerEl.textContent = format(s);
+
+    if (s-- <= 0) {
+      new Audio("done.mp3").play();
+      clearInterval(timerId);
+      timerId = null;
+
+      timerEl.textContent = "Færdig.";
+      chosenExerciseDisplay.textContent = "";
+
+      finishPause();
+    }
+
+  }, 1000);
+}
+
+function format(sec) {
+  const m = sec / 60 | 0;
+  const s = sec % 60;
+  return `${m} min ${String(s).padStart(2,'0')} sek`;
+}
+
+async function refreshFeed() {
+  const team = new URLSearchParams(location.search).get("team") || "default";
+
+  const res = await fetch(api(`/feed?team=${team}`), { cache:"no-store" });
+  const data = await res.json();
+  const items = data.feed || [];
+
+  const total = items.length;
+
+  const latest = {};
+  items.forEach(i => {
+    if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
+  });
+
+  statTotal.textContent = `${total} energipauser i alt`;
+
+  latestList.textContent = Object.values(latest)
+    .sort((a,b)=>b.ts - a.ts)
+    .map(i => `${{
+      "Squats":"🦵",
+      "Knæløft":"🏃",
+      "Armsving":"💨"
+    }[i.exercise] || "✨"} ${i.name}: ${i.exercise}`)
+    .join("\n");
+}
+
+async function finishPause() {
+  if (!pauseStart) return;
+
+  const duration = Math.round((Date.now() - pauseStart) / 1000);
+
+  rescheduleReminder();
+
+  const payload = {
+    team_id: new URLSearchParams(location.search).get("team") || "default",
+    name: nameInput.value || "Ukendt",
+    exercise: chosenExercise,
+    duration
+  };
+
+  await fetch(api("/event"), {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload),
+    cache:"no-store"
+  });
+
+  await refreshFeed();
+
+  setFeedback();
+  thanks.style.display = "block";
+
+  // Start energipause kommer tilbage
+  startBtn.style.display = "inline-block";
+}
+
+setInterval(refreshFeed, 3000);
+refreshFeed();
+</script>
+
+</body>
+</html>
