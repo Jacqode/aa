@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v67</title>
+<title>Flow Focus v68</title>
 
 <style>
   body{
@@ -55,7 +55,7 @@
 </div>
 
 <div class="section">
-  <button class="exerciseBtn" data-ex="random">Start energipause</button>
+  <button class="exerciseBtn" data-ex="random" style="display:none;">Start energipause</button>
 </div>
 
 <div id="chosenExerciseDisplay"></div>
@@ -98,7 +98,7 @@
 </details>
 
 <script>
-// --- Service worker registrering (v67) ---
+// --- Service worker registrering ---
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
@@ -122,6 +122,7 @@ let chosenInterval = Number(localStorage.getItem("interval") || 1500);
 let timerId = null;
 let pauseStart = null;
 let reminderTimeoutId = null;
+let nextPauseTimestamp = 0; // <-- NYT
 
 function bindButtons(selector, stateKey, callback) {
   document.querySelectorAll(selector).forEach(btn => {
@@ -153,7 +154,7 @@ nameInput.oninput = () => {
 };
 
 function setFeedback() {
-  const t = new Date(Date.now() + chosenInterval * 1000)
+  const t = new Date(nextPauseTimestamp)
     .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 
   thanks.textContent = `Næste pause kl. ${t}`;
@@ -252,6 +253,9 @@ async function finishPause() {
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
 
+  // Sæt tidspunkt for næste pause
+  nextPauseTimestamp = Date.now() + chosenInterval * 1000;
+
   rescheduleReminder();
 
   const payload = {
@@ -272,10 +276,16 @@ async function finishPause() {
 
   setFeedback();
   thanks.style.display = "block";
-
-  // Start energipause kommer tilbage
-  startBtn.style.display = "inline-block";
 }
+
+// --- Tjek hvert sekund om knappen må vises ---
+setInterval(() => {
+  if (Date.now() >= nextPauseTimestamp) {
+    startBtn.style.display = "inline-block";
+  } else {
+    startBtn.style.display = "none";
+  }
+}, 1000);
 
 setInterval(refreshFeed, 3000);
 refreshFeed();
