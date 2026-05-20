@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v60</title>
+<title>Flow Focus v61</title>
 
 <style>
   body{
@@ -55,7 +55,7 @@
 </div>
 
 <div class="section">
-  <button class="exerciseBtn" data-ex="random">✨ Få en energipause</button>
+  <button class="exerciseBtn" data-ex="random">Få en energipause 🎲</button>
 </div>
 
 <div id="chosenExerciseDisplay"></div>
@@ -148,7 +148,8 @@ nameInput.oninput = () => {
 function setFeedback() {
   const t = new Date(Date.now() + chosenInterval * 1000)
     .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-  thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${t}`;
+
+  thanks.textContent = `Færdig.\nNæste pause kl. ${t}`;
 }
 
 bindButtons(".intervalBtn", "chosenInterval");
@@ -160,7 +161,7 @@ bindButtons(".exerciseBtn", "chosenExercise", () => {
   const list = ["Squats","Knæløft","Armsving"];
   chosenExercise = list[Math.floor(Math.random() * list.length)];
 
-  /* Ændring i v60: “Knæløft i:” */
+  /* v61: “Knæløft i:” */
   chosenExerciseDisplay.textContent = `${chosenExercise} i:`;
 
   startTimer();
@@ -170,8 +171,8 @@ function scheduleReminder() {
   if (Notification.permission !== "granted") return;
 
   reminderTimeoutId = setTimeout(() => {
-    new Notification("Tid til en ny energipause ✨", {
-      body: "Vil du lade op igen?",
+    new Notification("Tid til en ny energipause", {
+      body: "Tryk for at åbne Flow Focus",
       icon: "icon.png"
     });
   }, chosenInterval * 1000);
@@ -205,7 +206,7 @@ function startTimer() {
       clearInterval(timerId);
       timerId = null;
 
-      timerEl.textContent = "Energipausen er slut.";
+      timerEl.textContent = "Færdig.";
 
       /* Fjern øvelsesnavn når tiden er gået */
       chosenExerciseDisplay.textContent = "";
