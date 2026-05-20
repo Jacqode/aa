@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v49</title>
+<title>Flow Focus v51</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -15,7 +15,6 @@
   input{padding:8px}
   .active{background:#111;color:#fff}
 
-  /* v49: stram, robust spacing mellem øvelse og timer */
   #chosenExerciseDisplay{
     font-size:18px;
     margin-top:0;
@@ -24,12 +23,11 @@
 
   #timer{
     font-size:26px;
-    margin:0 0 2px 0;
+    margin:0 0 2px 12px;
     min-height:28px;
     line-height:1;
   }
 
-  #finishBtn{margin-top:10px;}
   #thanks,#latestList{white-space:pre-line}
 </style>
 </head>
@@ -38,21 +36,18 @@
 <div style="font-size:18px; margin-bottom:10px;">
   Hej <span id="welcomeName">ven</span> 👋
   <br><br>
-  Få en energipause med et klik:
+  <span id="introText">Klik på en energipause:</span>
 </div>
 
 <div class="section">
   <button class="exerciseBtn" data-ex="Squats">🦵 Squats</button>
   <button class="exerciseBtn" data-ex="Knæløft">🏃 Høje knæløft</button>
-  <button class="exerciseBtn" data-ex="Lægløft">🦶 Lægløft</button>
   <button class="exerciseBtn" data-ex="Armsving">💨 Armsving</button>
   <button class="exerciseBtn" data-ex="random">🎲 Overrask mig!</button>
 </div>
 
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
-
-<button id="finishBtn">Færdig nu</button>
 
 <div id="thanks" style="display:none; margin-top:20px;"></div>
 
@@ -96,9 +91,9 @@ const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
 
 const nameInput = document.getElementById("nameInput");
 const welcomeName = document.getElementById("welcomeName");
+const introText = document.getElementById("introText");
 const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
-const finishBtn = document.getElementById("finishBtn");
 const thanks = document.getElementById("thanks");
 const statTotal = document.getElementById("statTotal");
 const latestList = document.getElementById("latestList");
@@ -109,6 +104,16 @@ let chosenInterval = Number(localStorage.getItem("interval") || 1500);
 let timerId = null;
 let pauseStart = null;
 let reminderTimeoutId = null;
+
+/* Dynamisk intro-tekst */
+function updateIntro(){
+  const m = Math.floor(chosenTime/60);
+  const s = chosenTime % 60;
+  introText.textContent =
+    `Klik på en ${m} min ${String(s).padStart(2,'0')} sekunders energipause:`;
+}
+
+updateIntro();
 
 function bindButtons(selector, stateKey, callback) {
   document.querySelectorAll(selector).forEach(btn => {
@@ -125,7 +130,7 @@ function bindButtons(selector, stateKey, callback) {
       if (selector !== ".exerciseBtn") {
         window[stateKey] = isNaN(val) ? val : Number(val);
         localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
-
+        updateIntro();
         if (pauseStart) rescheduleReminder();
       }
 
@@ -152,13 +157,14 @@ bindButtons(".intervalBtn", "chosenInterval", () => {
   if (thanks.style.display === "block") setFeedback();
 });
 
-bindButtons(".timeBtn", "chosenTime");
+bindButtons(".timeBtn", "chosenTime", updateIntro);
 
+/* Random uden Lægløft */
 bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
   const ex = btn.dataset.ex;
 
   if (ex === "random") {
-    const list = ["Squats","Knæløft","Lægløft","Armsving"];
+    const list = ["Squats","Knæløft","Armsving"];
     chosenExercise = list[Math.random()*list.length|0];
   } else {
     chosenExercise = ex;
@@ -207,6 +213,7 @@ function startTimer() {
       clearInterval(timerId);
       timerId = null;
       timerEl.textContent = "Tiden er gået ⏰";
+      finishPause(); // auto microfeedback
     }
 
   }, 1000);
@@ -239,7 +246,6 @@ async function refreshFeed() {
     .map(i => `${{
       "Squats":"🦵",
       "Knæløft":"🏃",
-      "Lægløft":"🦶",
       "Armsving":"💨"
     }[i.exercise] || "✨"} ${i.name}: ${i.exercise}`)
     .join("\n");
@@ -247,9 +253,6 @@ async function refreshFeed() {
 
 async function finishPause() {
   if (!pauseStart) return;
-
-  clearInterval(timerId);
-  timerId = null;
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
 
@@ -274,8 +277,6 @@ async function finishPause() {
   setFeedback();
   thanks.style.display = "block";
 }
-
-finishBtn.onclick = finishPause;
 
 setInterval(refreshFeed, 3000);
 refreshFeed();
