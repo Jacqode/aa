@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v72</title>
+<title>Flow Focus v73</title>
 
 <style>
   body{
@@ -49,8 +49,8 @@
 </head>
 <body>
 
-<!-- ⭐ NYT: Feed øverst -->
-<div id="feedTop"></div>
+<!-- ⭐ NYT: Hej Pablo øverst -->
+<div id="feedTop">Hej Pablo</div>
 
 <div class="section">
   <button class="exerciseBtn" data-ex="random" style="display:none;">Start energipause</button>
@@ -138,7 +138,7 @@ nameInput.oninput = () => {
 bindButtons(".intervalBtn", "chosenInterval");
 bindButtons(".timeBtn", "chosenTime");
 
-// --- Start energipause forsvinder ved klik ---
+// ⭐ Start-knap forsvinder ved klik
 bindButtons(".exerciseBtn", "chosenExercise", () => {
   startBtn.style.display = "none";
   startNewPause();
@@ -185,9 +185,7 @@ function startTimer() {
       clearInterval(timerId);
       timerId = null;
 
-      // Fjerner "Færdig."
       timerEl.textContent = "";
-
       chosenExerciseDisplay.textContent = "";
 
       finishPause();
@@ -202,7 +200,7 @@ function format(sec) {
   return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
-// --- NYT: Feed øverst ---
+// ⭐ Feed øverst
 async function refreshFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
 
@@ -224,7 +222,7 @@ async function refreshFeed() {
     })
     .join("\n");
 
-  feedTop.textContent = `Seneste energipauser i dit team:\n${lines}`;
+  feedTop.textContent = `Hej Pablo\n\nSeneste energipauser i dit team:\n${lines}`;
 }
 
 async function finishPause() {
@@ -259,7 +257,7 @@ async function finishPause() {
   thanks.style.display = "block";
 }
 
-// --- Tjek hvert sekund om knappen må vises ---
+// ⭐ Knap kun synlig når tiden er inde
 setInterval(() => {
   if (Date.now() >= nextPauseTimestamp) {
     startBtn.style.display = "inline-block";
