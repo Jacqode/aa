@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v51</title>
+<title>Flow Focus v54</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -105,15 +105,8 @@ let timerId = null;
 let pauseStart = null;
 let reminderTimeoutId = null;
 
-/* Dynamisk intro-tekst */
-function updateIntro(){
-  const m = Math.floor(chosenTime/60);
-  const s = chosenTime % 60;
-  introText.textContent =
-    `Klik på en ${m} min ${String(s).padStart(2,'0')} sekunders energipause:`;
-}
-
-updateIntro();
+/* Intro-tekst er statisk */
+introText.textContent = "Klik på en energipause:";
 
 function bindButtons(selector, stateKey, callback) {
   document.querySelectorAll(selector).forEach(btn => {
@@ -130,8 +123,6 @@ function bindButtons(selector, stateKey, callback) {
       if (selector !== ".exerciseBtn") {
         window[stateKey] = isNaN(val) ? val : Number(val);
         localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
-        updateIntro();
-        if (pauseStart) rescheduleReminder();
       }
 
       callback && callback(btn);
@@ -152,25 +143,23 @@ function setFeedback() {
   thanks.textContent = `Godt gået! 🙌\nNæste pause er kl. ${t}`;
 }
 
-bindButtons(".intervalBtn", "chosenInterval", () => {
-  chosenInterval = Number(localStorage.getItem("interval"));
-  if (thanks.style.display === "block") setFeedback();
-});
+bindButtons(".intervalBtn", "chosenInterval");
+bindButtons(".timeBtn", "chosenTime");
 
-bindButtons(".timeBtn", "chosenTime", updateIntro);
-
-/* Random uden Lægløft */
+/* Overrask mig + visning af valgt øvelse */
 bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
   const ex = btn.dataset.ex;
 
   if (ex === "random") {
     const list = ["Squats","Knæløft","Armsving"];
-    chosenExercise = list[Math.random()*list.length|0];
+    chosenExercise = list[Math.floor(Math.random() * list.length)];
   } else {
     chosenExercise = ex;
   }
 
-  chosenExerciseDisplay.textContent = "";
+  /* Tekst til bruger */
+  chosenExerciseDisplay.textContent = `Du laver ${chosenExercise}.`;
+
   startTimer();
 });
 
@@ -212,8 +201,11 @@ function startTimer() {
       new Audio("done.mp3").play();
       clearInterval(timerId);
       timerId = null;
-      timerEl.textContent = "Tiden er gået ⏰";
-      finishPause(); // auto microfeedback
+
+      /* Timer-slut tekst */
+      timerEl.textContent = "Energipausen er slut.";
+
+      finishPause();
     }
 
   }, 1000);
