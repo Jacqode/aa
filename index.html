@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v69</title>
+<title>Flow Focus v71</title>
 
 <style>
   body{
@@ -39,17 +39,9 @@
     margin-bottom:4px;
     min-height:20px;
   }
-
-  #latestList{
-    white-space:pre-line;
-    font-size:18px;
-    line-height:1.3;
-  }
 </style>
 </head>
 <body>
-
-<!-- Hej Pablo fjernet -->
 
 <div class="section">
   <button class="exerciseBtn" data-ex="random" style="display:none;">Start energipause</button>
@@ -60,17 +52,7 @@
 
 <div id="thanks" style="display:none; margin-top:20px;"></div>
 
-<details id="teamToggle" style="margin-top:30px; margin-bottom:20px;">
-  <summary style="cursor:pointer; font-size:16px; font-weight:500;">
-    Team statistik
-  </summary>
-
-  <div style="margin-top:12px;">
-    <div id="statTotal" style="margin-bottom:8px; color:#444;"></div>
-    <div style="font-weight:400; margin-bottom:6px;">Seneste pauser:</div>
-    <div id="latestList"></div>
-  </div>
-</details>
+<!-- Team statistik fjernet -->
 
 <details style="margin-top:20px;">
   <summary style="font-weight:600;">Indstillinger</summary>
@@ -95,7 +77,7 @@
 </details>
 
 <script>
-// --- Service worker registrering ---
+// --- Service worker ---
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
@@ -109,8 +91,6 @@ const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const thanks = document.getElementById("thanks");
 const startBtn = document.querySelector(".exerciseBtn");
-const statTotal = document.getElementById("statTotal");
-const latestList = document.getElementById("latestList");
 
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
@@ -118,7 +98,7 @@ let chosenInterval = Number(localStorage.getItem("interval") || 1500);
 let timerId = null;
 let pauseStart = null;
 let reminderTimeoutId = null;
-let nextPauseTimestamp = 0; // <-- styrer hvornår knappen må vises
+let nextPauseTimestamp = 0;
 
 function bindButtons(selector, stateKey, callback) {
   document.querySelectorAll(selector).forEach(btn => {
@@ -147,19 +127,12 @@ nameInput.oninput = () => {
   localStorage.setItem("name", nameInput.value);
 };
 
-function setFeedback() {
-  const t = new Date(nextPauseTimestamp)
-    .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-
-  thanks.textContent = `Næste pause kl. ${t}`;
-}
-
 bindButtons(".intervalBtn", "chosenInterval");
 bindButtons(".timeBtn", "chosenTime");
 
 // --- Start energipause forsvinder ved klik ---
 bindButtons(".exerciseBtn", "chosenExercise", () => {
-  startBtn.style.display = "none";   // <-- vigtig
+  startBtn.style.display = "none";
   startNewPause();
 });
 
@@ -219,38 +192,11 @@ function format(sec) {
   return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
-async function refreshFeed() {
-  const team = new URLSearchParams(location.search).get("team") || "default";
-
-  const res = await fetch(api(`/feed?team=${team}`), { cache:"no-store" });
-  const data = await res.json();
-  const items = data.feed || [];
-
-  const total = items.length;
-
-  const latest = {};
-  items.forEach(i => {
-    if (!latest[i.name] || i.ts > latest[i.name].ts) latest[i.name] = i;
-  });
-
-  statTotal.textContent = `${total} energipauser i alt`;
-
-  latestList.textContent = Object.values(latest)
-    .sort((a,b)=>b.ts - a.ts)
-    .map(i => `${{
-      "Squats":"🦵",
-      "Knæløft":"🏃",
-      "Armsving":"💨"
-    }[i.exercise] || "✨"} ${i.name}: ${i.exercise}`)
-    .join("\n");
-}
-
 async function finishPause() {
   if (!pauseStart) return;
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
 
-  // Sæt tidspunkt for næste pause
   nextPauseTimestamp = Date.now() + chosenInterval * 1000;
 
   rescheduleReminder();
@@ -269,9 +215,10 @@ async function finishPause() {
     cache:"no-store"
   });
 
-  await refreshFeed();
+  const nextTime = new Date(nextPauseTimestamp)
+    .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 
-  setFeedback();
+  thanks.textContent = `Energipause færdig. Næste er kl. ${nextTime}`;
   thanks.style.display = "block";
 }
 
@@ -283,9 +230,6 @@ setInterval(() => {
     startBtn.style.display = "none";
   }
 }, 1000);
-
-setInterval(refreshFeed, 3000);
-refreshFeed();
 </script>
 
 </body>
