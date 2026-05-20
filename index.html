@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v61</title>
+<title>Flow Focus v62</title>
 
 <style>
   body{
@@ -149,7 +149,8 @@ function setFeedback() {
   const t = new Date(Date.now() + chosenInterval * 1000)
     .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
 
-  thanks.textContent = `Færdig.\nNæste pause kl. ${t}`;
+  /* v62: Kun næste pause — ingen “Færdig.” her */
+  thanks.textContent = `Næste pause kl. ${t}`;
 }
 
 bindButtons(".intervalBtn", "chosenInterval");
@@ -161,7 +162,7 @@ bindButtons(".exerciseBtn", "chosenExercise", () => {
   const list = ["Squats","Knæløft","Armsving"];
   chosenExercise = list[Math.floor(Math.random() * list.length)];
 
-  /* v61: “Knæløft i:” */
+  /* v62: “Knæløft i:” */
   chosenExerciseDisplay.textContent = `${chosenExercise} i:`;
 
   startTimer();
@@ -206,9 +207,10 @@ function startTimer() {
       clearInterval(timerId);
       timerId = null;
 
+      /* v62: Timer viser Færdig. */
       timerEl.textContent = "Færdig.";
 
-      /* Fjern øvelsesnavn når tiden er gået */
+      /* v62: Fjern “Knæløft i:” */
       chosenExerciseDisplay.textContent = "";
 
       finishPause();
