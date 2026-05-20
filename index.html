@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v57</title>
+<title>Flow Focus v60</title>
 
 <style>
   body{
@@ -29,7 +29,6 @@
   input{padding:8px}
   .active{background:#111;color:#fff}
 
-  /* Ens typografi og spacing for alle tekstdele */
   #chosenExerciseDisplay,
   #timer,
   #thanks{
@@ -53,11 +52,9 @@
 <div style="font-size:18px; margin-bottom:10px; line-height:1.3;">
   Hej <span id="welcomeName">ven</span> 👋
   <br><br>
-  <!-- Intro-tekst fjernet -->
 </div>
 
 <div class="section">
-  <!-- Kun én knap tilbage -->
   <button class="exerciseBtn" data-ex="random">✨ Få en energipause</button>
 </div>
 
@@ -163,7 +160,8 @@ bindButtons(".exerciseBtn", "chosenExercise", () => {
   const list = ["Squats","Knæløft","Armsving"];
   chosenExercise = list[Math.floor(Math.random() * list.length)];
 
-  chosenExerciseDisplay.textContent = `Du laver ${chosenExercise}.`;
+  /* Ændring i v60: “Knæløft i:” */
+  chosenExerciseDisplay.textContent = `${chosenExercise} i:`;
 
   startTimer();
 });
@@ -208,6 +206,9 @@ function startTimer() {
       timerId = null;
 
       timerEl.textContent = "Energipausen er slut.";
+
+      /* Fjern øvelsesnavn når tiden er gået */
+      chosenExerciseDisplay.textContent = "";
 
       finishPause();
     }
