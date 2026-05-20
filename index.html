@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Feed dur – v45</title>
+<title>Flow Focus v46</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -15,7 +15,6 @@
   input{padding:8px}
   .active{background:#111;color:#fff}
 
-  /* v45: finjusteret spacing for visuel balance */
   #chosenExerciseDisplay{font-size:18px;margin-top:8px;min-height:24px}
   #timer{font-size:26px;margin:10px 0;min-height:32px}
   #finishBtn{margin-top:10px;}
@@ -32,9 +31,10 @@
 </div>
 
 <div class="section">
-  <button class="exerciseBtn" data-ex="Armstræk">💪 Armstræk</button>
   <button class="exerciseBtn" data-ex="Squats">🦵 Squats</button>
-  <button class="exerciseBtn" data-ex="Stræk">🤸 Stræk</button>
+  <button class="exerciseBtn" data-ex="Knæløft">🏃 Høje knæløft</button>
+  <button class="exerciseBtn" data-ex="Lægløft">🦶 Lægløft</button>
+  <button class="exerciseBtn" data-ex="Armsving">💨 Armsving</button>
   <button class="exerciseBtn" data-ex="random">🎲 Overrask mig!</button>
 </div>
 
@@ -147,7 +147,7 @@ bindButtons(".exerciseBtn", "chosenExercise", (btn) => {
   const ex = btn.dataset.ex;
 
   if (ex === "random") {
-    const list = ["Armstræk","Squats","Stræk"];
+    const list = ["Squats","Knæløft","Lægløft","Armsving"];
     chosenExercise = list[Math.random()*list.length|0];
   } else {
     chosenExercise = ex;
@@ -225,7 +225,12 @@ async function refreshFeed() {
 
   latestList.textContent = Object.values(latest)
     .sort((a,b)=>b.ts - a.ts)
-    .map(i => `${{"Armstræk":"💪","Squats":"🦵","Stræk":"🤸"}[i.exercise] || "✨"} ${i.name}: ${i.exercise}`)
+    .map(i => `${{
+      "Squats":"🦵",
+      "Knæløft":"🏃",
+      "Lægløft":"🦶",
+      "Armsving":"💨"
+    }[i.exercise] || "✨"} ${i.name}: ${i.exercise}`)
     .join("\n");
 }
 
