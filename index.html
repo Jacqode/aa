@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v78</title>
+<title>Flow Focus v79</title>
 
 <style>
   body{
@@ -49,6 +49,9 @@
 </head>
 <body>
 
+<!-- ⭐ Velkomst øverst -->
+<div id="feedTop">Velkommen tilbage, Pablo 😊</div>
+
 <!-- ⭐ Start-knap -->
 <div class="section">
   <button class="exerciseBtn" data-ex="random" style="display:none;">Start energipause</button>
@@ -58,8 +61,8 @@
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
 
-<!-- ⭐ Feed flyttet hertil -->
-<div id="feedTop">Hej Pablo</div>
+<!-- ⭐ Feed (rykket ned) -->
+<div id="feedTopList"></div>
 
 <!-- ⭐ Tak-besked -->
 <div id="thanks" style="display:none; margin-top:20px;"></div>
@@ -101,7 +104,7 @@ const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const thanks = document.getElementById("thanks");
 const startBtn = document.querySelector(".exerciseBtn");
-const feedTop = document.getElementById("feedTop");
+const feedTopList = document.getElementById("feedTopList");
 
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
@@ -179,7 +182,6 @@ function startTimer() {
   pauseStart = Date.now();
   timerEl.textContent = format(s);
 
-  // ⭐ Holder knappen væk under hele pausen + interval
   nextPauseTimestamp = Date.now() + (chosenTime + chosenInterval) * 1000;
 
   if (timerId) clearInterval(timerId);
@@ -245,7 +247,7 @@ async function refreshFeed() {
     })
     .join("\n");
 
-  feedTop.textContent = `Hej Pablo\n\nDit teams seneste opladninger:\n${lines}`;
+  feedTopList.textContent = `Dit teams seneste opladninger:\n${lines}`;
 }
 
 async function finishPause() {
