@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v80</title>
+<title>Flow Focus v82</title>
 
 <style>
   body{
@@ -55,7 +55,7 @@
 <body>
 
 <!-- ⭐ Velkomst øverst -->
-<div style="font-size:18px; margin-bottom:6px;">Velkommen tilbage, Pablo 😊</div>
+<div id="welcome" style="font-size:18px; margin-bottom:6px;"></div>
 
 <!-- ⭐ Energilinje -->
 <div class="energiline">30–90 sekunders let aktivitet øger energien.</div>
@@ -113,6 +113,7 @@ const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
 const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
 
 const nameInput = document.getElementById("nameInput");
+const welcome = document.getElementById("welcome");
 const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const thanks = document.getElementById("thanks");
@@ -126,6 +127,40 @@ let timerId = null;
 let pauseStart = null;
 let reminderTimeoutId = null;
 let nextPauseTimestamp = 0;
+
+const team = new URLSearchParams(location.search).get("team") || "default";
+
+// ⭐ Hent profilnavn fra Cloudflare
+async function loadProfileName() {
+  const localName = localStorage.getItem("name") || "";
+
+  const res = await fetch(api(`/profile?team=${team}&name=${localName}`), {
+    cache: "no-store"
+  });
+
+  const data = await res.json();
+
+  const profileName = data.name || localName || "Ukendt";
+
+  nameInput.value = profileName;
+  welcome.textContent = `Velkommen tilbage, ${profileName} 😊`;
+}
+
+// ⭐ Gem profilnavn i Cloudflare
+async function saveProfileName(name) {
+  await fetch(api("/profile"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ team_id: team, name })
+  });
+}
+
+nameInput.oninput = () => {
+  const newName = nameInput.value;
+  localStorage.setItem("name", newName);
+  welcome.textContent = `Velkommen tilbage, ${newName} 😊`;
+  saveProfileName(newName);
+};
 
 function bindButtons(selector, stateKey, callback) {
   document.querySelectorAll(selector).forEach(btn => {
@@ -148,11 +183,6 @@ function bindButtons(selector, stateKey, callback) {
     };
   });
 }
-
-nameInput.value = localStorage.getItem("name") || "";
-nameInput.oninput = () => {
-  localStorage.setItem("name", nameInput.value);
-};
 
 bindButtons(".intervalBtn", "chosenInterval");
 bindButtons(".timeBtn", "chosenTime");
@@ -223,8 +253,6 @@ function format(sec) {
 
 // ⭐ Feed kun i Team-sektionen
 async function refreshFeed() {
-  const team = new URLSearchParams(location.search).get("team") || "default";
-
   const res = await fetch(api(`/feed?team=${team}`), { cache:"no-store" });
   const data = await res.json();
   const items = data.feed || [];
@@ -273,7 +301,7 @@ async function finishPause() {
   rescheduleReminder();
 
   const payload = {
-    team_id: new URLSearchParams(location.search).get("team") || "default",
+    team_id: team,
     name: nameInput.value || "Ukendt",
     exercise: chosenExercise,
     duration
@@ -305,6 +333,9 @@ setInterval(() => {
 }, 1000);
 
 setInterval(refreshFeed, 3000);
+
+// ⭐ Load profile name from Cloudflare
+loadProfileName();
 refreshFeed();
 </script>
 
