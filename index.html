@@ -6,87 +6,36 @@
 <title>Flow Focus v82</title>
 
 <style>
-  body{
-    font-family:system-ui;
-    margin:0;
-    padding:20px;
-    background:#fff;
-    color:#111;
-  }
-
-  .section{margin:6px 0 8px 0}
-
-  button,input{
-    padding:10px 16px;
-    font-size:0.95rem;
-    border-radius:8px;
-    border:1px solid #ccc;
-    background:#fafafa;
-    cursor:pointer;
-    margin:4px;
-  }
-
+  body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
+  button,input{padding:10px 16px;font-size:.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
   input{padding:8px}
   .active{background:#111;color:#fff}
-
-  #chosenExerciseDisplay,
-  #timer,
-  #thanks{
-    font-size:18px;
-    line-height:1.3;
-    margin-top:4px;
-    margin-bottom:4px;
-    min-height:20px;
-  }
-
-  .subheader{
-    font-weight:600;
-    margin-top:16px;
-    margin-bottom:6px;
-  }
-
-  .energiline{
-    font-size:16px;
-    color:#555;
-    margin-bottom:20px;
-  }
+  #chosenExerciseDisplay,#timer,#thanks{font-size:18px;margin:4px 0;min-height:20px}
+  .subheader{font-weight:600;margin:16px 0 6px}
+  .energiline{font-size:16px;color:#555;margin-bottom:20px}
 </style>
 </head>
 <body>
 
-<!-- ⭐ Velkomst øverst -->
-<div id="welcome" style="font-size:18px; margin-bottom:6px;"></div>
-
-<!-- ⭐ Energilinje -->
+<div id="welcome" style="font-size:18px;margin-bottom:6px"></div>
 <div class="energiline">30–90 sekunders let aktivitet øger energien.</div>
 
-<!-- ⭐ Start-knap -->
-<div class="section">
-  <button class="exerciseBtn" data-ex="random" style="display:none;">Start energipause</button>
-</div>
+<button class="exerciseBtn" data-ex="random" style="display:none;">Start energipause</button>
 
-<!-- ⭐ Øvelse + timer -->
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
+<div id="thanks" style="display:none;margin-top:20px"></div>
 
-<!-- ⭐ Tak-besked -->
-<div id="thanks" style="display:none; margin-top:20px;"></div>
-
-<!-- ⭐ Toggle -->
 <details style="margin-top:20px;">
   <summary style="font-weight:600;">Team og Indstillinger</summary>
 
-  <!-- ⭐ TEAM-SEKTION -->
   <div class="subheader">Team</div>
   <div id="teamFeed">Seneste opladninger:</div>
 
-  <!-- ⭐ INDSTILLINGER -->
   <div class="subheader">Indstillinger</div>
-
   <div style="margin-top:12px">
     <div>Dit navn:</div>
-    <input id="nameInput" type="text" placeholder="Skriv dit navn">
-    <br><br>
+    <input id="nameInput" placeholder="Skriv dit navn"><br><br>
 
     <div>Interval til næste pause:</div>
     <button class="intervalBtn" data-int="30">30 sek</button>
@@ -95,7 +44,7 @@
     <button class="intervalBtn" data-int="2400">40 min</button>
 
     <br><br>
-    <div>Varighed (energipause):</div>
+    <div>Varighed:</div>
     <button class="timeBtn" data-time="30">30 sek</button>
     <button class="timeBtn" data-time="60">1 min</button>
     <button class="timeBtn" data-time="120">2 min</button>
@@ -103,241 +52,155 @@
 </details>
 
 <script>
-// --- Service worker ---
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
 
-// --- App kode ---
-const WORKER_URL = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
-const api = (p) => WORKER_URL.replace(/\/+$/,"") + p;
+const api = p => "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev" + p;
+const $ = id => document.getElementById(id);
 
-const nameInput = document.getElementById("nameInput");
-const welcome = document.getElementById("welcome");
-const timerEl = document.getElementById("timer");
-const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
-const thanks = document.getElementById("thanks");
-const startBtn = document.querySelector(".exerciseBtn");
-const teamFeed = document.getElementById("teamFeed");
+const nameInput = $("nameInput"), welcome = $("welcome"), timerEl = $("timer"),
+      chosenExerciseDisplay = $("chosenExerciseDisplay"), thanks = $("thanks"),
+      startBtn = document.querySelector(".exerciseBtn"), teamFeed = $("teamFeed");
 
-let chosenExercise = "random";
-let chosenTime = Number(localStorage.getItem("time") || 60);
-let chosenInterval = Number(localStorage.getItem("interval") || 1500);
-let timerId = null;
-let pauseStart = null;
-let reminderTimeoutId = null;
-let nextPauseTimestamp = 0;
+let chosenExercise="random",
+    chosenTime=+localStorage.time||60,
+    chosenInterval=+localStorage.interval||1500,
+    timerId=null, pauseStart=null, reminderTimeoutId=null, nextPauseTimestamp=0;
 
 const team = new URLSearchParams(location.search).get("team") || "default";
 
-// ⭐ Hent profilnavn fra Cloudflare
-async function loadProfileName() {
-  const localName = localStorage.getItem("name") || "";
-
-  const res = await fetch(api(`/profile?team=${team}&name=${localName}`), {
-    cache: "no-store"
-  });
-
-  const data = await res.json();
-
+async function loadProfileName(){
+  const localName = localStorage.name || "";
+  const data = await (await fetch(api(`/profile?team=${team}&name=${localName}`))).json();
   const profileName = data.name || localName || "Ukendt";
-
   nameInput.value = profileName;
   welcome.textContent = `Velkommen tilbage, ${profileName} 😊`;
 }
 
-// ⭐ Gem profilnavn i Cloudflare
-async function saveProfileName(name) {
+async function saveProfileName(name){
   await fetch(api("/profile"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ team_id: team, name })
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ team_id:team, name })
   });
 }
 
 nameInput.oninput = () => {
-  const newName = nameInput.value;
-  localStorage.setItem("name", newName);
-  welcome.textContent = `Velkommen tilbage, ${newName} 😊`;
-  saveProfileName(newName);
+  localStorage.name = nameInput.value;
+  welcome.textContent = `Velkommen tilbage, ${nameInput.value} 😊`;
+  saveProfileName(nameInput.value);
 };
 
-function bindButtons(selector, stateKey, callback) {
-  document.querySelectorAll(selector).forEach(btn => {
+function bindButtons(selector, stateKey, callback){
+  document.querySelectorAll(selector).forEach(btn=>{
     const val = btn.dataset.ex || btn.dataset.time || btn.dataset.int;
-
-    if (Number(val) === window[stateKey] || val === window[stateKey]) {
-      btn.classList.add("active");
-    }
+    if (+val === window[stateKey]) btn.classList.add("active");
 
     btn.onclick = () => {
-      document.querySelectorAll(selector).forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(selector).forEach(b=>b.classList.remove("active"));
       btn.classList.add("active");
 
-      if (selector !== ".exerciseBtn") {
-        window[stateKey] = isNaN(val) ? val : Number(val);
-        localStorage.setItem(stateKey.replace("chosen","").toLowerCase(), window[stateKey]);
+      if(selector !== ".exerciseBtn"){
+        window[stateKey] = +val;
+        localStorage[stateKey.replace("chosen","").toLowerCase()] = +val;
       }
-
       callback && callback(btn);
     };
   });
 }
 
-bindButtons(".intervalBtn", "chosenInterval");
-bindButtons(".timeBtn", "chosenTime");
-
-// ⭐ Start-knap forsvinder ved klik
-bindButtons(".exerciseBtn", "chosenExercise", () => {
-  startBtn.style.display = "none";
+bindButtons(".intervalBtn","chosenInterval");
+bindButtons(".timeBtn","chosenTime");
+bindButtons(".exerciseBtn","chosenExercise",()=>{
+  startBtn.style.display="none";
   startNewPause();
 });
 
-function startNewPause() {
-  thanks.style.display = "none";
-
-  const list = ["Squats","Knæløft","Armsving"];
-  chosenExercise = list[Math.floor(Math.random() * list.length)];
-
+function startNewPause(){
+  thanks.style.display="none";
+  const list=["Squats","Knæløft","Armsving"];
+  chosenExercise = list[Math.floor(Math.random()*list.length)];
   chosenExerciseDisplay.textContent = `${chosenExercise} i:`;
-
   startTimer();
 }
 
-function scheduleReminder() {
-  if (Notification.permission !== "granted") return;
-
-  reminderTimeoutId = setTimeout(() => {
-    new Notification("Tid til en ny energipause", {
-      body: "Tryk for at åbne Flow Focus",
-      icon: "icon.png"
-    });
-  }, chosenInterval * 1000);
+function scheduleReminder(){
+  if(Notification.permission!=="granted") return;
+  reminderTimeoutId = setTimeout(()=>new Notification("Tid til en ny energipause"), chosenInterval*1000);
 }
 
-function rescheduleReminder() {
-  if (reminderTimeoutId) clearTimeout(reminderTimeoutId);
+function rescheduleReminder(){
+  if(reminderTimeoutId) clearTimeout(reminderTimeoutId);
   scheduleReminder();
 }
 
-function startTimer() {
+function startTimer(){
   let s = chosenTime;
   pauseStart = Date.now();
   timerEl.textContent = format(s);
+  nextPauseTimestamp = Date.now() + (chosenTime + chosenInterval)*1000;
 
-  nextPauseTimestamp = Date.now() + (chosenTime + chosenInterval) * 1000;
-
-  if (timerId) clearInterval(timerId);
-  timerId = setInterval(() => {
+  clearInterval(timerId);
+  timerId = setInterval(()=>{
     timerEl.textContent = format(s);
-
-    if (s-- <= 0) {
+    if(s-- <= 0){
       new Audio("done.mp3").play();
       clearInterval(timerId);
-      timerId = null;
-
-      timerEl.textContent = "";
-      chosenExerciseDisplay.textContent = "";
-
+      timerEl.textContent="";
+      chosenExerciseDisplay.textContent="";
       finishPause();
     }
-
-  }, 1000);
+  },1000);
 }
 
-function format(sec) {
-  const m = sec / 60 | 0;
-  const s = sec % 60;
-  return `${m} min ${String(s).padStart(2,'0')} sek`;
-}
+const format = sec => `${(sec/60|0)} min ${String(sec%60).padStart(2,'0')} sek`;
 
-// ⭐ Feed kun i Team-sektionen
-async function refreshFeed() {
-  const res = await fetch(api(`/feed?team=${team}`), { cache:"no-store" });
-  const data = await res.json();
-  const items = data.feed || [];
-
+async function refreshFeed(){
+  const data = await (await fetch(api(`/feed?team=${team}`))).json();
   const latest = {};
-  items.forEach(i => {
-    const ts = Number(i.ts) * 1000;
-    const copy = Object.assign({}, i, { ts });
-    if (!latest[copy.name] || copy.ts > latest[copy.name].ts) latest[copy.name] = copy;
+
+  (data.feed||[]).forEach(i=>{
+    const ts = +i.ts*1000;
+    if(!latest[i.name] || ts > latest[i.name].ts) latest[i.name] = {...i, ts};
   });
 
-  const lines = Object.values(latest)
-    .sort((a,b)=>b.ts - a.ts)
-    .map(i => {
-      const date = new Date(i.ts);
-      const now = new Date();
-
-      const isToday =
-        date.getDate() === now.getDate() &&
-        date.getMonth() === now.getMonth() &&
-        date.getFullYear() === now.getFullYear();
-
-      const dayLabel = isToday
-        ? "I dag"
-        : date.toLocaleDateString("da-DK", { day: "numeric", month: "long" });
-
-      const time = date.toLocaleTimeString("da-DK", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-
-      return `${dayLabel} kl. ${time} ${i.name}: ${i.exercise}`;
-    })
-    .join("\n");
-
-  teamFeed.textContent = `Seneste opladninger:\n${lines}`;
+  teamFeed.textContent = "Seneste opladninger:\n" +
+    Object.values(latest)
+      .sort((a,b)=>b.ts-a.ts)
+      .map(i=>{
+        const d=new Date(i.ts), n=new Date();
+        const day = d.toDateString()===n.toDateString()
+          ? "I dag"
+          : d.toLocaleDateString("da-DK",{day:"numeric",month:"long"});
+        const time = d.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
+        return `${day} kl. ${time} ${i.name}: ${i.exercise}`;
+      }).join("\n");
 }
 
-async function finishPause() {
-  if (!pauseStart) return;
-
-  const duration = Math.round((Date.now() - pauseStart) / 1000);
-
-  nextPauseTimestamp = Date.now() + chosenInterval * 1000;
-
+async function finishPause(){
+  const duration = Math.round((Date.now()-pauseStart)/1000);
+  nextPauseTimestamp = Date.now() + chosenInterval*1000;
   rescheduleReminder();
 
-  const payload = {
-    team_id: team,
-    name: nameInput.value || "Ukendt",
-    exercise: chosenExercise,
-    duration
-  };
-
-  await fetch(api("/event"), {
+  await fetch(api("/event"),{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(payload),
-    cache:"no-store"
+    body:JSON.stringify({ team_id:team, name:nameInput.value||"Ukendt", exercise:chosenExercise, duration })
   });
 
   await refreshFeed();
 
-  const nextTime = new Date(nextPauseTimestamp)
-    .toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-
-  thanks.textContent = `Energipause færdig. Næste er kl. ${nextTime}`;
-  thanks.style.display = "block";
+  thanks.textContent = `Energipause færdig. Næste er kl. ${
+    new Date(nextPauseTimestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
+  }`;
+  thanks.style.display="block";
 }
 
-// ⭐ Knap kun synlig når tidspunktet for næste pause er nået
-setInterval(() => {
-  if (Date.now() >= nextPauseTimestamp) {
-    startBtn.style.display = "inline-block";
-  } else {
-    startBtn.style.display = "none";
-  }
-}, 1000);
+setInterval(()=>startBtn.style.display = Date.now()>=nextPauseTimestamp ? "inline-block" : "none",1000);
+setInterval(refreshFeed,3000);
 
-setInterval(refreshFeed, 3000);
-
-// ⭐ Load profile name from Cloudflare
 loadProfileName();
 refreshFeed();
 </script>
-
 </body>
 </html>
+
