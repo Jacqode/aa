@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v83</title>
+<title>Flow Focus v84</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -12,20 +12,25 @@
   .active{background:#111;color:#fff}
   #chosenExerciseDisplay,#timer,#thanks{font-size:18px;margin:4px 0;min-height:20px}
   .subheader{font-weight:600;margin:16px 0 6px}
-  .energiline{font-size:16px;color:#555;margin-bottom:20px}
+  #teamFeed{white-space:pre-line;margin-top:10px}
 </style>
 </head>
 <body>
 
-<div id="welcome" style="font-size:18px;margin-bottom:6px"></div>
-<div class="energiline">Brug for et energiboost, navn?</div>
+<!-- ⭐ Velkomst -->
+<div id="welcome" style="font-size:20px;font-weight:600;margin-bottom:16px"></div>
 
+<!-- ⭐ Boost-knap -->
 <button class="exerciseBtn" data-ex="random" style="display:none;">Få et boost</button>
 
+<!-- ⭐ Øvelse + timer -->
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
+
+<!-- ⭐ Tak-besked -->
 <div id="thanks" style="display:none;margin-top:20px"></div>
 
+<!-- ⭐ Team + indstillinger -->
 <details style="margin-top:20px;">
   <summary style="font-weight:600;">Team og Indstillinger</summary>
 
@@ -73,7 +78,7 @@ async function loadProfileName(){
   const data = await (await fetch(api(`/profile?team=${team}&name=${localName}`))).json();
   const profileName = data.name || localName || "Ukendt";
   nameInput.value = profileName;
-  welcome.textContent = "Brug for et energiboost, navn?";
+  welcome.textContent = `Brug for et energiboost, ${profileName}?`;
 }
 
 async function saveProfileName(name){
@@ -86,7 +91,7 @@ async function saveProfileName(name){
 
 nameInput.oninput = () => {
   localStorage.name = nameInput.value;
-  welcome.textContent = "Brug for et energiboost, navn?";
+  welcome.textContent = `Brug for et energiboost, ${nameInput.value}?`;
   saveProfileName(nameInput.value);
 };
 
@@ -125,7 +130,7 @@ function startNewPause(){
 
 function scheduleReminder(){
   if(Notification.permission!=="granted") return;
-  reminderTimeoutId = setTimeout(()=>new Notification("Tid til en ny energipause"), chosenInterval*1000);
+  reminderTimeoutId = setTimeout(()=>new Notification("Tid til et energiboost"), chosenInterval*1000);
 }
 
 function rescheduleReminder(){
@@ -189,7 +194,7 @@ async function finishPause(){
 
   await refreshFeed();
 
-  thanks.textContent = `Energipause færdig. Næste er kl. ${
+  thanks.textContent = `Boost færdigt. Næste er kl. ${
     new Date(nextPauseTimestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
   }`;
   thanks.style.display="block";
