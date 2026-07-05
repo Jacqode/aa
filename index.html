@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v77</title>
+<title>Flow Focus v78</title>
 
 <style>
   body{
@@ -42,22 +42,26 @@
   #feedTop{
     font-size:18px;
     line-height:1.35;
-    margin-bottom:20px;
+    margin-top:20px;
     white-space:pre-line;
   }
 </style>
 </head>
 <body>
 
-<div id="feedTop">Hej Pablo</div>
-
+<!-- ⭐ Start-knap -->
 <div class="section">
   <button class="exerciseBtn" data-ex="random" style="display:none;">Start energipause</button>
 </div>
 
+<!-- ⭐ Øvelse + timer -->
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
 
+<!-- ⭐ Feed flyttet hertil -->
+<div id="feedTop">Hej Pablo</div>
+
+<!-- ⭐ Tak-besked -->
 <div id="thanks" style="display:none; margin-top:20px;"></div>
 
 <details style="margin-top:20px;">
@@ -105,7 +109,6 @@ let chosenInterval = Number(localStorage.getItem("interval") || 1500);
 let timerId = null;
 let pauseStart = null;
 let reminderTimeoutId = null;
-// nextPauseTimestamp styrer hvornår start-knappen må vises igen
 let nextPauseTimestamp = 0;
 
 function bindButtons(selector, stateKey, callback) {
@@ -138,9 +141,8 @@ nameInput.oninput = () => {
 bindButtons(".intervalBtn", "chosenInterval");
 bindButtons(".timeBtn", "chosenTime");
 
-// Start-knap forsvinder ved klik og kommer først tilbage ved næste pause
+// ⭐ Start-knap forsvinder ved klik
 bindButtons(".exerciseBtn", "chosenExercise", () => {
-  // skjul øjeblikkeligt
   startBtn.style.display = "none";
   startNewPause();
 });
@@ -177,8 +179,7 @@ function startTimer() {
   pauseStart = Date.now();
   timerEl.textContent = format(s);
 
-  // Sæt tidspunkt for næste pause allerede ved start
-  // Dette holder start-knappen væk under hele pausen og indtil intervallet er nået.
+  // ⭐ Holder knappen væk under hele pausen + interval
   nextPauseTimestamp = Date.now() + (chosenTime + chosenInterval) * 1000;
 
   if (timerId) clearInterval(timerId);
@@ -205,7 +206,7 @@ function format(sec) {
   return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
-// Feed øverst med “I dag”-logik og ændret overskrift
+// ⭐ Feed med “I dag”-logik
 async function refreshFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
 
@@ -215,7 +216,6 @@ async function refreshFeed() {
 
   const latest = {};
   items.forEach(i => {
-    // worker sender UNIX-sekunder; konverter til ms
     const ts = Number(i.ts) * 1000;
     const copy = Object.assign({}, i, { ts });
     if (!latest[copy.name] || copy.ts > latest[copy.name].ts) latest[copy.name] = copy;
@@ -245,7 +245,6 @@ async function refreshFeed() {
     })
     .join("\n");
 
-  // ønsket overskrift
   feedTop.textContent = `Hej Pablo\n\nDit teams seneste opladninger:\n${lines}`;
 }
 
@@ -254,7 +253,6 @@ async function finishPause() {
 
   const duration = Math.round((Date.now() - pauseStart) / 1000);
 
-  // nextPauseTimestamp er allerede sat i startTimer; opdatering her er valgfri
   nextPauseTimestamp = Date.now() + chosenInterval * 1000;
 
   rescheduleReminder();
@@ -282,7 +280,7 @@ async function finishPause() {
   thanks.style.display = "block";
 }
 
-// Knap kun synlig når tidspunktet for næste pause er nået
+// ⭐ Knap kun synlig når tidspunktet for næste pause er nået
 setInterval(() => {
   if (Date.now() >= nextPauseTimestamp) {
     startBtn.style.display = "inline-block";
