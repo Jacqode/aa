@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v79</title>
+<title>Flow Focus v80</title>
 
 <style>
   body{
@@ -39,18 +39,26 @@
     min-height:20px;
   }
 
-  #feedTop{
-    font-size:18px;
-    line-height:1.35;
-    margin-top:20px;
-    white-space:pre-line;
+  .subheader{
+    font-weight:600;
+    margin-top:16px;
+    margin-bottom:6px;
+  }
+
+  .energiline{
+    font-size:16px;
+    color:#555;
+    margin-bottom:20px;
   }
 </style>
 </head>
 <body>
 
 <!-- ⭐ Velkomst øverst -->
-<div id="feedTop">Velkommen tilbage, Pablo 😊</div>
+<div style="font-size:18px; margin-bottom:6px;">Velkommen tilbage, Pablo 😊</div>
+
+<!-- ⭐ Energilinje -->
+<div class="energiline">30–90 sekunders let aktivitet øger energien.</div>
 
 <!-- ⭐ Start-knap -->
 <div class="section">
@@ -61,14 +69,19 @@
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
 
-<!-- ⭐ Feed (rykket ned) -->
-<div id="feedTopList"></div>
-
 <!-- ⭐ Tak-besked -->
 <div id="thanks" style="display:none; margin-top:20px;"></div>
 
+<!-- ⭐ Toggle -->
 <details style="margin-top:20px;">
-  <summary style="font-weight:600;">Indstillinger</summary>
+  <summary style="font-weight:600;">Team og Indstillinger</summary>
+
+  <!-- ⭐ TEAM-SEKTION -->
+  <div class="subheader">Team</div>
+  <div id="teamFeed">Seneste opladninger:</div>
+
+  <!-- ⭐ INDSTILLINGER -->
+  <div class="subheader">Indstillinger</div>
 
   <div style="margin-top:12px">
     <div>Dit navn:</div>
@@ -104,7 +117,7 @@ const timerEl = document.getElementById("timer");
 const chosenExerciseDisplay = document.getElementById("chosenExerciseDisplay");
 const thanks = document.getElementById("thanks");
 const startBtn = document.querySelector(".exerciseBtn");
-const feedTopList = document.getElementById("feedTopList");
+const teamFeed = document.getElementById("teamFeed");
 
 let chosenExercise = "random";
 let chosenTime = Number(localStorage.getItem("time") || 60);
@@ -208,7 +221,7 @@ function format(sec) {
   return `${m} min ${String(s).padStart(2,'0')} sek`;
 }
 
-// ⭐ Feed med “I dag”-logik
+// ⭐ Feed kun i Team-sektionen
 async function refreshFeed() {
   const team = new URLSearchParams(location.search).get("team") || "default";
 
@@ -247,7 +260,7 @@ async function refreshFeed() {
     })
     .join("\n");
 
-  feedTopList.textContent = `Dit teams seneste opladninger:\n${lines}`;
+  teamFeed.textContent = `Seneste opladninger:\n${lines}`;
 }
 
 async function finishPause() {
