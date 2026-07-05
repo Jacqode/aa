@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v82</title>
+<title>Flow Focus v83</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -18,9 +18,9 @@
 <body>
 
 <div id="welcome" style="font-size:18px;margin-bottom:6px"></div>
-<div class="energiline">30–90 sekunders let aktivitet øger energien.</div>
+<div class="energiline">Brug for et energiboost, navn?</div>
 
-<button class="exerciseBtn" data-ex="random" style="display:none;">Start energipause</button>
+<button class="exerciseBtn" data-ex="random" style="display:none;">Få et boost</button>
 
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
@@ -73,7 +73,7 @@ async function loadProfileName(){
   const data = await (await fetch(api(`/profile?team=${team}&name=${localName}`))).json();
   const profileName = data.name || localName || "Ukendt";
   nameInput.value = profileName;
-  welcome.textContent = `Velkommen tilbage, ${profileName} 😊`;
+  welcome.textContent = "Brug for et energiboost, navn?";
 }
 
 async function saveProfileName(name){
@@ -86,7 +86,7 @@ async function saveProfileName(name){
 
 nameInput.oninput = () => {
   localStorage.name = nameInput.value;
-  welcome.textContent = `Velkommen tilbage, ${nameInput.value} 😊`;
+  welcome.textContent = "Brug for et energiboost, navn?";
   saveProfileName(nameInput.value);
 };
 
@@ -203,4 +203,3 @@ refreshFeed();
 </script>
 </body>
 </html>
-
