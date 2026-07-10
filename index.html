@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v84</title>
+<title>Flow Focus v85</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -21,7 +21,7 @@
 <div id="welcome" style="font-size:20px;font-weight:600;margin-bottom:16px"></div>
 
 <!-- ⭐ Boost-knap -->
-<button class="exerciseBtn" data-ex="random" style="display:none;">Få et boost</button>
+<button class="exerciseBtn" data-ex="random" style="display:none;">Ja, jeg er klar</button>
 
 <!-- ⭐ Øvelse + timer -->
 <div id="chosenExerciseDisplay"></div>
@@ -124,7 +124,10 @@ function startNewPause(){
   thanks.style.display="none";
   const list=["Squats","Knæløft","Armsving"];
   chosenExercise = list[Math.floor(Math.random()*list.length)];
-  chosenExerciseDisplay.textContent = `${chosenExercise} i:`;
+
+  // ⭐ Hel 85 ændring: ny tekst
+  chosenExerciseDisplay.textContent = `Få et boost ved at lave ${chosenExercise}`;
+
   startTimer();
 }
 
