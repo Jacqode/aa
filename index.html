@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v85</title>
+<title>Flow Focus v86</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -125,8 +125,8 @@ function startNewPause(){
   const list=["Squats","Knæløft","Armsving"];
   chosenExercise = list[Math.floor(Math.random()*list.length)];
 
-  // ⭐ Hel 85 ændring: ny tekst
-  chosenExerciseDisplay.textContent = `Få et boost ved at lave ${chosenExercise}`;
+  // ⭐ Hel 86: boost-tekst + øvelse + "i:"
+  chosenExerciseDisplay.textContent = `Få et boost ved at lave ${chosenExercise} i:`;
 
   startTimer();
 }
