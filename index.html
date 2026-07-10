@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v89</title>
+<title>Flow Focus v90</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -126,7 +126,8 @@ function startNewPause(){
   const list=["Squats","Knæløft","Armsving"];
   chosenExercise = list[Math.floor(Math.random()*list.length)];
 
-  chosenExerciseDisplay.textContent = `Energizer: Lav ${chosenExercise} i`;
+  // ⭐ v90: fjern "Lav"
+  chosenExerciseDisplay.textContent = `Energizer: ${chosenExercise} i`;
 
   startTimer();
 }
@@ -171,7 +172,6 @@ async function refreshFeed(){
     if(!latest[i.name] || ts > latest[i.name].ts) latest[i.name] = {...i, ts};
   });
 
-  // ⭐ v89: ændret tekst
   teamFeed.textContent = "Seneste energizers:\n" +
     Object.values(latest)
       .sort((a,b)=>b.ts-a.ts)
