@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v87</title>
+<title>Flow Focus v88</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -79,7 +79,6 @@ async function loadProfileName(){
   const profileName = data.name || localName || "Ukendt";
   nameInput.value = profileName;
 
-  // ⭐ v87: energizer-tekst
   welcome.textContent = `Brug for en energizer, ${profileName}?`;
 }
 
@@ -93,10 +92,7 @@ async function saveProfileName(name){
 
 nameInput.oninput = () => {
   localStorage.name = nameInput.value;
-
-  // ⭐ v87: energizer-tekst
   welcome.textContent = `Brug for en energizer, ${nameInput.value}?`;
-
   saveProfileName(nameInput.value);
 };
 
@@ -130,8 +126,8 @@ function startNewPause(){
   const list=["Squats","Knæløft","Armsving"];
   chosenExercise = list[Math.floor(Math.random()*list.length)];
 
-  // ⭐ v87: Energizer-øvelseslinje
-  chosenExerciseDisplay.textContent = `Energizer: Lav ${chosenExercise} i:`;
+  // ⭐ v88: Energizer-øvelseslinje uden kolon
+  chosenExerciseDisplay.textContent = `Energizer: Lav ${chosenExercise} i`;
 
   startTimer();
 }
