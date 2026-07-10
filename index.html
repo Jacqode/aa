@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v86</title>
+<title>Flow Focus v87</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -20,8 +20,8 @@
 <!-- ⭐ Velkomst -->
 <div id="welcome" style="font-size:20px;font-weight:600;margin-bottom:16px"></div>
 
-<!-- ⭐ Boost-knap -->
-<button class="exerciseBtn" data-ex="random" style="display:none;">Ja, jeg er klar</button>
+<!-- ⭐ Energizer-knap -->
+<button class="exerciseBtn" data-ex="random" style="display:none;">Ja, giv mig en energizer</button>
 
 <!-- ⭐ Øvelse + timer -->
 <div id="chosenExerciseDisplay"></div>
@@ -78,7 +78,9 @@ async function loadProfileName(){
   const data = await (await fetch(api(`/profile?team=${team}&name=${localName}`))).json();
   const profileName = data.name || localName || "Ukendt";
   nameInput.value = profileName;
-  welcome.textContent = `Brug for et energiboost, ${profileName}?`;
+
+  // ⭐ v87: energizer-tekst
+  welcome.textContent = `Brug for en energizer, ${profileName}?`;
 }
 
 async function saveProfileName(name){
@@ -91,7 +93,10 @@ async function saveProfileName(name){
 
 nameInput.oninput = () => {
   localStorage.name = nameInput.value;
-  welcome.textContent = `Brug for et energiboost, ${nameInput.value}?`;
+
+  // ⭐ v87: energizer-tekst
+  welcome.textContent = `Brug for en energizer, ${nameInput.value}?`;
+
   saveProfileName(nameInput.value);
 };
 
@@ -125,15 +130,15 @@ function startNewPause(){
   const list=["Squats","Knæløft","Armsving"];
   chosenExercise = list[Math.floor(Math.random()*list.length)];
 
-  // ⭐ Hel 86: boost-tekst + øvelse + "i:"
-  chosenExerciseDisplay.textContent = `Få et boost ved at lave ${chosenExercise} i:`;
+  // ⭐ v87: Energizer-øvelseslinje
+  chosenExerciseDisplay.textContent = `Energizer: Lav ${chosenExercise} i:`;
 
   startTimer();
 }
 
 function scheduleReminder(){
   if(Notification.permission!=="granted") return;
-  reminderTimeoutId = setTimeout(()=>new Notification("Tid til et energiboost"), chosenInterval*1000);
+  reminderTimeoutId = setTimeout(()=>new Notification("Tid til en energizer"), chosenInterval*1000);
 }
 
 function rescheduleReminder(){
@@ -197,7 +202,7 @@ async function finishPause(){
 
   await refreshFeed();
 
-  thanks.textContent = `Boost færdigt. Næste er kl. ${
+  thanks.textContent = `Energizer færdig. Næste er kl. ${
     new Date(nextPauseTimestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
   }`;
   thanks.style.display="block";
