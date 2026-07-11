@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Energizer Admin v92</title>
+<title>Energizer Admin v93</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -12,16 +12,24 @@
   th,td{border:1px solid #ddd;padding:8px;text-align:left}
   th{background:#f5f5f5}
   .small{font-size:.9rem;color:#666}
+  canvas{max-width:100%;margin-top:20px}
 </style>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<h1>Energizer Admin v92</h1>
-<p class="small">Denne admin er frontend‑only og viser data for det team, der står i URL’en.</p>
+<h1>Energizer Admin v93</h1>
+<p class="small">Viser statistik og grafer for det team, der står i URL’en.</p>
 
 <!-- ⭐ Team info -->
 <h2>Team</h2>
 <div id="teamName" style="font-weight:600;font-size:18px;margin-bottom:10px"></div>
+
+<!-- ⭐ Statistik -->
+<h2>Statistik</h2>
+<div id="statsBox" style="font-size:16px;line-height:1.6"></div>
 
 <!-- ⭐ Brugere -->
 <h2>Brugere (seneste aktivitet)</h2>
@@ -41,17 +49,40 @@
   <tbody></tbody>
 </table>
 
+<!-- ⭐ Grafer -->
+<h2>Graf: Aktivitet over tid</h2>
+<canvas id="activityChart"></canvas>
+
+<h2>Graf: Mest populære øvelser</h2>
+<canvas id="exerciseChart"></canvas>
+
 <script>
 const api = p => "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev" + p;
 const team = new URLSearchParams(location.search).get("team") || "default";
 
 document.getElementById("teamName").textContent = "Team: " + team;
 
+let activityChart, exerciseChart;
+
 /* ⭐ Hent feed */
 async function loadFeed(){
   const res = await fetch(api(`/feed?team=${team}`));
   const data = await res.json();
   const feed = data.feed || [];
+
+  /* ⭐ Statistik */
+  const users = new Set(feed.map(e => e.name));
+  const eventsToday = feed.filter(e => {
+    const d = new Date(e.ts * 1000);
+    const now = new Date();
+    return d.toDateString() === now.toDateString();
+  });
+
+  document.getElementById("statsBox").innerHTML = `
+    <b>Antal brugere:</b> ${users.size}<br>
+    <b>Antal events:</b> ${feed.length}<br>
+    <b>Events i dag:</b> ${eventsToday.length}
+  `;
 
   /* ⭐ Brugere (seneste aktivitet) */
   const latest = {};
@@ -95,12 +126,28 @@ async function loadFeed(){
       `;
       feedTable.appendChild(row);
     });
+
+  drawActivityChart(feed);
+  drawExerciseChart(feed);
 }
 
-/* ⭐ Start */
-loadFeed();
-setInterval(loadFeed, 5000);
-</script>
+/* ⭐ Graf: Aktivitet over tid */
+function drawActivityChart(feed){
+  const byDay = {};
 
-</body>
-</html>
+  feed.forEach(e=>{
+    const d = new Date(e.ts * 1000);
+    const key = d.toLocaleDateString("da-DK");
+    byDay[key] = (byDay[key] || 0) + 1;
+  });
+
+  const labels = Object.keys(byDay);
+  const values = Object.values(byDay);
+
+  if(activityChart) activityChart.destroy();
+
+  activityChart = new Chart(document.getElementById("activityChart"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
