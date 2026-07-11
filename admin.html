@@ -3,94 +3,116 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus Admin v161 – Overblik</title>
+<title>Flow Focus Admin v91</title>
+
 <style>
-body{font-family:system-ui;padding:16px;max-width:900px;margin:auto}
-input,button{padding:8px;margin:6px 0}
-table{width:100%;border-collapse:collapse;margin-top:12px}
-th,td{border:1px solid #ddd;padding:8px;text-align:left}
-pre{background:#f6f6f6;padding:8px;overflow:auto}
-.small{font-size:.9rem;color:#666}
+  body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
+  h2{margin-top:30px}
+  button{padding:6px 12px;margin:4px;border-radius:6px;border:1px solid #ccc;cursor:pointer}
+  table{border-collapse:collapse;width:100%;margin-top:10px}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left}
+  th{background:#f5f5f5}
 </style>
 </head>
 <body>
 
-<h2>Flow Focus Admin v161 – Overblik</h2>
+<h1>Flow Focus Admin</h1>
+<p>Administrér teams og brugere.</p>
 
-<label>Team ID</label><br>
-<input id="team" placeholder="fx psy" style="width:200px">
-
-<button id="btnFeed">Hent team feed</button>
-<button id="btnDevices">Hent devices</button>
-
-<h3>Link til nye brugere</h3>
-<div id="inviteLink" class="small">Indtast team for at generere link…</div>
-
-<h3>Feed</h3>
-<table id="feedTable">
-<thead><tr><th>Navn</th><th>Aktivitet</th><th>Energi</th><th>Tid</th></tr></thead>
-<tbody></tbody>
+<!-- ⭐ TEAMS -->
+<h2>Teams</h2>
+<button onclick="loadTeams()">Genindlæs teams</button>
+<table id="teamsTable">
+  <tr><th>Team</th><th>Handling</th></tr>
 </table>
 
-<h3>Devices</h3>
-<table id="devicesTable">
-<thead><tr><th>Device</th><th>Navn</th><th>Team</th><th>Org</th><th>Last seen</th></tr></thead>
-<tbody></tbody>
+<!-- ⭐ USERS -->
+<h2>Brugere i valgt team</h2>
+<select id="teamSelect" onchange="loadUsers()"></select>
+<table id="usersTable">
+  <tr><th>Navn</th><th>Handling</th></tr>
 </table>
 
 <script>
-const BASE = "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev";
+const api = p => "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev" + p;
 
-function $(id){ return document.getElementById(id); }
+/* ⭐ Hent teams */
+async function loadTeams(){
+  const res = await fetch(api("/admin/teams"));
+  const data = await res.json();
 
-async function fetchJson(url){
-  const res = await fetch(url);
-  const text = await res.text();
-  try { return JSON.parse(text); } catch { return text; }
+  const table = document.getElementById("teamsTable");
+  table.innerHTML = "<tr><th>Team</th><th>Handling</th></tr>";
+
+  const select = document.getElementById("teamSelect");
+  select.innerHTML = "";
+
+  data.teams.forEach(team=>{
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${team.name}</td>
+      <td>
+        <button onclick="deleteTeam('${team.name}')">Slet team</button>
+      </td>
+    `;
+    table.appendChild(row);
+
+    const opt = document.createElement("option");
+    opt.value = team.name;
+    opt.textContent = team.name;
+    select.appendChild(opt);
+  });
+
+  loadUsers();
 }
 
-$("team").addEventListener("input", () => {
-  const t = $("team").value.trim();
-  if (!t) return $("inviteLink").textContent = "Indtast team for at generere link…";
-  $("inviteLink").textContent = `https://jacqode.github.io/aa/?team=${encodeURIComponent(t)}`;
-});
+/* ⭐ Slet team */
+async function deleteTeam(team){
+  await fetch(api("/admin/delete-team"),{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ team })
+  });
+  loadTeams();
+}
 
-$("btnFeed").addEventListener("click", async () => {
-  const team = $("team").value.trim();
-  if (!team) return alert("Indtast team");
-  const rows = await fetchJson(`${BASE}/api/team_feed?team_id=${team}&limit=200`);
-  const tbody = document.querySelector("#feedTable tbody");
-  tbody.innerHTML = "";
-  rows.forEach(r => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${r.display_name||""}</td><td>${r.activity||""}</td><td>${r.energy||""}</td><td>${r.timestamp||""}</td>`;
-    tbody.appendChild(tr);
-  });
-});
+/* ⭐ Hent brugere */
+async function loadUsers(){
+  const team = document.getElementById("teamSelect").value;
+  if(!team) return;
 
-$("btnDevices").addEventListener("click", async () => {
-  const team = $("team").value.trim();
-  if (!team) return alert("Indtast team");
-  const rows = await fetchJson(`${BASE}/api/team_feed?team_id=${team}&limit=500`);
-  const devices = {};
-  rows.forEach(r => {
-    devices[r.device_id] = {
-      device_id: r.device_id,
-      display_name: r.display_name,
-      team_id: r.team_id,
-      org_id: r.org_id,
-      last_seen: r.timestamp
-    };
+  const res = await fetch(api(`/admin/users?team=${team}`));
+  const data = await res.json();
+
+  const table = document.getElementById("usersTable");
+  table.innerHTML = "<tr><th>Navn</th><th>Handling</th></tr>";
+
+  data.users.forEach(u=>{
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${u.name}</td>
+      <td>
+        <button onclick="deleteUser('${team}','${u.name}')">Slet bruger</button>
+      </td>
+    `;
+    table.appendChild(row);
   });
-  const tbody = document.querySelector("#devicesTable tbody");
-  tbody.innerHTML = "";
-  Object.values(devices).forEach(d => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${d.device_id}</td><td>${d.display_name||""}</td><td>${d.team_id||""}</td><td>${d.org_id||""}</td><td>${d.last_seen||""}</td>`;
-    tbody.appendChild(tr);
+}
+
+/* ⭐ Slet bruger */
+async function deleteUser(team,name){
+  await fetch(api("/admin/delete-user"),{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ team, name })
   });
-});
+  loadUsers();
+}
+
+/* ⭐ Start */
+loadTeams();
 </script>
 
 </body>
 </html>
+

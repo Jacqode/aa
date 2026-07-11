@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus v90</title>
+<title>Energizer v92</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -17,20 +17,14 @@
 </head>
 <body>
 
-<!-- ⭐ Velkomst -->
 <div id="welcome" style="font-size:20px;font-weight:600;margin-bottom:16px"></div>
 
-<!-- ⭐ Energizer-knap -->
 <button class="exerciseBtn" data-ex="random" style="display:none;">Ja, giv mig en energizer</button>
 
-<!-- ⭐ Øvelse + timer -->
 <div id="chosenExerciseDisplay"></div>
 <div id="timer"></div>
-
-<!-- ⭐ Tak-besked -->
 <div id="thanks" style="display:none;margin-top:20px"></div>
 
-<!-- ⭐ Team + indstillinger -->
 <details style="margin-top:20px;">
   <summary style="font-weight:600;">Team og Indstillinger</summary>
 
@@ -57,8 +51,6 @@
 </details>
 
 <script>
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
-
 const api = p => "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev" + p;
 const $ = id => document.getElementById(id);
 
@@ -73,27 +65,18 @@ let chosenExercise="random",
 
 const team = new URLSearchParams(location.search).get("team") || "default";
 
-async function loadProfileName(){
-  const localName = localStorage.name || "";
-  const data = await (await fetch(api(`/profile?team=${team}&name=${localName}`))).json();
-  const profileName = data.name || localName || "Ukendt";
-  nameInput.value = profileName;
-
-  welcome.textContent = `Brug for en energizer, ${profileName}?`;
-}
-
-async function saveProfileName(name){
-  await fetch(api("/profile"), {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ team_id:team, name })
-  });
-}
+// ⭐ KISS: ingen backend GET /profile
+nameInput.value = localStorage.name || "";
+welcome.textContent = `Brug for en energizer, ${nameInput.value || "Ukendt"}?`;
 
 nameInput.oninput = () => {
   localStorage.name = nameInput.value;
   welcome.textContent = `Brug for en energizer, ${nameInput.value}?`;
-  saveProfileName(nameInput.value);
+  fetch(api("/profile"),{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ team_id:team, name:nameInput.value })
+  });
 };
 
 function bindButtons(selector, stateKey, callback){
@@ -125,10 +108,7 @@ function startNewPause(){
   thanks.style.display="none";
   const list=["Squats","Knæløft","Armsving"];
   chosenExercise = list[Math.floor(Math.random()*list.length)];
-
-  // ⭐ v90: fjern "Lav"
   chosenExerciseDisplay.textContent = `Energizer: ${chosenExercise} i`;
-
   startTimer();
 }
 
@@ -152,7 +132,6 @@ function startTimer(){
   timerId = setInterval(()=>{
     timerEl.textContent = format(s);
     if(s-- <= 0){
-      new Audio("done.mp3").play();
       clearInterval(timerId);
       timerEl.textContent="";
       chosenExerciseDisplay.textContent="";
@@ -207,7 +186,6 @@ async function finishPause(){
 setInterval(()=>startBtn.style.display = Date.now()>=nextPauseTimestamp ? "inline-block" : "none",1000);
 setInterval(refreshFeed,3000);
 
-loadProfileName();
 refreshFeed();
 </script>
 </body>

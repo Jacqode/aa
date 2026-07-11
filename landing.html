@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow Focus – Start her</title>
+
+<style>
+  body{font-family:system-ui;margin:0;padding:30px;background:#fff;color:#111;line-height:1.5}
+  h1{font-size:28px;margin-bottom:10px}
+  p{max-width:600px}
+  input,button{
+    padding:10px 14px;
+    font-size:1rem;
+    border-radius:8px;
+    border:1px solid #ccc;
+    margin-top:10px;
+  }
+  button{
+    background:#111;
+    color:#fff;
+    cursor:pointer;
+  }
+  #msg{margin-top:20px;font-weight:600}
+</style>
+</head>
+<body>
+
+<h1>Flow Focus</h1>
+<p>
+  Korte energizers der giver bedre fokus, trivsel og energi i hverdagen.
+  Opret et team og kom i gang på under 10 sekunder.
+</p>
+
+<h2>Opret team</h2>
+<p>Vælg et team‑navn (fx <i>psy</i>, <i>hr</i>, <i>it</i>, <i>demo</i>):</p>
+
+<input id="teamInput" placeholder="Team-navn">
+<button onclick="createTeam()">Opret team</button>
+
+<div id="msg"></div>
+
+<script>
+const api = p => "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev" + p;
+
+async function createTeam(){
+  const team = document.getElementById("teamInput").value.trim();
+  const msg = document.getElementById("msg");
+
+  if(!team){
+    msg.textContent = "Skriv et team-navn.";
+    return;
+  }
+
+  msg.textContent = "Opretter team...";
+
+  const res = await fetch(api("/signup"),{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ team })
+  });
+
+  const data = await res.json();
+
+  if(!data.ok){
+    msg.textContent = "Kunne ikke oprette team.";
+    return;
+  }
+
+  msg.textContent = "Team oprettet! Sender dig videre...";
+
+  // Redirect til appen
+  setTimeout(()=>{
+    location.href = `/?team=${team}`;
+  },800);
+}
+</script>
+
+</body>
+</html>
