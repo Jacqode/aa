@@ -3,54 +3,126 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Flow Focus Stats v152</title>
+<title>Stats</title>
 
 <style>
-body{font-family:system-ui;padding:16px}
-h3{margin-top:24px}
+  body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
+  h2{margin-top:30px}
+  table{border-collapse:collapse;width:100%;margin-top:10px}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left}
+  th{background:#f5f5f5}
+  .small{font-size:.9rem;color:#666}
 </style>
 </head>
-
 <body>
 
-<h2>Statistik</h2>
-<div id="stats">Indlæser…</div>
+<h1>Stats</h1>
+<p class="small">Statistik for det team, der står i URL’en.</p>
+
+<!-- ⭐ Team info -->
+<h2>Team</h2>
+<div id="teamName" style="font-weight:600;font-size:18px;margin-bottom:10px"></div>
+
+<!-- ⭐ Dine stats -->
+<h2>Dine stats</h2>
+<div id="yourStats" style="font-size:16px;line-height:1.6"></div>
+
+<!-- ⭐ Team: seneste energizer pr. bruger -->
+<h2>Team – seneste energizer pr. bruger</h2>
+<table id="usersTable">
+  <thead>
+    <tr><th>Navn</th><th>Øvelse</th><th>Tidspunkt</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- ⭐ Team feed -->
+<h2>Team feed (alle events)</h2>
+<table id="feedTable">
+  <thead>
+    <tr><th>Navn</th><th>Øvelse</th><th>Varighed</th><th>Tidspunkt</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
 <script>
-const p = new URLSearchParams(location.search);
-const TEAM = p.get("team") || "demo";
+const api = p => "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev" + p;
+const team = new URLSearchParams(location.search).get("team") || "default";
+document.getElementById("teamName").textContent = "Team: " + team;
 
-const BASE = "https://workerff092.jakobhelkjaer.workers.dev";
-const api = (p,o={}) => fetch(BASE+p,{...o,mode:"cors"}).then(r=>r.json());
+// ⭐ Dit navn fra localStorage (samme som index.html)
+const yourName = localStorage.name || "Ukendt";
 
-function $(id){return document.getElementById(id)}
+/* ⭐ Hent feed */
+async function loadFeed(){
+  const res = await fetch(api(`/feed?team=${team}`));
+  const data = await res.json();
+  const feed = data.feed || [];
 
-async function loadStats(){
-  const rows = await api(`/api/team_feed?team_id=${TEAM}&limit=500`);
+  /* ⭐ Dine stats */
+  const yourEvents = feed.filter(e => e.name === yourName);
+  const yourCount = yourEvents.length;
+  const yourLast = yourEvents.sort((a,b)=>b.ts-a.ts)[0];
 
-  const total = rows.length;
-  const yes = rows.filter(r => r.energy === "ja").length;
-  const no = rows.filter(r => r.energy === "nej").length;
-  const maybe = rows.filter(r => r.energy === "ved_ikke").length;
-
-  $("stats").innerHTML = `
-    <h3>Antal pauser</h3>
-    ${total}
-
-    <h3>Energiscore</h3>
-    Ja: ${yes}<br>
-    Nej: ${no}<br>
-    Ved ikke: ${maybe}<br>
-
-    <h3>Procenter</h3>
-    Ja: ${(yes/total*100||0).toFixed(0)}%<br>
-    Nej: ${(no/total*100||0).toFixed(0)}%<br>
-    Ved ikke: ${(maybe/total*100||0).toFixed(0)}%
+  document.getElementById("yourStats").innerHTML = `
+    <b>Navn:</b> ${yourName}<br>
+    <b>Antal energizers:</b> ${yourCount}<br>
+    <b>Seneste:</b> ${
+      yourLast
+        ? `${yourLast.exercise} (${new Date(yourLast.ts*1000).toLocaleString("da-DK")})`
+        : "Ingen endnu"
+    }
   `;
+
+  /* ⭐ Team – seneste pr. bruger */
+  const latest = {};
+  feed.forEach(i=>{
+    const ts = +i.ts * 1000;
+    if(!latest[i.name] || ts > latest[i.name].ts){
+      latest[i.name] = {...i, ts};
+    }
+  });
+
+  const usersTable = document.querySelector("#usersTable tbody");
+  usersTable.innerHTML = "";
+
+  Object.values(latest)
+    .sort((a,b)=>b.ts - a.ts)
+    .forEach(i=>{
+      const d = new Date(i.ts);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${i.name}</td>
+        <td>${i.exercise}</td>
+        <td>${d.toLocaleString("da-DK")}</td>
+      `;
+      usersTable.appendChild(row);
+    });
+
+  /* ⭐ Team feed (alle events) */
+  const feedTable = document.querySelector("#feedTable tbody");
+  feedTable.innerHTML = "";
+
+  feed
+    .sort((a,b)=>b.ts - a.ts)
+    .forEach(i=>{
+      const d = new Date(i.ts * 1000);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${i.name}</td>
+        <td>${i.exercise}</td>
+        <td>${i.duration} sek</td>
+        <td>${d.toLocaleString("da-DK")}</td>
+      `;
+      feedTable.appendChild(row);
+    });
 }
 
-window.onload = loadStats;
+/* ⭐ Start */
+loadFeed();
+setInterval(loadFeed, 5000);
 </script>
 
 </body>
 </html>
+
