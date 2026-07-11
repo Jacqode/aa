@@ -3,177 +3,151 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Energizer v94</title>
+<title>Stats v94</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
-  button,input{padding:10px 16px;font-size:.95rem;border-radius:8px;border:1px solid #ccc;background:#fafafa;cursor:pointer;margin:4px}
-  input{padding:8px}
-  .active{background:#111;color:#fff}
-  #chosenExerciseDisplay,#timer,#thanks{font-size:18px;margin:4px 0;min-height:20px}
-  .subheader{font-weight:600;margin:16px 0 6px}
+  h2{margin-top:30px}
+  table{border-collapse:collapse;width:100%;margin-top:10px}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left}
+  th{background:#f5f5f5}
+  .small{font-size:.9rem;color:#666}
 </style>
 </head>
 <body>
 
-<div id="welcome" style="font-size:20px;font-weight:600;margin-bottom:16px"></div>
+<h1>Stats v94</h1>
+<p class="small">Statistik for det team, der står i URL’en.</p>
 
-<button class="exerciseBtn" data-ex="random" style="display:none;">Ja, giv mig en energizer</button>
+<!-- ⭐ Team info -->
+<h2>Team</h2>
+<div id="teamName" style="font-weight:600;font-size:18px;margin-bottom:4px"></div>
+<div id="lastUpdated" class="small" style="margin-bottom:20px"></div>
 
-<div id="chosenExerciseDisplay"></div>
-<div id="timer"></div>
-<div id="thanks" style="display:none;margin-top:20px"></div>
+<!-- ⭐ Dine stats -->
+<h2>Dine stats</h2>
+<div id="yourStats" style="font-size:16px;line-height:1.6"></div>
 
-<details style="margin-top:20px;">
-  <summary style="font-weight:600;">Indstillinger</summary>
+<!-- ⭐ Team – seneste energizer pr. bruger -->
+<h2>Dit teams stats – seneste energizer pr. bruger</h2>
+<table id="usersTable">
+  <thead>
+    <tr>
+      <th>Navn</th>
+      <th>Device</th>
+      <th>Øvelse</th>
+      <th>Tidspunkt</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-  <div class="subheader">Dit navn</div>
-  <input id="nameInput" placeholder="Skriv dit navn"><br><br>
-
-  <div class="subheader">Interval til næste pause</div>
-  <button class="intervalBtn" data-int="30">30 sek</button>
-  <button class="intervalBtn" data-int="1500">25 min</button>
-  <button class="intervalBtn" data-int="1800">30 min</button>
-  <button class="intervalBtn" data-int="2400">40 min</button>
-
-  <br><br>
-  <div class="subheader">Varighed</div>
-  <button class="timeBtn" data-time="30">30 sek</button>
-  <button class="timeBtn" data-time="60">1 min</button>
-  <button class="timeBtn" data-time="120">2 min</button>
-
-  <br><br>
-  <a id="statsLink" style="font-size:16px;display:inline-block;margin-top:10px;">Se statistik og feed</a>
-</details>
+<!-- ⭐ Team feed -->
+<h2>Team feed (alle events)</h2>
+<table id="feedTable">
+  <thead>
+    <tr>
+      <th>Navn</th>
+      <th>Device</th>
+      <th>Øvelse</th>
+      <th>Varighed</th>
+      <th>Tidspunkt</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
 <script>
 const api = p => "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev" + p;
-const $ = id => document.getElementById(id);
-
-const nameInput = $("nameInput"), welcome = $("welcome"), timerEl = $("timer"),
-      chosenExerciseDisplay = $("chosenExerciseDisplay"), thanks = $("thanks"),
-      startBtn = document.querySelector(".exerciseBtn");
-
-let chosenExercise="random",
-    chosenTime=+localStorage.time||60,
-    chosenInterval=+localStorage.interval||1500,
-    timerId=null, pauseStart=null, reminderTimeoutId=null, nextPauseTimestamp=0;
-
 const team = new URLSearchParams(location.search).get("team") || "default";
-document.getElementById("statsLink").href = `stats.html?team=${team}`;
+document.getElementById("teamName").textContent = "Team: " + team;
 
-/* ⭐ Device-ID (v94) */
-if(!localStorage.device_id){
-  localStorage.device_id = crypto.randomUUID();
-}
-const device_id = localStorage.device_id;
+// ⭐ Dit navn og device fra localStorage
+const yourName = localStorage.name || "Ukendt";
+const yourDevice = localStorage.device_id || "Ukendt";
 
-/* ⭐ Navn */
-nameInput.value = localStorage.name || "";
-welcome.textContent = `Brug for en energizer, ${nameInput.value || "Ukendt"}?`;
+/* ⭐ Hent feed */
+async function loadFeed(){
+  const res = await fetch(api(`/feed?team=${team}`));
+  const data = await res.json();
+  const feed = data.feed || [];
 
-nameInput.oninput = () => {
-  localStorage.name = nameInput.value;
-  welcome.textContent = `Brug for en energizer, ${nameInput.value}?`;
+  /* ⭐ Last updated */
+  if(feed.length > 0){
+    const newest = feed.sort((a,b)=>b.ts - a.ts)[0];
+    const d = new Date(newest.ts * 1000);
+    document.getElementById("lastUpdated").textContent =
+      "Last updated: " + d.toLocaleString("da-DK");
+  } else {
+    document.getElementById("lastUpdated").textContent = "Last updated: Ingen data";
+  }
 
-  fetch(api("/profile"),{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      team_id: team,
-      name: nameInput.value,
-      device_id
-    })
-  });
-};
+  /* ⭐ Dine stats */
+  const yourEvents = feed.filter(e => e.device_id === yourDevice);
+  const yourCount = yourEvents.length;
+  const yourLast = yourEvents.sort((a,b)=>b.ts-a.ts)[0];
 
-function bindButtons(selector, stateKey, callback){
-  document.querySelectorAll(selector).forEach(btn=>{
-    const val = btn.dataset.ex || btn.dataset.time || btn.dataset.int;
-    if (+val === window[stateKey]) btn.classList.add("active");
-
-    btn.onclick = () => {
-      document.querySelectorAll(selector).forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-
-      if(selector !== ".exerciseBtn"){
-        window[stateKey] = +val;
-        localStorage[stateKey.replace("chosen","").toLowerCase()] = +val;
-      }
-      callback && callback(btn);
-    };
-  });
-}
-
-bindButtons(".intervalBtn","chosenInterval");
-bindButtons(".timeBtn","chosenTime");
-bindButtons(".exerciseBtn","chosenExercise",()=>{
-  startBtn.style.display="none";
-  startNewPause();
-});
-
-function startNewPause(){
-  thanks.style.display="none";
-  const list=["Squats","Knæløft","Armsving"];
-  chosenExercise = list[Math.floor(Math.random()*list.length)];
-  chosenExerciseDisplay.textContent = `Energizer: ${chosenExercise} i`;
-  startTimer();
-}
-
-function scheduleReminder(){
-  if(Notification.permission!=="granted") return;
-  reminderTimeoutId = setTimeout(()=>new Notification("Tid til en energizer"), chosenInterval*1000);
-}
-
-function rescheduleReminder(){
-  if(reminderTimeoutId) clearTimeout(reminderTimeoutId);
-  scheduleReminder();
-}
-
-function startTimer(){
-  let s = chosenTime;
-  pauseStart = Date.now();
-  timerEl.textContent = format(s);
-  nextPauseTimestamp = Date.now() + (chosenTime + chosenInterval)*1000;
-
-  clearInterval(timerId);
-  timerId = setInterval(()=>{
-    timerEl.textContent = format(s);
-    if(s-- <= 0){
-      clearInterval(timerId);
-      timerEl.textContent="";
-      chosenExerciseDisplay.textContent="";
-      finishPause();
+  document.getElementById("yourStats").innerHTML = `
+    <b>Navn:</b> ${yourName}<br>
+    <b>Device:</b> ${yourDevice}<br>
+    <b>Antal energizers:</b> ${yourCount}<br>
+    <b>Seneste:</b> ${
+      yourLast
+        ? `${yourLast.exercise} (${new Date(yourLast.ts*1000).toLocaleString("da-DK")})`
+        : "Ingen endnu"
     }
-  },1000);
-}
+  `;
 
-const format = sec => `${(sec/60|0)} min ${String(sec%60).padStart(2,'0')} sek`;
-
-async function finishPause(){
-  const duration = Math.round((Date.now()-pauseStart)/1000);
-  nextPauseTimestamp = Date.now() + chosenInterval*1000;
-  rescheduleReminder();
-
-  await fetch(api("/event"),{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      team_id: team,
-      name: nameInput.value || "Ukendt",
-      device_id,
-      exercise: chosenExercise,
-      duration
-    })
+  /* ⭐ Team – seneste pr. bruger */
+  const latest = {};
+  feed.forEach(i=>{
+    const ts = +i.ts * 1000;
+    if(!latest[i.device_id] || ts > latest[i.device_id].ts){
+      latest[i.device_id] = {...i, ts};
+    }
   });
 
-  thanks.textContent = `Energizer færdig. Næste er kl. ${
-    new Date(nextPauseTimestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
-  }`;
-  thanks.style.display="block";
+  const usersTable = document.querySelector("#usersTable tbody");
+  usersTable.innerHTML = "";
+
+  Object.values(latest)
+    .sort((a,b)=>b.ts - a.ts)
+    .forEach(i=>{
+      const d = new Date(i.ts);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${i.name}</td>
+        <td>${i.device_id}</td>
+        <td>${i.exercise}</td>
+        <td>${d.toLocaleString("da-DK")}</td>
+      `;
+      usersTable.appendChild(row);
+    });
+
+  /* ⭐ Team feed (alle events) */
+  const feedTable = document.querySelector("#feedTable tbody");
+  feedTable.innerHTML = "";
+
+  feed
+    .sort((a,b)=>b.ts - a.ts)
+    .forEach(i=>{
+      const d = new Date(i.ts * 1000);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${i.name}</td>
+        <td>${i.device_id}</td>
+        <td>${i.exercise}</td>
+        <td>${i.duration} sek</td>
+        <td>${d.toLocaleString("da-DK")}</td>
+      `;
+      feedTable.appendChild(row);
+    });
 }
 
-setInterval(()=>startBtn.style.display = Date.now()>=nextPauseTimestamp ? "inline-block" : "none",1000);
+/* ⭐ Start */
+loadFeed();
+setInterval(loadFeed, 5000);
 </script>
+
 </body>
 </html>
