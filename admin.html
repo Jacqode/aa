@@ -151,3 +151,47 @@ function drawActivityChart(feed){
     data: {
       labels,
       datasets: [{
+        label: "Events pr. dag",
+        data: values,
+        borderColor: "#0d6efd",
+        backgroundColor: "rgba(13,110,253,0.2)",
+        fill: true,
+        tension: 0.3
+      }]
+    }
+  });
+}
+
+/* ⭐ Graf: Mest populære øvelser */
+function drawExerciseChart(feed){
+  const counts = {};
+
+  feed.forEach(e=>{
+    counts[e.exercise] = (counts[e.exercise] || 0) + 1;
+  });
+
+  const labels = Object.keys(counts);
+  const values = Object.values(counts);
+
+  if(exerciseChart) exerciseChart.destroy();
+
+  exerciseChart = new Chart(document.getElementById("exerciseChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Antal gange udført",
+        data: values,
+        backgroundColor: "#198754"
+      }]
+    }
+  });
+}
+
+/* ⭐ Start */
+loadFeed();
+setInterval(loadFeed, 5000);
+</script>
+
+</body>
+</html>
