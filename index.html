@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Energizer v92</title>
+<title>Energizer v93</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -12,7 +12,6 @@
   .active{background:#111;color:#fff}
   #chosenExerciseDisplay,#timer,#thanks{font-size:18px;margin:4px 0;min-height:20px}
   .subheader{font-weight:600;margin:16px 0 6px}
-  #teamFeed{white-space:pre-line;margin-top:10px}
 </style>
 </head>
 <body>
@@ -26,28 +25,25 @@
 <div id="thanks" style="display:none;margin-top:20px"></div>
 
 <details style="margin-top:20px;">
-  <summary style="font-weight:600;">Team og Indstillinger</summary>
+  <summary style="font-weight:600;">Indstillinger</summary>
 
-  <div class="subheader">Team</div>
-  <div id="teamFeed">Seneste energizers:</div>
+  <div class="subheader">Dit navn</div>
+  <input id="nameInput" placeholder="Skriv dit navn"><br><br>
 
-  <div class="subheader">Indstillinger</div>
-  <div style="margin-top:12px">
-    <div>Dit navn:</div>
-    <input id="nameInput" placeholder="Skriv dit navn"><br><br>
+  <div class="subheader">Interval til næste pause</div>
+  <button class="intervalBtn" data-int="30">30 sek</button>
+  <button class="intervalBtn" data-int="1500">25 min</button>
+  <button class="intervalBtn" data-int="1800">30 min</button>
+  <button class="intervalBtn" data-int="2400">40 min</button>
 
-    <div>Interval til næste pause:</div>
-    <button class="intervalBtn" data-int="30">30 sek</button>
-    <button class="intervalBtn" data-int="1500">25 min</button>
-    <button class="intervalBtn" data-int="1800">30 min</button>
-    <button class="intervalBtn" data-int="2400">40 min</button>
+  <br><br>
+  <div class="subheader">Varighed</div>
+  <button class="timeBtn" data-time="30">30 sek</button>
+  <button class="timeBtn" data-time="60">1 min</button>
+  <button class="timeBtn" data-time="120">2 min</button>
 
-    <br><br>
-    <div>Varighed:</div>
-    <button class="timeBtn" data-time="30">30 sek</button>
-    <button class="timeBtn" data-time="60">1 min</button>
-    <button class="timeBtn" data-time="120">2 min</button>
-  </div>
+  <br><br>
+  <a id="statsLink" style="font-size:16px;display:inline-block;margin-top:10px;">Se statistik og feed</a>
 </details>
 
 <script>
@@ -56,7 +52,7 @@ const $ = id => document.getElementById(id);
 
 const nameInput = $("nameInput"), welcome = $("welcome"), timerEl = $("timer"),
       chosenExerciseDisplay = $("chosenExerciseDisplay"), thanks = $("thanks"),
-      startBtn = document.querySelector(".exerciseBtn"), teamFeed = $("teamFeed");
+      startBtn = document.querySelector(".exerciseBtn");
 
 let chosenExercise="random",
     chosenTime=+localStorage.time||60,
@@ -64,6 +60,7 @@ let chosenExercise="random",
     timerId=null, pauseStart=null, reminderTimeoutId=null, nextPauseTimestamp=0;
 
 const team = new URLSearchParams(location.search).get("team") || "default";
+document.getElementById("statsLink").href = `stats.html?team=${team}`;
 
 // ⭐ KISS: ingen backend GET /profile
 nameInput.value = localStorage.name || "";
@@ -142,28 +139,6 @@ function startTimer(){
 
 const format = sec => `${(sec/60|0)} min ${String(sec%60).padStart(2,'0')} sek`;
 
-async function refreshFeed(){
-  const data = await (await fetch(api(`/feed?team=${team}`))).json();
-  const latest = {};
-
-  (data.feed||[]).forEach(i=>{
-    const ts = +i.ts*1000;
-    if(!latest[i.name] || ts > latest[i.name].ts) latest[i.name] = {...i, ts};
-  });
-
-  teamFeed.textContent = "Seneste energizers:\n" +
-    Object.values(latest)
-      .sort((a,b)=>b.ts-a.ts)
-      .map(i=>{
-        const d=new Date(i.ts), n=new Date();
-        const day = d.toDateString()===n.toDateString()
-          ? "I dag"
-          : d.toLocaleDateString("da-DK",{day:"numeric",month:"long"});
-        const time = d.toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"});
-        return `${day} kl. ${time} ${i.name}: ${i.exercise}`;
-      }).join("\n");
-}
-
 async function finishPause(){
   const duration = Math.round((Date.now()-pauseStart)/1000);
   nextPauseTimestamp = Date.now() + chosenInterval*1000;
@@ -175,8 +150,6 @@ async function finishPause(){
     body:JSON.stringify({ team_id:team, name:nameInput.value||"Ukendt", exercise:chosenExercise, duration })
   });
 
-  await refreshFeed();
-
   thanks.textContent = `Energizer færdig. Næste er kl. ${
     new Date(nextPauseTimestamp).toLocaleTimeString("da-DK",{hour:"2-digit",minute:"2-digit"})
   }`;
@@ -184,9 +157,6 @@ async function finishPause(){
 }
 
 setInterval(()=>startBtn.style.display = Date.now()>=nextPauseTimestamp ? "inline-block" : "none",1000);
-setInterval(refreshFeed,3000);
-
-refreshFeed();
 </script>
 </body>
 </html>
