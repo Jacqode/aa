@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stats</title>
+<title>Stats v93</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -16,19 +16,20 @@
 </head>
 <body>
 
-<h1>Stats</h1>
+<h1>Stats v93</h1>
 <p class="small">Statistik for det team, der står i URL’en.</p>
 
 <!-- ⭐ Team info -->
 <h2>Team</h2>
-<div id="teamName" style="font-weight:600;font-size:18px;margin-bottom:10px"></div>
+<div id="teamName" style="font-weight:600;font-size:18px;margin-bottom:4px"></div>
+<div id="lastUpdated" class="small" style="margin-bottom:20px"></div>
 
 <!-- ⭐ Dine stats -->
 <h2>Dine stats</h2>
 <div id="yourStats" style="font-size:16px;line-height:1.6"></div>
 
-<!-- ⭐ Team: seneste energizer pr. bruger -->
-<h2>Team – seneste energizer pr. bruger</h2>
+<!-- ⭐ Team – seneste energizer pr. bruger -->
+<h2>Dit teams stats – seneste energizer pr. bruger</h2>
 <table id="usersTable">
   <thead>
     <tr><th>Navn</th><th>Øvelse</th><th>Tidspunkt</th></tr>
@@ -50,14 +51,25 @@ const api = p => "https://flowfocus-aa-2704.jakobhelkjaer.workers.dev" + p;
 const team = new URLSearchParams(location.search).get("team") || "default";
 document.getElementById("teamName").textContent = "Team: " + team;
 
-// ⭐ Dit navn fra localStorage (samme som index.html)
+// ⭐ Dit navn og device fra localStorage
 const yourName = localStorage.name || "Ukendt";
+const yourDevice = localStorage.device || "Ukendt";
 
 /* ⭐ Hent feed */
 async function loadFeed(){
   const res = await fetch(api(`/feed?team=${team}`));
   const data = await res.json();
   const feed = data.feed || [];
+
+  /* ⭐ Last updated */
+  if(feed.length > 0){
+    const newest = feed.sort((a,b)=>b.ts - a.ts)[0];
+    const d = new Date(newest.ts * 1000);
+    document.getElementById("lastUpdated").textContent =
+      "Last updated: " + d.toLocaleString("da-DK");
+  } else {
+    document.getElementById("lastUpdated").textContent = "Last updated: Ingen data";
+  }
 
   /* ⭐ Dine stats */
   const yourEvents = feed.filter(e => e.name === yourName);
@@ -66,6 +78,7 @@ async function loadFeed(){
 
   document.getElementById("yourStats").innerHTML = `
     <b>Navn:</b> ${yourName}<br>
+    <b>Device:</b> ${yourDevice}<br>
     <b>Antal energizers:</b> ${yourCount}<br>
     <b>Seneste:</b> ${
       yourLast
@@ -125,4 +138,5 @@ setInterval(loadFeed, 5000);
 
 </body>
 </html>
+
 
