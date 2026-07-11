@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Energizer v93</title>
+<title>Energizer v94</title>
 
 <style>
   body{font-family:system-ui;margin:0;padding:20px;background:#fff;color:#111}
@@ -62,17 +62,28 @@ let chosenExercise="random",
 const team = new URLSearchParams(location.search).get("team") || "default";
 document.getElementById("statsLink").href = `stats.html?team=${team}`;
 
-// ⭐ KISS: ingen backend GET /profile
+/* ⭐ Device-ID (v94) */
+if(!localStorage.device_id){
+  localStorage.device_id = crypto.randomUUID();
+}
+const device_id = localStorage.device_id;
+
+/* ⭐ Navn */
 nameInput.value = localStorage.name || "";
 welcome.textContent = `Brug for en energizer, ${nameInput.value || "Ukendt"}?`;
 
 nameInput.oninput = () => {
   localStorage.name = nameInput.value;
   welcome.textContent = `Brug for en energizer, ${nameInput.value}?`;
+
   fetch(api("/profile"),{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ team_id:team, name:nameInput.value })
+    body:JSON.stringify({
+      team_id: team,
+      name: nameInput.value,
+      device_id
+    })
   });
 };
 
@@ -147,7 +158,13 @@ async function finishPause(){
   await fetch(api("/event"),{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ team_id:team, name:nameInput.value||"Ukendt", exercise:chosenExercise, duration })
+    body:JSON.stringify({
+      team_id: team,
+      name: nameInput.value || "Ukendt",
+      device_id,
+      exercise: chosenExercise,
+      duration
+    })
   });
 
   thanks.textContent = `Energizer færdig. Næste er kl. ${
